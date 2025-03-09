@@ -1,9 +1,8 @@
-import React /*{ useState }*/ from 'react';
+import React from 'react';
 import logo from '../../Assets/OCD-logo.png';
 import './SignUpPage.css';
 
 function SignUpPage({ onBack }) {
-
   const handleSubmit = (e) => {
     e.preventDefault();
     alert('Sign Up Successful!');
@@ -37,9 +36,9 @@ function SignUpPage({ onBack }) {
 
             <p className="have-account-link">
               Have an account?{' '}
-              <button type="button" className="link-button" onClick={(e) => { e.preventDefault(); onBack(); }}>
+              <a href="#" onClick={(e) => { e.preventDefault(); onBack(); }}>
                 Sign In
-              </button>
+              </a>
             </p>
 
             <button type="submit">Sign Up</button>
