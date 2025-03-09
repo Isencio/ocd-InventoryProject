@@ -1,0 +1,198 @@
+
+.LandingPage {
+  text-align: center;
+}
+
+/* First Header Styles */
+.header-small {
+  background-color: #f28920;
+  color: white;
+  padding: 10px;
+  text-align: left;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+/* Second Header Styles */
+.header-large {
+  background-color: #231e54;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  height: 80px;
+  margin-right: 20px;
+}
+
+.header-text {
+  text-align: left;
+}
+
+.header-text h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.header-text h2 {
+  margin: 5px 0;
+  font-size: 1.2rem;
+}
+
+.header-text h3 {
+  margin: 5px 0;
+  font-size: 1rem;
+}
+
+/* Time and Date Styles */
+.header-right {
+  text-align: right;
+}
+
+.header-right .time {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.header-right .date {
+  margin: 5px 0 0;
+  font-size: 1rem;
+}
+
+.create-account-button:hover {
+  background-color: #1b164b;
+  color: white;
+}
+
+/* Content vision Section Styles */
+.content {
+  padding: 20px;
+  background-color: #b8b8b8;
+}
+
+.vision-section,
+.mission-section,
+.core-values-section,
+.quality-policy-section {
+  display: flex;
+  align-items: center;
+  margin-bottom: 40px;
+  padding: 20px;
+  background-color: #d3d3d3;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.vision-section,
+.core-values-section {
+  flex-direction: row;
+}
+
+.mission-section,
+.quality-policy-section {
+  flex-direction: row-reverse;
+}
+
+.vision-text,
+.mission-text,
+.core-values-text,
+.quality-policy-text {
+  flex: 1;
+  padding: 20px;
+  text-align: left;
+}
+
+.vision-image,
+.mission-image,
+.core-values-image,
+.quality-policy-image {
+  flex: 1;
+  text-align: center;
+}
+
+.vision-image img,
+.mission-image img,
+.core-values-image img,
+.quality-policy-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.vision-section,
+.core-values-section {
+  flex-direction: row;
+}
+
+.mission-section,
+.quality-policy-section {
+  flex-direction: row;
+}
+
+.mission-section .mission-image,
+.quality-policy-section .quality-policy-image {
+  order: 1;
+}
+
+.mission-section .mission-text,
+.quality-policy-section .quality-policy-text {
+  order: 2;
+}
+
+/* About Us Section Styles */
+.about-us-section {
+  background-color: #808080;
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.about-us-content {
+  flex: 1;
+  text-align: left;
+}
+
+.about-us-content h1 {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.about-us-content p {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 0;
+}
+
+/* Create Account Button Container */
+.create-account {
+  display: flex;
+  justify-content: right;
+}
+
+/* Create Account Button Styles */
+.create-account-button {
+  background-color: #f34823;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.create-account-button:hover {
+  background-color: #1b164b;
+  color: white;
+}
