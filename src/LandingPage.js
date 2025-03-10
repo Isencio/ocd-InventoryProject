@@ -4,6 +4,7 @@ import visionImage from './Assets/Vision.png';
 import missionImage from './Assets/Mission.png';
 import coreValuesImage from './Assets/OCD-logo.png';
 import qualityPolicyImage from './Assets/OCD-logo.png';
+import ocdIllustration from './Assets/OCD-illustration.jpg'; // Import the new image
 import './LandingPage.css';
 import LoginPage from './components/LoginPage/LoginPage';
 import SignUpPage from './components/SignUpPage/SignUpPage';
@@ -142,12 +143,21 @@ function LandingPage() {
                   and disaster risk reduction and management program for an adaptive, safer, and resilient Filipino community.</p>
                 </div>
             </div>
+
+            {/* News Image Section */}
+            <div className="news section">
+              <img src={ocdIllustration} alt="OCD Illustration" className="full-width-image" />
+            </div>
+
+            <div className="social-media section">
+              <img src={ocdIllustration} alt="OCD Illustration" className="full-width-image" />
+            </div>
           </section>
 
           {/* About Us Section */}
           <footer className="about-us-section">
             <div className="about-us-content">
-              <p>About Us</p>
+              <p>ABOUT US</p>
                 <div className="create-account">
                 <button className="create-account-button" onClick={handleCreateAccount}>
                   Create Account

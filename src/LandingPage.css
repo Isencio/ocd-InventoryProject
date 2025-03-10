@@ -73,10 +73,10 @@
   color: white;
 }
 
-/* Content vision Section Styles */
+/* Content vision Section Styles #b8b8b8*/
 .content {
   padding: 20px;
-  background-color: #b8b8b8;
+  background-color: #ffffff;
 }
 
 .vision-section,
@@ -195,4 +195,28 @@
 .create-account-button:hover {
   background-color: #1b164b;
   color: white;
+}
+
+/*OCD Illustration*/
+.news section {
+  width: 100%;
+  margin: 20px 0;
+}
+
+.full-width-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* OCD-social-media */
+.social-media section {
+  width: 100%;
+  margin: 20px 0;
+}
+
+.full-width-image {
+  width: 100%;
+  height: auto;
+  display: block;
 }
