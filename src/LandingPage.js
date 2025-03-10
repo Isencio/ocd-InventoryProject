@@ -4,7 +4,8 @@ import visionImage from './Assets/Vision.png';
 import missionImage from './Assets/Mission.png';
 import coreValuesImage from './Assets/OCD-logo.png';
 import qualityPolicyImage from './Assets/OCD-logo.png';
-import ocdIllustration from './Assets/OCD-illustration.jpg'; // Import the new image
+import ocdIllustration from './Assets/OCD-illustration.png';
+import socialMediaImage from './Assets/OCD-social-media.png';
 import './LandingPage.css';
 import LoginPage from './components/LoginPage/LoginPage';
 import SignUpPage from './components/SignUpPage/SignUpPage';
@@ -150,7 +151,7 @@ function LandingPage() {
             </div>
 
             <div className="social-media section">
-              <img src={ocdIllustration} alt="OCD Illustration" className="full-width-image" />
+              <img src={socialMediaImage} alt="OCD social-media" className="full-width-image" />
             </div>
           </section>
 

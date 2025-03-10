@@ -76,7 +76,7 @@
 /* Content vision Section Styles #b8b8b8*/
 .content {
   padding: 20px;
-  background-color: #ffffff;
+  background-color: #b8b8b8;
 }
 
 .vision-section,
@@ -213,6 +213,7 @@
 .social-media section {
   width: 100%;
   margin: 20px 0;
+  
 }
 
 .full-width-image {
