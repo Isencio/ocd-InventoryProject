@@ -11,6 +11,9 @@ const OfficeSuppliesPage = () => {
 
   return (
     <div className="office-supplies-container">
+      <button className="return-button" onClick={onBack}>
+        &larr;
+      </button>
       <h1>OFFICE SUPPLIES</h1>
       <div className="stock-cards">
         <button className="stock-card" onClick={() => handleNavigation('/rpci')}>RPCI</button>

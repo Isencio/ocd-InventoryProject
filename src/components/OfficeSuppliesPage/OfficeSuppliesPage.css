@@ -2,7 +2,19 @@
     text-align: center;
     padding: 20px;
   }
-  
+  .return-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: #231e54;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+  }
   h1 {
     font-size: 24px;
     margin-bottom: 20px;
