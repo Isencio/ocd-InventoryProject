@@ -18,6 +18,7 @@ function LandingPage() {
   const [showSignUpPage, setShowSignUpPage] = useState(false);
   const [showForgotPasswordPage, setShowForgotPasswordPage] = useState(false);
 
+
   const updateDateTime = () => {
     const now = new Date();
     const formattedDate = now.toLocaleDateString('en-US', {
