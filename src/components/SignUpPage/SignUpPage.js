@@ -11,6 +11,9 @@ function SignUpPage({ onBack }) {
 
   return (
     <div className="signup-page">
+      <button className="return-button" onClick={onBack}>
+        &larr;
+      </button>
       <div className="signup-container">
         <div className="signup-logo">
           <img src={logo} alt="OCD Logo" />

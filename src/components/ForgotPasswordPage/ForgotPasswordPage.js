@@ -10,6 +10,9 @@ function ForgotPasswordPage({ onBack }) {
 
   return (
     <div className="forgot-password-page">
+      <button className="return-button" onClick={onBack}>
+        &larr;
+      </button>
       <div className="forgot-password-container">
         <div className="forgot-password-header">
           <img src={logo} alt="OCD Logo" className="forgot-password-logo" />

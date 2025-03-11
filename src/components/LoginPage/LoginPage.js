@@ -5,6 +5,9 @@ import './LoginPage.css';
 function LoginPage({ onBack, onSignUp, onForgotPassword }) {
   return (
     <div className="login-page">
+      <button className="return-button" onClick={onBack}>
+        &larr;
+      </button>
       <div className="login-container">
         <div className="login-logo">
           <img src={logo} alt="OCD Logo" />

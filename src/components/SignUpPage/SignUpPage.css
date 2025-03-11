@@ -6,7 +6,19 @@
     height: 100vh;
     background-color: #e8e8e8;
   }
-  
+  .return-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: #231e54;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+  }
   .signup-container {
     display: flex;
     background-color: #e8e8e8;
