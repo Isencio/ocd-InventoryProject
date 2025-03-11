@@ -158,7 +158,12 @@ function LandingPage() {
           {/* About Us Section */}
           <footer className="about-us-section">
             <div className="about-us-content">
-              <p>ABOUT US</p>
+              <p>ABOUT US:
+              <p>the OCD is an agency under the Department of National Defense (DND).</p>
+              <p>It serves as the implementing arm of the National Disaster Risk Reduction and Management Council (NDRRMC). </p>
+              <p>The OCD plays a critical role in ensuring the country's readiness for disasters, given the Philippines' vulnerability to natural disasters.</p>
+              <p>Its primary focus is on disaster preparedness, response, recovery, and mitigation to ensure public safety and resilience.</p></p>
+              
                 <div className="create-account">
                 <button className="create-account-button" onClick={handleCreateAccount}>
                   Create Account
