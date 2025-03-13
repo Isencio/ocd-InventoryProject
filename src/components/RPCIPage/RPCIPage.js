@@ -8,7 +8,7 @@ const RPCIPage = () => {
             <div className="rpci-container">
                 <div className="rpci-header">RPCI</div>
                 <div className="rpci-content">
-                    <p><strong>Fooler</strong></p>
+                    <p><strong>Footer</strong></p>
                 </div>
             </div>
             <div className="footer">
