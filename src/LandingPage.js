@@ -172,10 +172,6 @@ function LandingPage() {
           {/* About Us Section */}
           <footer className="about-us-section">
             <div className="about-us-content">
-<<<<<<< HEAD
-              <p>ABOUT US</p>
-              <div className="create-account">
-=======
               <p>ABOUT US:
               <p>the OCD is an agency under the Department of National Defense (DND).</p>
               <p>It serves as the implementing arm of the National Disaster Risk Reduction and Management Council (NDRRMC). </p>
@@ -183,7 +179,6 @@ function LandingPage() {
               <p>Its primary focus is on disaster preparedness, response, recovery, and mitigation to ensure public safety and resilience.</p></p>
               
                 <div className="create-account">
->>>>>>> c71dbb4b2af9f4dec0d2d44c82255b5ba3f82a9b
                 <button className="create-account-button" onClick={handleCreateAccount}>
                   Create Account
                 </button>
