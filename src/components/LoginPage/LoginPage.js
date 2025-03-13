@@ -15,8 +15,14 @@ function LoginPage({ onBack, onSignUp, onForgotPassword, onLogin }) {
 
   return (
     <div className="login-page">
+<<<<<<< HEAD
       <button className="return-button" onClick={onBack}> &larr;
        </button>
+=======
+      <button className="return-button" onClick={onBack}>
+        &larr;
+      </button>
+>>>>>>> c71dbb4b2af9f4dec0d2d44c82255b5ba3f82a9b
       <div className="login-container">
         <div className="login-logo">
           <img src={logo} alt="OCD Logo" />

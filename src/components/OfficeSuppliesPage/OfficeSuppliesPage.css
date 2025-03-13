@@ -1,0 +1,47 @@
+.office-supplies-container {
+    text-align: center;
+    padding: 20px;
+  }
+  .return-button {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background-color: #231e54;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+  
+  .stock-cards {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .stock-card {
+    border: 1px solid #ccc;
+    padding: 10px;
+    width: 100px;
+    text-align: center;
+    cursor: pointer;
+    background-color: #f9f9f9;
+    transition: background-color 0.3s ease;
+  }
+  
+  .stock-card:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .footer {
+    margin-top: 20px;
+    font-size: 14px;
+  }
