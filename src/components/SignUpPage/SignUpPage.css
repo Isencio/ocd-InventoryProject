@@ -6,7 +6,6 @@
     height: 100vh;
     background-color: #e8e8e8;
   }
-<<<<<<< HEAD
 
   /* Return Button*/
 .return-button {
@@ -23,7 +22,6 @@
   cursor: pointer;
 }
   
-=======
   .return-button {
     position: absolute;
     top: 20px;
@@ -37,7 +35,6 @@
     border-radius: 5px;
     cursor: pointer;
   }
->>>>>>> c71dbb4b2af9f4dec0d2d44c82255b5ba3f82a9b
   .signup-container {
     display: flex;
     background-color: #e8e8e8;
