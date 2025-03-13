@@ -1,0 +1,82 @@
+/* Main Container */
+.spms-container {
+  display: flex;
+  height: 100vh;
+  background-color: #231e54;
+}
+
+/* Left section - Image */
+.OCD-main-left {
+  width: 20%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f0f0f0;
+}
+
+.OCD-vertical-image {
+  max-width: 100%;
+  height: 100vh;
+}
+
+/* Right section - Buttons and Headers */
+.rightBUTTON-section {
+  width: 80%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 20px;
+}
+
+/* Header Container */
+.header-container {
+  text-align: center;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+/* OCD Header */
+.ocd-header {
+  color: #f28920;
+  font-size: 36px;
+  font-weight: bold;
+  margin: 0;
+}
+
+/* spms Header */
+.spms-header {
+  color: white;
+  font-size: 40px;
+  font-weight: bold;
+  margin: 0;
+  margin-top: 15px;
+}
+
+/* Button Grid */
+.SPMS-button-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 20px;
+  width: 60%;
+  margin: auto;
+}
+
+/* Orange Buttons */
+.orange-button {
+  background-color: #f28920;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 30px 50px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.orange-button:hover {
+  background-color: darkorange;
+}

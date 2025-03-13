@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import logo from './Assets/OCD-logo.png';
 import visionImage from './Assets/Vision.png';
 import missionImage from './Assets/Mission.png';
@@ -17,6 +18,7 @@ function LandingPage() {
   const [showLoginPage, setShowLoginPage] = useState(false);
   const [showSignUpPage, setShowSignUpPage] = useState(false);
   const [showForgotPasswordPage, setShowForgotPasswordPage] = useState(false);
+  const navigate = useNavigate();
 
   const updateDateTime = () => {
     const now = new Date();
@@ -64,6 +66,12 @@ function LandingPage() {
     setShowForgotPasswordPage(true);
   };
 
+  // Handle login (mock functionality)
+  const handleLogin = (credentials) => {
+    console.log('Logging in with:', credentials);
+    navigate('/spms');
+  };
+
   return (
     <div className="App">
       {showLoginPage ? (
@@ -72,7 +80,12 @@ function LandingPage() {
         ) : showForgotPasswordPage ? (
           <ForgotPasswordPage onBack={handleBackToLogin} />
         ) : (
-          <LoginPage onBack={handleBackToMain} onSignUp={handleSignUp} onForgotPassword={handleForgotPassword} />
+          <LoginPage
+            onBack={handleBackToMain}
+            onSignUp={handleSignUp}
+            onForgotPassword={handleForgotPassword}
+            onLogin={handleLogin}
+          />
         )
       ) : (
         <>
@@ -116,7 +129,7 @@ function LandingPage() {
                 <h1>MISSION</h1>
                 <p>To lead in the administration of comprehensive national Civil Defense and Disaster Risk Reduction and 
                   Management programs for adaptive, safer, and disaster resilient communities towards sustainable development.</p>
-                </div>
+              </div>
             </div>
 
             <div className="core-values-section">
@@ -142,15 +155,15 @@ function LandingPage() {
                 <p>III. Ensure continual improvement of its quality management system. </p>
                 <p>To meet the highest level of stakeholder satisfaction in the administration of the country's comprehensive civil defense 
                   and disaster risk reduction and management program for an adaptive, safer, and resilient Filipino community.</p>
-                </div>
+              </div>
             </div>
 
             {/* News Image Section */}
-            <div className="news section">
+            <div className="news-section">
               <img src={ocdIllustration} alt="OCD Illustration" className="full-width-image" />
             </div>
 
-            <div className="social-media section">
+            <div className="social-media-section">
               <img src={socialMediaImage} alt="OCD social-media" className="full-width-image" />
             </div>
           </section>
@@ -159,7 +172,7 @@ function LandingPage() {
           <footer className="about-us-section">
             <div className="about-us-content">
               <p>ABOUT US</p>
-                <div className="create-account">
+              <div className="create-account">
                 <button className="create-account-button" onClick={handleCreateAccount}>
                   Create Account
                 </button>

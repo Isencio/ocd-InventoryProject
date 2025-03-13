@@ -1,15 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import logo from '../../Assets/OCD-logo.png';
 import './ForgotPasswordPage.css';
 
 function ForgotPasswordPage({ onBack }) {
+  const [email, setEmail] = useState('');
+
   const handleSearch = (e) => {
     e.preventDefault();
     alert('Searching for your account...');
+    onBack();
   };
 
   return (
     <div className="forgot-password-page">
+      <button className="return-button" onClick={onBack}> 
+        &larr;
+      </button>
       <div className="forgot-password-container">
         <div className="forgot-password-header">
           <img src={logo} alt="OCD Logo" className="forgot-password-logo" />
@@ -24,9 +30,19 @@ function ForgotPasswordPage({ onBack }) {
           <h2>Find Your Account</h2>
           <p>Please enter your email to search for your account.</p>
           <form onSubmit={handleSearch}>
-            <input type="email" placeholder="Enter your email" required />
+            <input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
             <div className="form-buttons">
-              <button type="button" onClick={onBack} className="cancel-button">
+              <button
+                type="button"
+                onClick={onBack}
+                className="cancel-button"
+              >
                 Cancel
               </button>
               <button type="submit" className="search-button">
