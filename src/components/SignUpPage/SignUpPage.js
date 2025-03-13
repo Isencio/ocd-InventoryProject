@@ -1,8 +1,11 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import logo from '../../Assets/OCD-logo.png';
 import './SignUpPage.css';
 
 function SignUpPage({ onBack }) {
+  const navigate = useNavigate();
+
   const handleSubmit = (e) => {
     e.preventDefault();
     alert('Sign Up Successful!');
@@ -11,7 +14,11 @@ function SignUpPage({ onBack }) {
 
   return (
     <div className="signup-page">
+<<<<<<< HEAD
+      <button className="return-button" onClick={onBack}> 
+=======
       <button className="return-button" onClick={onBack}>
+>>>>>>> c71dbb4b2af9f4dec0d2d44c82255b5ba3f82a9b
         &larr;
       </button>
       <div className="signup-container">
@@ -39,7 +46,7 @@ function SignUpPage({ onBack }) {
 
             <p className="have-account-link">
               Have an account?{' '}
-              <a href="#" onClick={(e) => { e.preventDefault(); onBack(); }}>
+              <a href="#" className="link-button" onClick={(e) => { e.preventDefault(); onBack(); }}>
                 Sign In
               </a>
             </p>
