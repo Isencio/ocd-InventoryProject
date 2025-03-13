@@ -1,24 +1,15 @@
-// StockCardsPage.js
+// RPCIPage.js
 import React from 'react';
 import './RPCIPage.css';
 
 const RPCIPage = () => {
-    const stockCards = [
-        { id: 1, name: 'Stock 1', description: 'Description for Stock 1' },
-        { id: 2, name: 'Stock 2', description: 'Description for Stock 2' },
-        { id: 3, name: 'Stock 3', description: 'Description for Stock 3' },
-        // Add more stock cards as needed
-    ];
-
     return (
         <div>
-            <div className="stock-cards-container">
-                {stockCards.map((card) => (
-                    <div key={card.id} className="stock-card">
-                        <h3>{card.name}</h3>
-                        <p>{card.description}</p>
-                    </div>
-                ))}
+            <div className="rpci-container">
+                <div className="rpci-header">RPCI</div>
+                <div className="rpci-content">
+                    <p><strong>Fooler</strong></p>
+                </div>
             </div>
             <div className="footer">
                 <p>Footer</p>
