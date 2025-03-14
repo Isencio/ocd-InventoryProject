@@ -8,18 +8,22 @@
   }
 
   /* Return Button*/
-.return-button {
+.signup-page .return-button {
   position: absolute;
   top: 20px;
   left: 20px;
   background-color: #231e54;
-  color: white;
+  color: rgb(255, 255, 255);
   border: none;
   padding: 10px 20px;
   font-size: 1rem;
   font-weight: bold;
   border-radius: 5px;
   cursor: pointer;
+}
+
+.signup-page .return-button:hover {
+  background-color: #1a1640;
 }
   
   .signup-container {
