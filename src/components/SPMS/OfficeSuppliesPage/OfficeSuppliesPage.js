@@ -20,10 +20,10 @@ const OfficeSuppliesPage = () => {
           <div className="Office-Supplies-section">
             <h1>OFFICE SUPPLIES</h1>
             <div className="office-stock-grid">
-              <button className="stock-card" onClick={() => handleNavigation('/rpci')}>STOCK CARDS</button>
+              <button className="stock-card" onClick={() => handleNavigation('/stock-cards')}>STOCK CARDS</button>
               <button className="stock-card">RPCI</button>
-              <button className="stock-card">RSMI</button>
-              <button className="stock-card">RIS</button>
+              <button className="stock-card" onClick={() => handleNavigation('/rsmi')}>RSMI</button>
+              <button className="stock-card" onClick={() => handleNavigation('/ris')}>RIS</button>
             </div>
           </div>
           <div className="right-image-section">

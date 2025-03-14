@@ -1,0 +1,37 @@
+/* RSMIPage.css */
+.rsmi-container {
+    display: flex;
+    height: 100vh;
+    background-color: #231e54;
+}
+.rsmi-header {
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-top: 20px;
+}
+
+.rsmi-header h1{
+    color: white;
+    font-size: 45px;
+    font-weight: bold;
+    margin-bottom: 40px;
+    text-align: center;
+    width: 100%;
+}
+
+.right-image-section {
+    width: 20%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f0f0;
+  }
+  
+  .vertical-OCD-image {
+    max-width: 100%;
+    height: 100%;
+  }

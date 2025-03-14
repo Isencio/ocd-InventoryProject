@@ -69,13 +69,20 @@
   }
   
   /* Return Button */
-  .return-button {
+  .office-supplies-container .return-button {
     position: absolute;
     top: 20px;
     left: 20px;
-    background: none;
+    background-color: #1c1841;
+    color: rgb(255, 255, 255);
     border: none;
-    font-size: 24px;
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 5px;
     cursor: pointer;
-    color: white;
+  }
+
+  .office-supplies-container .return-button:hover {
+    background-color: #f28920;
   }

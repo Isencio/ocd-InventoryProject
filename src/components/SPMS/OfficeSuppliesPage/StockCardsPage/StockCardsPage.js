@@ -1,6 +1,7 @@
 // StockCardsPage.js
 import React from 'react';
 import './StockCardsPage.css';
+import logo from '../../../../Assets/OCD-main.jpg';
 
 const StockCardsPage = () => {
     const stockCards = [
@@ -13,6 +14,9 @@ const StockCardsPage = () => {
     return (
         <div>
             <div className="stock-cards-container">
+            <div className="stock-cards-header">
+                <h1>Stock Card</h1>
+            </div>
                 {stockCards.map((card) => (
                     <div key={card.id} className="stock-card">
                         <h3>{card.name}</h3>
@@ -20,6 +24,11 @@ const StockCardsPage = () => {
                     </div>
                 ))}
             </div>
+            <div className="right-image-section">
+                    <img src={logo} 
+                    alt="OCD logo" 
+                    className="vertical-OCD-image" />
+                </div>
             <div className="footer">
                 <p>Footer</p>
             </div>

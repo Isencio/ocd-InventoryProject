@@ -1,6 +1,7 @@
 // RPCIPage.js
 import React from 'react';
 import './RPCIPage.css';
+import logo from '../../../../Assets/OCD-main.jpg';
 
 const RPCIPage = () => {
     return (
@@ -11,9 +12,11 @@ const RPCIPage = () => {
                     <p><strong>Footer</strong></p>
                 </div>
             </div>
-            <div className="footer">
-                <p>Footer</p>
-            </div>
+            <div className="right-image-section">
+                    <img src={logo} 
+                    alt="OCD logo" 
+                    className="vertical-OCD-image" />
+                </div>
         </div>
     );
 };
