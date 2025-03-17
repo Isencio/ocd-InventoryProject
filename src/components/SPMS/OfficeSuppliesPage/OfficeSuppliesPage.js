@@ -21,7 +21,7 @@ const OfficeSuppliesPage = () => {
             <h1>OFFICE SUPPLIES</h1>
             <div className="office-stock-grid">
               <button className="stock-card" onClick={() => handleNavigation('/stock-cards')}>STOCK CARDS</button>
-              <button className="stock-card">RPCI</button>
+              <button className="stock-card" onClick={() => handleNavigation('/rpci')}>RPCI</button>
               <button className="stock-card" onClick={() => handleNavigation('/rsmi')}>RSMI</button>
               <button className="stock-card" onClick={() => handleNavigation('/ris')}>RIS</button>
             </div>

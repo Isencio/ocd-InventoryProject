@@ -1,4 +1,3 @@
-// RPCIPage.js
 import React from 'react';
 import './RSMIPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
