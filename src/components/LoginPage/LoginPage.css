@@ -1,3 +1,4 @@
+/* LoginPage.css */
 .login-page {
   display: flex;
   justify-content: center;
@@ -5,11 +6,9 @@
   height: 100vh;
   background-color: #e8e8e8;
 }
-<<<<<<< HEAD
-/* Return Button*/
-=======
->>>>>>> c71dbb4b2af9f4dec0d2d44c82255b5ba3f82a9b
-.return-button {
+
+/* Return Button */
+.login-page .return-button {
   position: absolute;
   top: 20px;
   left: 20px;
@@ -22,10 +21,11 @@
   border-radius: 5px;
   cursor: pointer;
 }
-<<<<<<< HEAD
 
-=======
->>>>>>> c71dbb4b2af9f4dec0d2d44c82255b5ba3f82a9b
+.login-page .return-button:hover {
+  background-color: #1a1640;
+}
+
 .login-container {
   display: flex;
   background-color: #e8e8e8;

@@ -14,9 +14,7 @@ function SignUpPage({ onBack }) {
 
   return (
     <div className="signup-page">
-
-      <button className="return-button" onClick={onBack}>
-
+      <button className="return-button" onClick={onBack}> 
         &larr;
       </button>
       <div className="signup-container">
