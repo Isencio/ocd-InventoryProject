@@ -43,7 +43,18 @@
   font-weight: bold;
   margin: 0;
 }
+.orange-button:hover {
+  background-color: #e07b1f;
+  transform: scale(1.05); /* Slightly increase the size of the button */
+}
+.orange-button:hover {
+background-position: left bottom; /* Transition the background color */
+transform: scale(1.05);
+}
 
+.orange-button:hover {
+  background-color: #b1631b;
+}
 /* spms Header */
 .spms-header {
   color: white;

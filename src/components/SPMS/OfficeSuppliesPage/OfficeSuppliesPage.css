@@ -51,6 +51,15 @@
   
   .stock-card:hover {
     background-color: #e07b1f;
+    transform: scale(1.05); /* Slightly increase the size of the button */
+}
+.stock-card:hover {
+  background-position: left bottom; /* Transition the background color */
+  transform: scale(1.05);
+}
+  
+  .stock-card:hover {
+    background-color: #b1631b;
   }
   
   /* Right Section - Image */
