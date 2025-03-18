@@ -27,7 +27,7 @@
   align-items: center;
   justify-content: flex-start;
   padding-top: 20px;
-  position: relative; /* For absolute positioning of the profile section */
+  position: relative;
 }
 
 /* Header Container */
@@ -54,7 +54,6 @@
   margin-top: 15px;
 }
 
-<<<<<<< HEAD
 /* Profile Button */
 .profile-button {
   background-color: #f28920;
@@ -65,9 +64,9 @@
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
-  position: absolute; /* Position the button absolutely */
-  top: 20px; /* Distance from the top */
-  right: 20px; /* Distance from the right */
+  position: absolute;
+  top: 20px;
+  right: 20px;
   transition: background-color 0.3s ease;
 }
 
@@ -77,15 +76,15 @@
 
 /* Profile Section */
 .profile-section {
-  position: absolute; /* Float the profile section */
-  top: 80px; /* Adjust this value to position the profile section below the header */
-  right: 20px; /* Adjust this value to position the profile section */
-  width: 400px; /* Adjust width as needed */
+  position: absolute;
+  top: 80px;
+  right: 20px;
+  width: 400px;
   padding: 20px;
   background-color: #2c2c2c;
   border-radius: 10px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  z-index: 10; /* Ensure it appears above other content */
+  z-index: 10;
 }
 
 /* Profile Header */
@@ -160,33 +159,6 @@
 .update-password-button:hover {
   background-color: darkorange;
 }
-=======
-
-.spms:hover {
-  transform: rotateX(10deg) rotateY(10deg) translateZ(20px); /* 3D rotation and movement */
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5); /* Enhanced shadow for depth */
-}
-
-@keyframes float {
-0%, 100% {
-    transform: translateY(0) rotateX(0) rotateY(0) translateZ(0);
-}
-50% {
-    transform: translateY(-10px) rotateX(5deg) rotateY(5deg) translateZ(10px);
-}
-}
-
-.SPMS-button-grid {
-animation: float 3s ease-in-out infinite; /* Apply the floating animation */
-}
-
-.spms:hover {
-animation: none; /* Stop the continuous animation on hover */
-transform: rotateX(10deg) rotateY(10deg) translateZ(20px); /* Keep the hover effect */
-box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-}
-
->>>>>>> ad9106755febb7de6f1505ddbbd1ba886e82d898
 
 /* Button Grid */
 .SPMS-button-grid {
