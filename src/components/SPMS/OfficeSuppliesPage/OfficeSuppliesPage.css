@@ -61,7 +61,31 @@
   .stock-card:hover {
     background-color: #b1631b;
   }
+
+  .stock-card:hover {
+    transform: rotateX(10deg) rotateY(10deg) translateZ(20px); /* 3D rotation and movement */
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5); /* Enhanced shadow for depth */
+}
+
+@keyframes float {
+  0%, 100% {
+      transform: translateY(0) rotateX(0) rotateY(0) translateZ(0);
+  }
+  50% {
+      transform: translateY(-10px) rotateX(5deg) rotateY(5deg) translateZ(10px);
+  }
+}
   
+.stock-card {
+  animation: float 3s ease-in-out infinite; /* Apply the floating animation */
+}
+
+.stock-card:hover {
+  animation: none; /* Stop the continuous animation on hover */
+  transform: rotateX(10deg) rotateY(10deg) translateZ(20px); /* Keep the hover effect */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
   /* Right Section - Image */
   .right-image-section {
     width: 20%;

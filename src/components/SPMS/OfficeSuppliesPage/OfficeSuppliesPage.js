@@ -13,7 +13,7 @@ const OfficeSuppliesPage = () => {
   const onBack = () => {
     navigate(-1);
   };
-
+  
   return (
     <div className="office-supplies-container">
       <button className="return-button" onClick={onBack}> &larr; </button>
