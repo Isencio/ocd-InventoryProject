@@ -8,19 +8,22 @@ function ForgotPasswordPage({ onBack }) {
   const handleSearch = (e) => {
     e.preventDefault();
     alert('Searching for your account...');
-    onBack();
+    onBack(); // Navigate back after searching
   };
 
   return (
     <div className="forgot-password-page">
-      <button className="return-button" onClick={onBack}> 
+      <button className="return-button" onClick={onBack}>
         &larr;
       </button>
       <div className="forgot-password-container">
         <div className="forgot-password-header">
           <img src={logo} alt="OCD Logo" className="forgot-password-logo" />
           <div className="forgot-password-buttons">
-            <button className="signin-button">Sign In</button>
+            {/* Add onClick handler to the Sign In button */}
+            <button className="signin-button" onClick={onBack}>
+              Sign In
+            </button>
           </div>
         </div>
 
