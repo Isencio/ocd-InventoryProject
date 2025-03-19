@@ -23,32 +23,46 @@ const StockCardsPage = () => {
                     <table>
                         <thead>
                             <tr>
-                                <th>Column 1</th>
-                                <th>Column 2</th>
-                                <th>Column 3</th>
-                                <th>Column 4</th>
-                                <th>Column 5</th>
-                                <th>Column 6</th>
-                                <th>Column 7</th>
-                                <th>Column 8</th>
-                                <th>Column 9</th>
-                                <th>Column 10</th>
-                                <th>Column 11</th>
+                                <th>DATE</th>
+                                <th>REFERENCE</th>
+                                <th colSpan="3">RECEIPT</th>
+                                <th colSpan="3">BALANCE</th>
+                                <th colSpan="2">ISSUE</th>
+                                <th>No. of Days to Consume</th>
+                            </tr>
+                            <tr>
+                                <th></th> {/* Empty for DATE */}
+                                <th></th> {/* Empty for REFERENCE */} 
+                                {/* Sub-columns for RECEIPT */}
+                                <th>Qty</th>
+                                <th>Unit Cost</th>
+                                <th>Total Cost</th>
+                                {/* Sub-columns for BALANCE */}
+                                <th>Qty</th>
+                                <th>Unit Cost</th>
+                                <th>Total Cost</th>
+                                {/* Sub-columns for ISSUE */}
+                                <th>Qty</th>
+                                <th>Office</th>
+                                <th></th> {/* Empty for No. of Days to Consume */}
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td>Data 1</td>
-                                <td>Data 2</td>
-                                <td>Data 3</td>
-                                <td>Data 4</td>
-                                <td>Data 5</td>
-                                <td>Data 6</td>
-                                <td>Data 7</td>
-                                <td>Data 8</td>
-                                <td>Data 9</td>
-                                <td>Data 10</td>
-                                <td>Data 11</td>
+                                <td>2023-10-01</td>
+                                <td>REF123</td>
+                                {/* Receipt Data */}
+                                <td>100</td>
+                                <td>$10</td>
+                                <td>$1000</td>
+                                {/* Balance Data */}
+                                <td>200</td>
+                                <td>$10</td>
+                                <td>$2000</td>
+                                {/* Issue Data */}
+                                <td>50</td>
+                                <td>Office A</td>
+                                <td>30</td> {/* No. of Days to Consume */}
                             </tr>
                         </tbody>
                     </table>
