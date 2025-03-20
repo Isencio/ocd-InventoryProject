@@ -58,7 +58,10 @@ const StockCardsPage = () => {
     
     return (
         <div className="stock-cards-container">
-            <button className="return-button" onClick={onBack}> &larr; </button>
+            <div className="header-top">
+                <button className="return-button" onClick={onBack}> &larr; </button>
+                <h1>Stock Card</h1>
+            </div>
             <div className="stock-cards-header">
                 <div className="header-text">
                     <p>Republic of the Philippines</p>
@@ -69,7 +72,7 @@ const StockCardsPage = () => {
                     <p>Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325</p>
                     <p>E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com</p>
                 </div>
-                <h1>Stock Card</h1>
+                
                 <div className="table-container">
                     <table ref={tableRef}>
                         <thead>
