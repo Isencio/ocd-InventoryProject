@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './StockCardsPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
@@ -25,8 +25,7 @@ const StockCardsPage = () => {
     const addNewRow = () => {
         const table = tableRef.current;
         const newRow = table.insertRow(-1);
-
-        // Create cells for the new row
+        
         const columns = [
             { editable: true }, // DATE
             { editable: true }, // REFERENCE
@@ -50,10 +49,26 @@ const StockCardsPage = () => {
         });
     };
 
+    useEffect(() => {
+        const table = tableRef.current;
+        for (let i = 0; i < 5; i++) {
+            addNewRow();
+        }
+    }, []);
+    
     return (
         <div className="stock-cards-container">
             <button className="return-button" onClick={onBack}> &larr; </button>
             <div className="stock-cards-header">
+                <div className="header-text">
+                    <p>Republic of the Philippines</p>
+                    <p><b>Department of National Defense</b></p>
+                    <p><b>OFFICE OF CIVIL DEFENSE</b></p>
+                    <p>NATIONAL CAPITAL REGION</p>
+                    <p>NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY</p>
+                    <p>Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325</p>
+                    <p>E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com</p>
+                </div>
                 <h1>Stock Card</h1>
                 <div className="table-container">
                     <table ref={tableRef}>
@@ -84,23 +99,6 @@ const StockCardsPage = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {/* Initial editable row */}
-                            <tr>
-                                <td contentEditable="true" onKeyDown={handleKeyDown}></td>
-                                <td contentEditable="true" onKeyDown={handleKeyDown}></td>
-                                {/* Receipt Data */}
-                                <td contentEditable="true" onKeyDown={handleKeyDown}></td>
-                                <td contentEditable="true" onKeyDown={handleKeyDown}></td>
-                                <td contentEditable="true" onKeyDown={handleKeyDown}></td>
-                                {/* Balance Data */}
-                                <td contentEditable="true" onKeyDown={handleKeyDown}></td>
-                                <td contentEditable="true" onKeyDown={handleKeyDown}></td>
-                                <td contentEditable="true" onKeyDown={handleKeyDown}></td>
-                                {/* Issue Data */}
-                                <td contentEditable="true" onKeyDown={handleKeyDown}></td>
-                                <td contentEditable="true" onKeyDown={handleKeyDown}></td>
-                                <td contentEditable="true" onKeyDown={handleKeyDown}></td>
-                            </tr>
                         </tbody>
                     </table>
                 </div>
