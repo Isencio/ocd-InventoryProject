@@ -50,6 +50,46 @@
   overflow-x: auto;
 }
 
+/* Styles for the new Item and Stock No. row */
+.item-stock-row, .description-reorder-row, .unit-of-measurement-row {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  background-color: #1c1841;
+  color: white;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+}
+
+.item-cell, .stock-no-cell, .description-cell, .reorder-point-cell, .unit-of-measurement-cell {
+  margin-right: 20px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.item-cell label, .stock-no-cell label, .description-cell label, .reorder-point-cell label, .unit-of-measurement-cell label {
+  margin-right: 10px;
+}
+
+.item-cell input, .stock-no-cell input, .description-cell input, .reorder-point-cell input, .unit-of-measurement-cell input {
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background-color: #fff;
+  color: #231e54;
+  font-size: 14px;
+}
+
+.item-cell input:focus, .stock-no-cell input:focus, .description-cell input:focus, .reorder-point-cell input:focus, .unit-of-measurement-cell input:focus {
+  outline: none;
+  border-color: #f28920;
+  box-shadow: 0 0 5px rgba(242, 137, 32, 0.5);
+}
+
+
+/* Table styles */
 table {
   width: 100%;
   border-collapse: collapse;

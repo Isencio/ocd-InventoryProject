@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './StockCardsPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
@@ -6,6 +6,10 @@ import logo from '../../../../Assets/OCD-main.jpg';
 const StockCardsPage = () => {
     const navigate = useNavigate();
     const tableRef = useRef(null);
+    const [item, setItem] = useState('');
+    const [stockNo, setStockNo] = useState('');
+    const [description, setDescription] = useState('');
+    const [reorderPoint, setReorderPoint] = useState('');
 
     const onBack = () => {
         navigate(-1);
@@ -74,6 +78,51 @@ const StockCardsPage = () => {
                 </div>
                 
                 <div className="table-container">
+                    {/* Add a new row for Item and Stock No. with input fields */}
+                    <div className="item-stock-row">
+                        <div className="item-cell">
+                            <label>Item:</label>
+                            <input
+                                type="text"
+                                placeholder="Enter Item"
+                                value={item}
+                                onChange={(e) => setItem(e.target.value)}
+                            />
+                        </div>
+                        <div className="stock-no-cell">
+                            <label>Stock No.:</label>
+                            <input
+                                type="text"
+                                placeholder="Enter Stock No."
+                                value={stockNo}
+                                onChange={(e) => setStockNo(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Add a new row for Description and Re-order point with input fields */}
+                    <div className="description-reorder-row">
+                        <div className="description-cell">
+                            <label>Description:</label>
+                            <input
+                                type="text"
+                                placeholder="Enter Description"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                            />
+                        </div>
+                        <div className="reorder-point-cell">
+                            <label>Re-order Point:</label>
+                            <input
+                                type="text"
+                                placeholder="Enter Re-order Point"
+                                value={reorderPoint}
+                                onChange={(e) => setReorderPoint(e.target.value)}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Existing table */}
                     <table ref={tableRef}>
                         <thead>
                             <tr>
