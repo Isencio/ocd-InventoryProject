@@ -10,6 +10,7 @@ const StockCardsPage = () => {
     const [stockNo, setStockNo] = useState('');
     const [description, setDescription] = useState('');
     const [reorderPoint, setReorderPoint] = useState('');
+    const [unitofmeasurement, setUnitofMeasurement] = useState('');
 
     const onBack = () => {
         navigate(-1);
@@ -69,8 +70,8 @@ const StockCardsPage = () => {
             <div className="stock-cards-header">
                 <div className="header-text">
                     <p>Republic of the Philippines</p>
-                    <p><b>Department of National Defense</b></p>
-                    <p><b>OFFICE OF CIVIL DEFENSE</b></p>
+                    <p>Department of National Defense</p>
+                    <p>OFFICE OF CIVIL DEFENSE</p>
                     <p>NATIONAL CAPITAL REGION</p>
                     <p>NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY</p>
                     <p>Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325</p>
@@ -122,6 +123,17 @@ const StockCardsPage = () => {
                         </div>
                     </div>
 
+                    <div className="unit-of-measurement">
+                        <div className="unit-of-measurement-cell">
+                            <label>Unit of Measurement:</label>
+                            <input
+                                type="text"
+                                placeholder="Enter Unit of Measurement"
+                                value={unitofmeasurement}
+                                onChange={(e) => setUnitofMeasurement(e.target.value)}
+                            />
+                        </div>
+                    </div>
                     {/* Existing table */}
                     <table ref={tableRef}>
                         <thead>

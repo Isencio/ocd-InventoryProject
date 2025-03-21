@@ -19,7 +19,7 @@
   color: white;
   font-size: 30px;
   font-weight: bold;
-  margin: 0;
+  margin: #ddd;
 }
 
 .stock-cards-header {
@@ -30,19 +30,28 @@
   justify-content: flex-start;
   padding-top: 80px;
   margin-left: 40px;
+  border: #ddd;
+}
+.table-container {
+  width: 90%;
+  border-collapse: collapse;
+  background-color: white;
+  color: #231e54;
 }
 
 .header-text {
   text-align: center;
   color: white;
   margin-bottom: 20px;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.5;
+  font-family: 'Times New Roman', Times, serif;
 }
 
 .header-text p {
   margin: 5px 0;
 }
+
 
 .table-container {
   width: 90%;
@@ -51,30 +60,84 @@
 }
 
 /* Styles for the new Item and Stock No. row */
-.item-stock-row, .description-reorder-row, .unit-of-measurement-row {
+.item-stock-row, .description-reorder-row, .unit-of-measurement-cell {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  background-color: #1c1841;
+  background-color: rgb(136, 139, 145);
   color: white;
   padding: 10px;
   margin-bottom: 10px;
   border-radius: 5px;
 }
 
-.item-cell, .stock-no-cell, .description-cell, .reorder-point-cell, .unit-of-measurement-cell {
+.item-cell, .description-cell, .unit-of-measurement-cell {
   margin-right: 20px;
   font-weight: bold;
   display: flex;
   align-items: center;
 }
+.stock-no-cell{
+  margin-left: 200px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
 
-.item-cell label, .stock-no-cell label, .description-cell label, .reorder-point-cell label, .unit-of-measurement-cell label {
+.stock-no-cell label{
+  margin-left: 150px;
+}
+.stock-no-cell input{
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background-color: #fff;
+  color: #231e54;
+  font-size: 14px;
+  margin-left: 10px;
+}
+.stock-no-cell input:focus{
+  outline: none;
+  border-color: #f28920;
+  box-shadow: 0 0 5px rgba(242, 137, 32, 0.5);
+}
+
+.reorder-point-cell{
+  margin-left: 150px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+}
+
+.reorder-point-cell label{
+  margin-left: 150px;
+}
+.reorder-point-cell input{
+  padding: 5px 10px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  background-color: #fff;
+  color: #231e54;
+  font-size: 14px;
+  margin-left: 10px;
+}
+.reorder-point-cell input:focus{
+  outline: none;
+  border-color: #f28920;
+  box-shadow: 0 0 5px rgba(242, 137, 32, 0.5);
+}
+
+.item-cell label, .description-cell label, .unit-of-measurement-cell label {
   margin-right: 10px;
 }
 
-.item-cell input, .stock-no-cell input, .description-cell input, .reorder-point-cell input, .unit-of-measurement-cell input {
-  padding: 5px 10px;
+
+.item-cell label, .description-cell label, .unit-of-measurement-cell label {
+  margin-right: 10px;
+}
+
+.item-cell input, .description-cell input, .unit-of-measurement-cell input {
+  padding: 5px 20px;
   border: 1px solid #ddd;
   border-radius: 3px;
   background-color: #fff;
@@ -82,7 +145,7 @@
   font-size: 14px;
 }
 
-.item-cell input:focus, .stock-no-cell input:focus, .description-cell input:focus, .reorder-point-cell input:focus, .unit-of-measurement-cell input:focus {
+.item-cell input:focus, .description-cell input:focus, .unit-of-measurement-cell input:focus {
   outline: none;
   border-color: #f28920;
   box-shadow: 0 0 5px rgba(242, 137, 32, 0.5);
@@ -91,20 +154,20 @@
 
 /* Table styles */
 table {
-  width: 100%;
+  width: 90%;
   border-collapse: collapse;
   background-color: white;
   color: #231e54;
 }
 
 table th, table td {
-  padding: 15px;
+  padding: 5px;
   text-align: center;
   border: 1px solid #ddd;
 }
 
 table th {
-  background-color: #1c1841;
+  background-color: rgb(136, 139, 145);
   color: white;
   font-weight: bold;
 }
@@ -126,7 +189,7 @@ table td[contentEditable="true"] {
 
 table td[contentEditable="true"]:focus {
   background-color: #f0f8ff;
-  border: 2px solid #1c1841;
+  border: rgb(136, 139, 145);
 }
 
 .right-image-section {
