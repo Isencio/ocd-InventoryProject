@@ -1,16 +1,28 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './StockCardsPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
 
 const StockCardsPage = () => {
-    const navigate = useNavigate();
-    const tableRef = useRef(null);
     const [item, setItem] = useState('');
     const [stockNo, setStockNo] = useState('');
     const [description, setDescription] = useState('');
-    const [reorderPoint, setReorderPoint] = useState('');
+    const [reorderpoint, setReOrderPoint] = useState('');
     const [unitofmeasurement, setUnitofMeasurement] = useState('');
+    const [rows, setRows] = useState(Array(5).fill({
+        date: '',
+        reference: '',
+        receiptQty: '',
+        receiptUnitCost: '',
+        receiptTotalCost: '',
+        balanceQty: '',
+        balanceUnitCost: '',
+        balanceTotalCost: '',
+        issueQty: '',
+        issueOffice: '',
+        daysToConsume: ''
+    }));
+    const navigate = useNavigate();
 
     const onBack = () => {
         navigate(-1);
@@ -20,47 +32,38 @@ const StockCardsPage = () => {
         console.log('Export button clicked');
     };
 
-    const handleKeyDown = (event) => {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            addNewRow();
+    const handleAddRow = () => {
+        setRows([...rows, {
+            date: '',
+            reference: '',
+            receiptQty: '',
+            receiptUnitCost: '',
+            receiptTotalCost: '',
+            balanceQty: '',
+            balanceUnitCost: '',
+            balanceTotalCost: '',
+            issueQty: '',
+            issueOffice: '',
+            daysToConsume: ''
+        }]);
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            handleAddRow();
         }
     };
 
-    const addNewRow = () => {
-        const table = tableRef.current;
-        const newRow = table.insertRow(-1);
-        
-        const columns = [
-            { editable: true }, // DATE
-            { editable: true }, // REFERENCE
-            { editable: true }, // RECEIPT Qty
-            { editable: true }, // RECEIPT Unit Cost
-            { editable: true }, // RECEIPT Total Cost
-            { editable: true }, // BALANCE Qty
-            { editable: true }, // BALANCE Unit Cost
-            { editable: true }, // BALANCE Total Cost
-            { editable: true }, // ISSUE Qty
-            { editable: true }, // ISSUE Office
-            { editable: true }, // No. of Days to Consume
-        ];
-
-        columns.forEach((column) => {
-            const cell = newRow.insertCell();
-            if (column.editable) {
-                cell.contentEditable = true;
-                cell.addEventListener('keydown', handleKeyDown); // Add event listener to new cells
+    const handleInputChange = (index, field, value) => {
+        const updatedRows = rows.map((row, i) => {
+            if (i === index) {
+                return { ...row, [field]: value }; // Update only the specific field
             }
+            return row; // Return the row as-is for other rows
         });
+        setRows(updatedRows);
     };
 
-    useEffect(() => {
-        const table = tableRef.current;
-        for (let i = 0; i < 5; i++) {
-            addNewRow();
-        }
-    }, []);
-    
     return (
         <div className="stock-cards-container">
             <div className="header-top">
@@ -77,93 +80,186 @@ const StockCardsPage = () => {
                     <p>Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325</p>
                     <p>E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com</p>
                 </div>
-                
+
                 <div className="table-container">
-                    {/* Add a new row for Item and Stock No. with input fields */}
-                    <div className="item-stock-row">
-                        <div className="item-cell">
-                            <label>Item:</label>
-                            <input
-                                type="text"
-                                placeholder="Enter Item"
-                                value={item}
-                                onChange={(e) => setItem(e.target.value)}
-                            />
-                        </div>
-                        <div className="stock-no-cell">
-                            <label>Stock No.:</label>
-                            <input
-                                type="text"
-                                placeholder="Enter Stock No."
-                                value={stockNo}
-                                onChange={(e) => setStockNo(e.target.value)}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Add a new row for Description and Re-order point with input fields */}
-                    <div className="description-reorder-row">
-                        <div className="description-cell">
-                            <label>Description:</label>
-                            <input
-                                type="text"
-                                placeholder="Enter Description"
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                            />
-                        </div>
-                        <div className="reorder-point-cell">
-                            <label>Re-order Point:</label>
-                            <input
-                                type="text"
-                                placeholder="Enter Re-order Point"
-                                value={reorderPoint}
-                                onChange={(e) => setReorderPoint(e.target.value)}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="unit-of-measurement">
-                        <div className="unit-of-measurement-cell">
-                            <label>Unit of Measurement:</label>
-                            <input
-                                type="text"
-                                placeholder="Enter Unit of Measurement"
-                                value={unitofmeasurement}
-                                onChange={(e) => setUnitofMeasurement(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                    {/* Existing table */}
-                    <table ref={tableRef}>
+                    <table>
                         <thead>
                             <tr>
-                                <th>DATE</th>
-                                <th>REFERENCE</th>
-                                <th colSpan="3">RECEIPT</th>
-                                <th colSpan="3">BALANCE</th>
-                                <th colSpan="2">ISSUE</th>
-                                <th>No. of Days to Consume</th>
+                                <th className="Item-left-align">Item:</th>
+                                <td className="input-Item-cell">
+                                    <input
+                                        type="text"
+                                        value={item}
+                                        onChange={(e) => setItem(e.target.value)}
+                                        onKeyDown={handleKeyDown} // Add onKeyDown here
+                                    />
+                                </td>
+                                <th className="Item-right-align">Stock No. :</th>
+                                <td className="input-stockno-cell">
+                                    <input
+                                        type="text"
+                                        value={stockNo}
+                                        onChange={(e) => setStockNo(e.target.value)}
+                                        onKeyDown={handleKeyDown} // Add onKeyDown here
+                                    />
+                                </td>
                             </tr>
                             <tr>
-                                <th></th> {/* Empty for DATE */}
-                                <th></th> {/* Empty for REFERENCE */}
-                                {/* Sub-columns for RECEIPT */}
-                                <th>Qty</th>
-                                <th>Unit Cost</th>
-                                <th>Total Cost</th>
-                                {/* Sub-columns for BALANCE */}
-                                <th>Qty</th>
-                                <th>Unit Cost</th>
-                                <th>Total Cost</th>
-                                {/* Sub-columns for ISSUE */}
-                                <th>Qty</th>
-                                <th>Office</th>
-                                <th></th> {/* Empty for No. of Days to Consume */}
+                                <th className="Item-left-align">Description:</th>
+                                <td>
+                                    <input
+                                        type="text"
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}
+                                        onKeyDown={handleKeyDown} // Add onKeyDown here
+                                    />
+                                </td>
+                                <th className="Item-right-align">Re-order point:</th>
+                                <td>
+                                    <input
+                                        type="text"
+                                        value={reorderpoint}
+                                        onChange={(e) => setReOrderPoint(e.target.value)}
+                                        onKeyDown={handleKeyDown} // Add onKeyDown here
+                                    />
+                                </td>
+                            </tr>
+                            <tr>
+                                <th className="Item-left-align">Unit of Measurement:</th>
+                                <td>
+                                    <input
+                                        type="text"
+                                        value={unitofmeasurement}
+                                        onChange={(e) => setUnitofMeasurement(e.target.value)}
+                                        onKeyDown={handleKeyDown} // Add onKeyDown here
+                                    />
+                                </td>
+                                <td colSpan="2"></td>
+                            </tr>
+                            <tr>
+                                <th colSpan="4">
+                                    <table className="inner-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Reference</th>
+                                                <th colSpan="3">RECEIPT</th>
+                                                <th colSpan="3">BALANCE</th>
+                                                <th colSpan="2">ISSUE</th>
+                                                <th>No. of Days to Consume</th>
+                                            </tr>
+                                            <tr>
+                                                <th></th>
+                                                <th></th>
+                                                <th>Qty</th>
+                                                <th>Unit Cost</th>
+                                                <th>Total Cost</th>
+                                                <th>Qty</th>
+                                                <th>Unit Cost</th>
+                                                <th>Total Cost</th>
+                                                <th>Qty</th>
+                                                <th>Office</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {rows.map((row, index) => (
+                                                <tr key={index}>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.date}
+                                                            onChange={(e) => handleInputChange(index, 'date', e.target.value)}
+                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.reference}
+                                                            onChange={(e) => handleInputChange(index, 'reference', e.target.value)}
+                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.receiptQty}
+                                                            onChange={(e) => handleInputChange(index, 'receiptQty', e.target.value)}
+                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.receiptUnitCost}
+                                                            onChange={(e) => handleInputChange(index, 'receiptUnitCost', e.target.value)}
+                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.receiptTotalCost}
+                                                            onChange={(e) => handleInputChange(index, 'receiptTotalCost', e.target.value)}
+                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.balanceQty}
+                                                            onChange={(e) => handleInputChange(index, 'balanceQty', e.target.value)}
+                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.balanceUnitCost}
+                                                            onChange={(e) => handleInputChange(index, 'balanceUnitCost', e.target.value)}
+                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.balanceTotalCost}
+                                                            onChange={(e) => handleInputChange(index, 'balanceTotalCost', e.target.value)}
+                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.issueQty}
+                                                            onChange={(e) => handleInputChange(index, 'issueQty', e.target.value)}
+                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.issueOffice}
+                                                            onChange={(e) => handleInputChange(index, 'issueOffice', e.target.value)}
+                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.daysToConsume}
+                                                            onChange={(e) => handleInputChange(index, 'daysToConsume', e.target.value)}
+                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                        />
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </th>
                             </tr>
                         </thead>
-                        <tbody>
-                        </tbody>
                     </table>
                 </div>
             </div>
