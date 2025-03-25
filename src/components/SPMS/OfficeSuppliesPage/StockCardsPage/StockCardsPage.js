@@ -54,6 +54,14 @@ const StockCardsPage = () => {
         }
     };
 
+    const itemOptions = [
+        { value: '', label: 'Select an item' },
+        { value: 'first_aid_kit', label: 'First Aid Kit' },
+        { value: 'flashlight', label: 'Flashlight' },
+        { value: 'battery', label: 'Battery' },
+        { value: 'water_container', label: 'Water Container' },
+    ];
+
     const handleInputChange = (index, field, value) => {
         const updatedRows = rows.map((row, i) => {
             if (i === index) {
@@ -87,12 +95,17 @@ const StockCardsPage = () => {
                             <tr>
                                 <th className="Item-left-align">Item:</th>
                                 <td className="input-Item-cell">
-                                    <input
-                                        type="text"
-                                        value={item}
-                                        onChange={(e) => setItem(e.target.value)}
-                                        onKeyDown={handleKeyDown}
-                                    />
+                                <select
+                                value={item}
+                                onChange={(e) => setItem(e.target.value)}
+                                className="dropdown-select"
+                            >
+                                {itemOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
                                 </td>
                                 <th className="Item-right-align">Stock No. :</th>
                                 <td className="input-stockno-cell">

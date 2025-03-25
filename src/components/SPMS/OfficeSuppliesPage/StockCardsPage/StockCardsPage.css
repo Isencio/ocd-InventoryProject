@@ -74,6 +74,14 @@ th {
   width: 100%;
 }
 
+.dropdown-select {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid #ffffff;
+  border-radius: 6px;
+  font-size: 15px;
+}
+
 input {
   width: 100%;
   box-sizing: border-box;
@@ -86,10 +94,11 @@ input {
 }
 
 .inner-table th, .inner-table td {
-  padding: 8px;
+  padding: 25px;
   text-align: center;
   border: 1px solid #ddd;
 }
+
 
 
 .inner-table input {
