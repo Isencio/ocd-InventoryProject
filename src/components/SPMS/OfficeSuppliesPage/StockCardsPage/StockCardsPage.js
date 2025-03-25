@@ -57,9 +57,9 @@ const StockCardsPage = () => {
     const handleInputChange = (index, field, value) => {
         const updatedRows = rows.map((row, i) => {
             if (i === index) {
-                return { ...row, [field]: value }; // Update only the specific field
+                return { ...row, [field]: value };
             }
-            return row; // Return the row as-is for other rows
+            return row;
         });
         setRows(updatedRows);
     };
@@ -91,7 +91,7 @@ const StockCardsPage = () => {
                                         type="text"
                                         value={item}
                                         onChange={(e) => setItem(e.target.value)}
-                                        onKeyDown={handleKeyDown} // Add onKeyDown here
+                                        onKeyDown={handleKeyDown}
                                     />
                                 </td>
                                 <th className="Item-right-align">Stock No. :</th>
@@ -100,7 +100,7 @@ const StockCardsPage = () => {
                                         type="text"
                                         value={stockNo}
                                         onChange={(e) => setStockNo(e.target.value)}
-                                        onKeyDown={handleKeyDown} // Add onKeyDown here
+                                        onKeyDown={handleKeyDown} 
                                     />
                                 </td>
                             </tr>
@@ -111,7 +111,7 @@ const StockCardsPage = () => {
                                         type="text"
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
-                                        onKeyDown={handleKeyDown} // Add onKeyDown here
+                                        onKeyDown={handleKeyDown}
                                     />
                                 </td>
                                 <th className="Item-right-align">Re-order point:</th>
@@ -120,7 +120,7 @@ const StockCardsPage = () => {
                                         type="text"
                                         value={reorderpoint}
                                         onChange={(e) => setReOrderPoint(e.target.value)}
-                                        onKeyDown={handleKeyDown} // Add onKeyDown here
+                                        onKeyDown={handleKeyDown}
                                     />
                                 </td>
                             </tr>
@@ -131,7 +131,7 @@ const StockCardsPage = () => {
                                         type="text"
                                         value={unitofmeasurement}
                                         onChange={(e) => setUnitofMeasurement(e.target.value)}
-                                        onKeyDown={handleKeyDown} // Add onKeyDown here
+                                        onKeyDown={handleKeyDown}
                                     />
                                 </td>
                                 <td colSpan="2"></td>
@@ -170,7 +170,7 @@ const StockCardsPage = () => {
                                                             type="text"
                                                             value={row.date}
                                                             onChange={(e) => handleInputChange(index, 'date', e.target.value)}
-                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                     <td>
@@ -178,7 +178,7 @@ const StockCardsPage = () => {
                                                             type="text"
                                                             value={row.reference}
                                                             onChange={(e) => handleInputChange(index, 'reference', e.target.value)}
-                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                     <td>
@@ -186,7 +186,7 @@ const StockCardsPage = () => {
                                                             type="text"
                                                             value={row.receiptQty}
                                                             onChange={(e) => handleInputChange(index, 'receiptQty', e.target.value)}
-                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                     <td>
@@ -194,7 +194,7 @@ const StockCardsPage = () => {
                                                             type="text"
                                                             value={row.receiptUnitCost}
                                                             onChange={(e) => handleInputChange(index, 'receiptUnitCost', e.target.value)}
-                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                     <td>
@@ -202,7 +202,7 @@ const StockCardsPage = () => {
                                                             type="text"
                                                             value={row.receiptTotalCost}
                                                             onChange={(e) => handleInputChange(index, 'receiptTotalCost', e.target.value)}
-                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                     <td>
@@ -210,7 +210,7 @@ const StockCardsPage = () => {
                                                             type="text"
                                                             value={row.balanceQty}
                                                             onChange={(e) => handleInputChange(index, 'balanceQty', e.target.value)}
-                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                     <td>
@@ -218,7 +218,7 @@ const StockCardsPage = () => {
                                                             type="text"
                                                             value={row.balanceUnitCost}
                                                             onChange={(e) => handleInputChange(index, 'balanceUnitCost', e.target.value)}
-                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                     <td>
@@ -226,7 +226,7 @@ const StockCardsPage = () => {
                                                             type="text"
                                                             value={row.balanceTotalCost}
                                                             onChange={(e) => handleInputChange(index, 'balanceTotalCost', e.target.value)}
-                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                     <td>
@@ -234,7 +234,7 @@ const StockCardsPage = () => {
                                                             type="text"
                                                             value={row.issueQty}
                                                             onChange={(e) => handleInputChange(index, 'issueQty', e.target.value)}
-                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                     <td>
@@ -242,7 +242,7 @@ const StockCardsPage = () => {
                                                             type="text"
                                                             value={row.issueOffice}
                                                             onChange={(e) => handleInputChange(index, 'issueOffice', e.target.value)}
-                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                     <td>
@@ -250,7 +250,7 @@ const StockCardsPage = () => {
                                                             type="text"
                                                             value={row.daysToConsume}
                                                             onChange={(e) => handleInputChange(index, 'daysToConsume', e.target.value)}
-                                                            onKeyDown={handleKeyDown} // Add onKeyDown here
+                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                 </tr>

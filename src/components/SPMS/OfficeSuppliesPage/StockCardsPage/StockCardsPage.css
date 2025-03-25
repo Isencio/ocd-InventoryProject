@@ -67,7 +67,7 @@ th, td {
 }
 
 th {
-  background-color: #26224c;
+  background-color: #46407f;
 }
 
 .input-Item-cell, .input-stockno-cell {
@@ -127,7 +127,7 @@ input {
   color: rgb(255, 255, 255);
   border: none;
   padding: 10px 20px;
-  font-size: 1rem;
+  font-size: 1.5rem;
   font-weight: bold;
   border-radius: 5px;
   cursor: pointer;
