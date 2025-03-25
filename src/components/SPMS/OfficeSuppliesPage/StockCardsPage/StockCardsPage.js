@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 import './StockCardsPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
 
@@ -29,7 +30,71 @@ const StockCardsPage = () => {
     };
 
     const onExport = () => {
-        console.log('Export button clicked');
+        // Prepare the data for export
+        const exportData = [
+            // Header row
+            ['Republic of the Philippines'],
+            ['Department of National Defense'],
+            ['OFFICE OF CIVIL DEFENSE'],
+            ['NATIONAL CAPITAL REGION'],
+            ['NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY'],
+            ['Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325'],
+            ['E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com'],
+            [],
+            ['STOCK CARD'],
+            [],
+            // Item information
+            ['Item:', item, 'Stock No.:', stockNo],
+            ['Description:', description, 'Re-order point:', reorderpoint],
+            ['Unit of Measurement:', unitofmeasurement],
+            [],
+            // Table headers
+            [
+                'Date', 'Reference', 
+                'RECEIPT', '', '', 
+                'BALANCE', '', '', 
+                'ISSUE', '', 
+                'No. of Days to Consume'
+            ],
+            [
+                '', '', 
+                'Qty', 'Unit Cost', 'Total Cost', 
+                'Qty', 'Unit Cost', 'Total Cost', 
+                'Qty', 'Office', 
+                ''
+            ],
+            // Data rows
+            ...rows.map(row => [
+                row.date,
+                row.reference,
+                row.receiptQty,
+                row.receiptUnitCost,
+                row.receiptTotalCost,
+                row.balanceQty,
+                row.balanceUnitCost,
+                row.balanceTotalCost,
+                row.issueQty,
+                row.issueOffice,
+                row.daysToConsume
+            ])
+        ];
+
+        // Create a worksheet with column widths
+        const ws = XLSX.utils.aoa_to_sheet(exportData);
+        ws['!cols'] = [
+            { width: 15 }, { width: 15 }, 
+            { width: 10 }, { width: 12 }, { width: 12 },
+            { width: 10 }, { width: 12 }, { width: 12 },
+            { width: 10 }, { width: 15 },
+            { width: 20 }
+        ];
+
+        // Create a workbook
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "StockCard");
+
+        // Generate Excel file and trigger download
+        XLSX.writeFile(wb, `StockCard_${item || 'Inventory'}.xlsx`);
     };
 
     const handleAddRow = () => {
@@ -276,7 +341,7 @@ const StockCardsPage = () => {
                     </table>
                 </div>
             </div>
-            <button className="export-button" onClick={onExport}>Export</button>
+            <button className="export-button" onClick={onExport}>Export to Excel</button>
             <div className="right-image-section">
                 <img src={logo} alt="OCD logo" className="vertical-OCD-image" />
             </div>
