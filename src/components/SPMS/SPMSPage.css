@@ -87,28 +87,110 @@
   z-index: 10;
 }
 
-/* Profile Header */
 .profile-header {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
 }
 
-/* Logout Button */
+.user-info {
+  flex-grow: 1;
+  margin-right: 20px;
+}
+
+.user-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 5px;
+}
+
+.user-email {
+  font-size: 14px;
+  color: #ffffff;
+  word-break: break-all;
+}
+
 .logout-button {
-  background-color: #ff4d4d;
+  background-color: #e74c3c;
   color: white;
   border: none;
-  border-radius: 25px;
-  padding: 10px 20px;
-  font-size: 16px;
-  font-weight: bold;
+  padding: 8px 15px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s;
+  flex-shrink: 0;
 }
 
 .logout-button:hover {
-  background-color: #cc0000;
+  background-color: #c0392b;
+}
+
+.error-message {
+  color: #e74c3c;
+  margin-bottom: 15px;
+  text-align: center;
+}
+/* Add these to your existing CSS */
+
+.password-input-container {
+  position: relative;
+  margin-bottom: 5px;
+}
+
+.password-input-wrapper {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #666;
+  z-index: 2;
+}
+
+.password-toggle:hover {
+  color: #333;
+}
+
+.password-input-wrapper input {
+  padding-right: 35px;
+  width: 95%;
+}
+
+.error-message {
+  color: #e74c3c;
+  margin: 10px 0;
+  text-align: center;
+}
+
+.success-message {
+  color: #2ecc71;
+  margin: 10px 0;
+  text-align: center;
+}
+
+.update-password-button {
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+  font-size: 16px;
+  margin-top: 10px;
+  transition: background-color 0.3s;
+}
+
+.update-password-button:hover {
+  background-color: #3a7bc8;
 }
 
 /* Update Password Form */
