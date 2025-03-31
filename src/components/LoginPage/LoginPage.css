@@ -85,7 +85,7 @@
   font-weight: bold;
   border-radius: 5px;
   cursor: pointer;
-  width: 106%;
+  width: 100%;
 }
 
 .login-form button:hover {
