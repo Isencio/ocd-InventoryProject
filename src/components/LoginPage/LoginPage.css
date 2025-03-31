@@ -85,7 +85,7 @@
   font-weight: bold;
   border-radius: 5px;
   cursor: pointer;
-  width: 106%;
+  width: 100%;
 }
 
 .login-form button:hover {
@@ -129,4 +129,56 @@
 
 .create-account-link a:hover {
   text-decoration: underline;
+}
+
+.error-message {
+  color: #e74c3c;
+  background-color: #fdecea;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+  border-left: 4px solid #e74c3c;
+}
+
+button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.verification-message {
+  background-color: #e8f4fd;
+  border-left: 4px solid #4a90e2;
+  color: #2c3e50;
+}
+
+.resend-button {
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-top: 8px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.resend-button:disabled {
+  background-color: #95b8e6;
+  cursor: not-allowed;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
