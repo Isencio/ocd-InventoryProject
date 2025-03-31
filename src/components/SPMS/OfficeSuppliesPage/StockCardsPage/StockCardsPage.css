@@ -93,13 +93,14 @@ input {
   width: 100%;
 }
 
-.inner-table th, .inner-table td {
-  padding: 25px;
+.inner-table th {
+  padding: 15px;
   text-align: center;
   border: 1px solid #ddd;
 }
-
-
+.inner-table td {
+  font-size: 5px;
+}
 
 .inner-table input {
   border: none;
@@ -109,7 +110,7 @@ input {
   padding: 10px;
   margin: 0px;
   font-family: inherit;
-  font-size: 40px;
+  font-size: 12px;
   text-align: inherit;
 }
 
