@@ -73,6 +73,7 @@
   margin-bottom: 15px;
   border: 1px solid #ccc;
   border-radius: 5px;
+  color: black; /* Add this line to set the text color to black */
 }
 
 .login-form button {
