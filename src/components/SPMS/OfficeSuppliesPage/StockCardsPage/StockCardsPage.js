@@ -30,6 +30,13 @@ const StockCardsPage = () => {
     const navigate = useNavigate();
     const tableRef = useRef(null);
 
+    // Validate and clamp numeric values to be >= 0
+    const validateNumber = (value) => {
+        const num = parseFloat(value);
+        if (isNaN(num)) return '';
+        return Math.max(0, num).toString();
+    };
+
     const fetchStockData = async (stockNumber) => {
         try {
             setLoading(true);
@@ -44,9 +51,7 @@ const StockCardsPage = () => {
             const data = await response.json();
             
             if (data && data.length > 0) {
-                // First item contains header info
                 const headerData = data[0];
-                // The rest are transactions
                 const transactions = data.slice(1);
                 
                 setStockData({
@@ -59,15 +64,15 @@ const StockCardsPage = () => {
                         transactions.map(t => ({
                             date: t.date || '',
                             reference: t.reference || '',
-                            receiptqty: t.receiptqty || '',
-                            receiptunitcost: t.receiptunitcost || '',
-                            receipttotalcost: t.receipttotalcost || '',
-                            issueqty: t.issueqty || '',
+                            receiptqty: validateNumber(t.receiptqty),
+                            receiptunitcost: validateNumber(t.receiptunitcost),
+                            receipttotalcost: validateNumber(t.receipttotalcost),
+                            issueqty: validateNumber(t.issueqty),
                             issueoffice: t.issueoffice || '',
-                            balanceqty: t.balanceqty || '',
-                            balanceunitcost: t.balanceunitcost || '',
-                            balancetotalcost: t.balancetotalcost || '',
-                            daystoconsume: t.daystoconsume || ''
+                            balanceqty: validateNumber(t.balanceqty),
+                            balanceunitcost: validateNumber(t.balanceunitcost),
+                            balancetotalcost: validateNumber(t.balancetotalcost),
+                            daystoconsume: validateNumber(t.daystoconsume)
                         })) : 
                         [{
                             date: '',
@@ -84,7 +89,6 @@ const StockCardsPage = () => {
                         }]
                 });
             } else {
-                // Initialize with empty data if no record found
                 setStockData({
                     fundcluster: '',
                     stocknumber: stockNumber,
@@ -125,7 +129,6 @@ const StockCardsPage = () => {
         if (value) {
             fetchStockData(value);
         } else {
-            // Clear all data if stock number is empty
             setStockData({
                 fundcluster: '',
                 stocknumber: '',
@@ -157,10 +160,19 @@ const StockCardsPage = () => {
     };
 
     const handleTransactionChange = (index, field, value) => {
+        // For numeric fields, validate the input
+        const numericFields = [
+            'receiptqty', 'receiptunitcost', 'receipttotalcost',
+            'issueqty', 'balanceqty', 'balanceunitcost',
+            'balancetotalcost', 'daystoconsume'
+        ];
+        
+        const validatedValue = numericFields.includes(field) ? validateNumber(value) : value;
+        
         const updatedTransactions = [...stockData.transactions];
         updatedTransactions[index] = {
             ...updatedTransactions[index],
-            [field]: value
+            [field]: validatedValue
         };
         
         // Calculate totals if relevant fields change
@@ -183,7 +195,6 @@ const StockCardsPage = () => {
     };
 
     const addNewRow = (index) => {
-        // Check if we're editing the last row
         if (index === stockData.transactions.length - 1) {
             const newTransaction = {
                 date: '',
@@ -204,7 +215,6 @@ const StockCardsPage = () => {
                 transactions: [...prev.transactions, newTransaction]
             }));
             
-            // Focus on the first cell of the new row after a small delay
             setTimeout(() => {
                 const rows = tableRef.current.querySelectorAll('tbody tr');
                 const lastRow = rows[rows.length - 1];
@@ -299,7 +309,6 @@ const StockCardsPage = () => {
 
     return (
         <div className="stock-cards-container">
-            {/* Loading Modal */}
             {loading && (
                 <div className="loading-modal">
                     <div className="loading-content">
@@ -310,7 +319,6 @@ const StockCardsPage = () => {
                 </div>
             )}
 
-            {/* Error Modal */}
             {error && !loading && (
                 <div className="error-modal">
                     <div className="error-content">
@@ -441,6 +449,7 @@ const StockCardsPage = () => {
                                                     <td>
                                                         <input
                                                             type="number"
+                                                            min="0"
                                                             value={transaction.receiptqty}
                                                             onChange={(e) => handleTransactionChange(index, 'receiptqty', e.target.value)}
                                                             onKeyDown={(e) => handleKeyDown(index, e)}
@@ -449,6 +458,7 @@ const StockCardsPage = () => {
                                                     <td>
                                                         <input
                                                             type="number"
+                                                            min="0"
                                                             step="0.01"
                                                             value={transaction.receiptunitcost}
                                                             onChange={(e) => handleTransactionChange(index, 'receiptunitcost', e.target.value)}
@@ -458,6 +468,7 @@ const StockCardsPage = () => {
                                                     <td>
                                                         <input
                                                             type="number"
+                                                            min="0"
                                                             step="0.01"
                                                             value={transaction.receipttotalcost}
                                                             onChange={(e) => handleTransactionChange(index, 'receipttotalcost', e.target.value)}
@@ -468,6 +479,7 @@ const StockCardsPage = () => {
                                                     <td>
                                                         <input
                                                             type="number"
+                                                            min="0"
                                                             value={transaction.balanceqty}
                                                             onChange={(e) => handleTransactionChange(index, 'balanceqty', e.target.value)}
                                                             onKeyDown={(e) => handleKeyDown(index, e)}
@@ -476,6 +488,7 @@ const StockCardsPage = () => {
                                                     <td>
                                                         <input
                                                             type="number"
+                                                            min="0"
                                                             step="0.01"
                                                             value={transaction.balanceunitcost}
                                                             onChange={(e) => handleTransactionChange(index, 'balanceunitcost', e.target.value)}
@@ -485,6 +498,7 @@ const StockCardsPage = () => {
                                                     <td>
                                                         <input
                                                             type="number"
+                                                            min="0"
                                                             step="0.01"
                                                             value={transaction.balancetotalcost}
                                                             onChange={(e) => handleTransactionChange(index, 'balancetotalcost', e.target.value)}
@@ -495,6 +509,7 @@ const StockCardsPage = () => {
                                                     <td>
                                                         <input
                                                             type="number"
+                                                            min="0"
                                                             value={transaction.issueqty}
                                                             onChange={(e) => handleTransactionChange(index, 'issueqty', e.target.value)}
                                                             onKeyDown={(e) => handleKeyDown(index, e)}
@@ -511,6 +526,7 @@ const StockCardsPage = () => {
                                                     <td>
                                                         <input
                                                             type="number"
+                                                            min="0"
                                                             value={transaction.daystoconsume}
                                                             onChange={(e) => handleTransactionChange(index, 'daystoconsume', e.target.value)}
                                                             onKeyDown={(e) => handleKeyDown(index, e)}
