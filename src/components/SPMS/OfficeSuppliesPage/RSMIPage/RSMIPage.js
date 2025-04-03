@@ -105,7 +105,7 @@ const RSMIPage = () => {
     };
 
     return (
-            <div className="rpci-container">
+            <div className="rsmi-container">
                 <div className="header-top">
                     <button className="return-button" onClick={onBack}> &larr; </button>
                     <h1>RSMI</h1>

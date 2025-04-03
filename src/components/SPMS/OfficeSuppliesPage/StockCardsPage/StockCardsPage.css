@@ -100,6 +100,7 @@ input {
 }
 .inner-table td {
   font-size: 5px;
+  padding: 10px;
 }
 
 .inner-table input {
