@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '../../firebase';
 import logo from '../../Assets/OCD-logo.png';
 import './ForgotPasswordPage.css';
 
