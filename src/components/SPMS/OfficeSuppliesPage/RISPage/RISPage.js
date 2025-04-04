@@ -38,11 +38,17 @@ const RISPage = () => {
             ['Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325'],
             ['E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com'],
             [],
-            ['RPCI'],
+            ['RIS'],
             [],
             // Table headers
             [
-                'Article',
+                'Stock No.',
+                'Unit',
+                'Description',
+                'Quantity',
+                'Yes',
+                'No',
+                'Quantity',
                 'Remarks',
             ],
             // Data rows
@@ -72,7 +78,7 @@ const RISPage = () => {
         XLSX.utils.book_append_sheet(wb, ws, "RSMI");
 
         // Generate Excel file and trigger download
-        XLSX.writeFile(wb, `RSMI_Inventory.xlsx`);
+        XLSX.writeFile(wb, `RIS_Inventory.xlsx`);
     };
 
     const handleAddRow = () => {

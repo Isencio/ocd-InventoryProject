@@ -38,12 +38,18 @@ const RSMIPage = () => {
             ['Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325'],
             ['E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com'],
             [],
-            ['RPCI'],
+            ['RSMI'],
             [],
             // Table headers
             [
-                'Article',
-                'Remarks',
+                'RIS No.',
+                'Responsibility Center Code',
+                'Stock No.',
+                'Item',
+                'Unit',
+                'QuantityIssued',
+                'Unit Cost',
+                'Amount',
             ],
             // Data rows
             ...rows.map(row => [

@@ -140,7 +140,7 @@ const RPCIPage = () => {
                                 <th>Unit Value</th>
                                 <th>Balance Per Card</th>
                                 <th>On Hand Per Count</th>
-                                <th>Shortage/Overage</th>
+                                <th colSpan="2">Shortage/Overage</th>
                                 <th>Total Cost</th>
                                 <th>Remarks</th>
                             </tr>
@@ -151,6 +151,7 @@ const RPCIPage = () => {
                                 <th></th>
                                 <th></th>
                                 <th></th>
+                                <th>Qty</th>
                                 <th>Qty</th>
                                 <th>Qty</th>
                                 <th>Qty</th>
