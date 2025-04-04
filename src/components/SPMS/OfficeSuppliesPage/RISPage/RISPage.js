@@ -17,7 +17,7 @@ const RISPage = () => {
         yes:'',
         no:'',
         quantity2:'',
-        remarks:'',
+        remarks:''
     }));
 
     const navigate = useNavigate();
@@ -84,7 +84,7 @@ const RISPage = () => {
             yes:'',
             no:'',
             quantity2:'',
-            remarks:'',
+            remarks:''
         }]);
     };
 
@@ -164,15 +164,14 @@ const RISPage = () => {
                                     />
                                 </td>
                             </tr>
-                
                             <tr>
                                 <th colSpan="4">
                                     <table className="inner-table">
                                         <thead>
                                             <tr>
-                                              <th colSpan="4">Requisition</th>
-                                              <th colSpan="2">Stock Available</th>
-                                              <th colSpan="2">Issue</th>
+                                                <th colSpan="4">Requisition</th>
+                                                <th colSpan="2">Stock Available</th>
+                                                <th colSpan="2">Issue</th>
                                             </tr>
                                             <tr>
                                                 <th>Stock No.</th>
@@ -188,81 +187,73 @@ const RISPage = () => {
                                         <tbody>
                                             {rows.map((row, index) => (
                                                 <tr key={index}>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.stockNo}
-                                                            onChange={(e) => handleInputChange(index, 'stockNo', e.target.value)}
-                                                            onKeyDown={handleKeyDown}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.unit}
-                                                            onChange={(e) => handleInputChange(index, 'unit', e.target.value)}
-                                                            onKeyDown={handleKeyDown}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.description}
-                                                            onChange={(e) => handleInputChange(index, 'description', e.target.value)}
-                                                            onKeyDown={handleKeyDown}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.quantity}
-                                                            onChange={(e) => handleInputChange(index, 'quantity', e.target.value)}
-                                                            onKeyDown={handleKeyDown}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.yes}
-                                                            onChange={(e) => handleInputChange(index, 'yes', e.target.value)}
-                                                            onKeyDown={handleKeyDown}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.no}
-                                                            onChange={(e) => handleInputChange(index, 'no', e.target.value)}
-                                                            onKeyDown={handleKeyDown}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.unitCost}
-                                                            onChange={(e) => handleInputChange(index, 'unitCost', e.target.value)}
-                                                            onKeyDown={handleKeyDown}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.quantity2}
-                                                            onChange={(e) => handleInputChange(index, 'quantity', e.target.value)}
-                                                            onKeyDown={handleKeyDown}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.remarks}
-                                                            onChange={(e) => handleInputChange(index, 'remarks', e.target.value)}
-                                                            onKeyDown={handleKeyDown}
-                                                        />
-                                                    </td>
+                                                <td>
+                                                    <input
+                                                    type="text"
+                                                    value={row.stockNo}
+                                                    onChange={(e) => handleInputChange(index, 'stockNo', e.target.value)}
+                                                    onKeyDown={handleKeyDown}
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                    type="text"
+                                                    value={row.unit}
+                                                    onChange={(e) => handleInputChange(index, 'unit', e.target.value)}
+                                                    onKeyDown={handleKeyDown}
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                    type="text"
+                                                    value={row.description}
+                                                    onChange={(e) => handleInputChange(index, 'description', e.target.value)}
+                                                    onKeyDown={handleKeyDown}
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                    type="text"
+                                                    value={row.quantity}
+                                                    onChange={(e) => handleInputChange(index, 'quantity', e.target.value)}
+                                                    onKeyDown={handleKeyDown}
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                    type="text"
+                                                    value={row.yes}
+                                                    onChange={(e) => handleInputChange(index, 'yes', e.target.value)}
+                                                    onKeyDown={handleKeyDown}
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                    type="text"
+                                                    value={row.no}
+                                                    onChange={(e) => handleInputChange(index, 'no', e.target.value)}
+                                                    onKeyDown={handleKeyDown}
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                    type="text"
+                                                    value={row.quantity2}
+                                                    onChange={(e) => handleInputChange(index, 'quantity2', e.target.value)}
+                                                    onKeyDown={handleKeyDown}
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <input
+                                                    type="text"
+                                                    value={row.remarks}
+                                                    onChange={(e) => handleInputChange(index, 'remarks', e.target.value)}
+                                                    onKeyDown={handleKeyDown}
+                                                    />
+                                                </td>
                                                 </tr>
                                             ))}
-                                        </tbody>
+                                            </tbody>
                                     </table>
                                 </th>
                             </tr>
