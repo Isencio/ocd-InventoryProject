@@ -19,13 +19,27 @@ const StockCardsPage = () => {
     const [showSaveConfirm, setShowSaveConfirm] = useState(false);
     const [hasChanges, setHasChanges] = useState(false);
     const [originalData, setOriginalData] = useState(null);
+    const [showExportOptions, setShowExportOptions] = useState(false);
     const navigate = useNavigate();
     const tableRef = useRef(null);
+    const exportRef = useRef(null);
 
     useEffect(() => {
         if (stockData.stocknumber) {
             fetchStockData(stockData.stocknumber);
         }
+    }, []);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (exportRef.current && !exportRef.current.contains(event.target)) {
+                setShowExportOptions(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, []);
 
     const validateNumber = (value) => {
@@ -237,7 +251,6 @@ const StockCardsPage = () => {
         try {
             setLoading(true);
             
-            // Prepare the data with proper numeric values
             const dataToSend = {
                 ...stockData,
                 transactions: stockData.transactions.map(t => ({
@@ -290,7 +303,11 @@ const StockCardsPage = () => {
         setShowSaveConfirm(false);
     };
 
-    const onExport = () => {
+    const toggleExportOptions = () => {
+        setShowExportOptions(!showExportOptions);
+    };
+
+    const exportToExcel = () => {
         if (!stockData.transactions.length) {
             setError('No data to export');
             return;
@@ -353,6 +370,12 @@ const StockCardsPage = () => {
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "StockCard");
         XLSX.writeFile(wb, `StockCard_${stockData.stocknumber || 'Inventory'}.xlsx`);
+        setShowExportOptions(false);
+    };
+
+    const exportToPDF = () => {
+        setError('PDF export functionality will be implemented soon');
+        setShowExportOptions(false);
     };
 
     const stockNumberOptions = [
@@ -626,13 +649,21 @@ const StockCardsPage = () => {
                 >
                     Save Changes
                 </button>
-                <button 
-                    className="export-button" 
-                    onClick={onExport}
-                    disabled={!stockData.transactions.length}
-                >
-                    Export to Excel
-                </button>
+                <div className="export-dropdown" ref={exportRef}>
+                    <button 
+                        className="export-button"
+                        onClick={toggleExportOptions}
+                        disabled={!stockData.transactions.length}
+                    >
+                        Export
+                    </button>
+                    {showExportOptions && (
+                        <div className="export-options">
+                            <button onClick={exportToExcel}>Export to Excel</button>
+                            <button onClick={exportToPDF}>Export to PDF</button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             <div className="right-image-section">
