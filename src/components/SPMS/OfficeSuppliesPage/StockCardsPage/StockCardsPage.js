@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import './StockCardsPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
+import { SiHackclub } from 'react-icons/si';
 
 const StockCardsPage = () => {
     const [loading, setLoading] = useState(false);
@@ -13,28 +14,24 @@ const StockCardsPage = () => {
         item: '',
         description: '',
         unitofmeasurement: '',
-        transactions: [{
-            date: '',
-            reference: '',
-            receiptqty: '',
-            receiptunitcost: '',
-            receipttotalcost: '',
-            issueqty: '',
-            issueoffice: '',
-            balanceqty: '',
-            balanceunitcost: '',
-            balancetotalcost: '',
-            daystoconsume: ''
-        }]
+        transactions: []
     });
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+    const [hasChanges, setHasChanges] = useState(false);
+    const [originalData, setOriginalData] = useState(null);
     const navigate = useNavigate();
     const tableRef = useRef(null);
 
-    // Validate and clamp numeric values to be >= 0
+    useEffect(() => {
+        if (stockData.stocknumber) {
+            fetchStockData(stockData.stocknumber);
+        }
+    }, []);
+
     const validateNumber = (value) => {
+        if (value === '' || value === null) return '';
         const num = parseFloat(value);
-        if (isNaN(num)) return '';
-        return Math.max(0, num).toString();
+        return isNaN(num) ? '' : Math.max(0, num).toString();
     };
 
     const fetchStockData = async (stockNumber) => {
@@ -42,84 +39,90 @@ const StockCardsPage = () => {
             setLoading(true);
             setError(null);
             
-            const response = await fetch(`https://10.16.4.97/project/stockcards.php?stocknumber=${stockNumber}`);
+            const response = await fetch(`http://localhost/project/stockcards.php?stocknumber=${stockNumber}`);
             
             if (!response.ok) {
                 throw new Error(`Server responded with status ${response.status}`);
             }
-            
+
             const data = await response.json();
-            
-            if (data && data.length > 0) {
-                const headerData = data[0];
-                const transactions = data.slice(1);
-                
-                setStockData({
-                    fundcluster: headerData.fundcluster || '',
-                    stocknumber: headerData.stocknumber || '',
-                    item: headerData.item || '',
-                    description: headerData.description || '',
-                    unitofmeasurement: headerData.unitofmeasurement || '',
-                    transactions: transactions.length > 0 ? 
-                        transactions.map(t => ({
-                            date: t.date || '',
-                            reference: t.reference || '',
-                            receiptqty: validateNumber(t.receiptqty),
-                            receiptunitcost: validateNumber(t.receiptunitcost),
-                            receipttotalcost: validateNumber(t.receipttotalcost),
-                            issueqty: validateNumber(t.issueqty),
-                            issueoffice: t.issueoffice || '',
-                            balanceqty: validateNumber(t.balanceqty),
-                            balanceunitcost: validateNumber(t.balanceunitcost),
-                            balancetotalcost: validateNumber(t.balancetotalcost),
-                            daystoconsume: validateNumber(t.daystoconsume)
-                        })) : 
-                        [{
-                            date: '',
-                            reference: '',
-                            receiptqty: '',
-                            receiptunitcost: '',
-                            receipttotalcost: '',
-                            issueqty: '',
-                            issueoffice: '',
-                            balanceqty: '',
-                            balanceunitcost: '',
-                            balancetotalcost: '',
-                            daystoconsume: ''
-                        }]
-                });
-            } else {
-                setStockData({
-                    fundcluster: '',
-                    stocknumber: stockNumber,
-                    item: '',
-                    description: '',
-                    unitofmeasurement: '',
-                    transactions: [{
-                        date: '',
-                        reference: '',
-                        receiptqty: '',
-                        receiptunitcost: '',
-                        receipttotalcost: '',
-                        issueqty: '',
-                        issueoffice: '',
-                        balanceqty: '',
-                        balanceunitcost: '',
-                        balancetotalcost: '',
-                        daystoconsume: ''
-                    }]
-                });
+
+            if (!Array.isArray(data)) {
+                throw new Error('Expected array but received different data structure');
             }
+
+            const processedData = {
+                fundcluster: data[0]?.fundcluster || '',
+                stocknumber: data[0]?.stocknumber || stockNumber,
+                item: data[0]?.item || '',
+                description: data[0]?.description || '',
+                unitofmeasurement: data[0]?.unitofmeasurement || '',
+                transactions: data.length > 0 ? data.map(processTransaction) : [createEmptyTransaction()]
+            };
+
+            setStockData(processedData);
+            setOriginalData(JSON.parse(JSON.stringify(processedData)));
+            setHasChanges(false);
             
-            setLoading(false);
         } catch (error) {
-            setError(error.message || 'Failed to load data. Please check your connection.');
+            console.error('Error in fetchStockData:', error);
+            setError(error.message || 'Failed to load stock data');
+            const emptyData = {
+                fundcluster: '',
+                stocknumber: stockNumber,
+                item: '',
+                description: '',
+                unitofmeasurement: '',
+                transactions: [createEmptyTransaction()]
+            };
+            setStockData(emptyData);
+            setOriginalData(JSON.parse(JSON.stringify(emptyData)));
+        } finally {
             setLoading(false);
-            console.error('Fetch error:', error);
         }
     };
 
+    const processTransaction = (item) => ({
+        id: item.StockID || Date.now().toString(),
+        date: item.date || '',
+        reference: item.reference || '',
+        receiptqty: validateNumber(item.receiptqty),
+        receiptunitcost: validateNumber(item.receiptunitcost),
+        receipttotalcost: validateNumber(item.receipttotalcost),
+        issueqty: validateNumber(item.issueqty),
+        issueoffice: item.issueoffice || '',
+        balanceqty: validateNumber(item.balanceqty),
+        balanceunitcost: validateNumber(item.balanceunitcost),
+        balancetotalcost: validateNumber(item.balancetotalcost),
+        daystoconsume: validateNumber(item.daystoconsume)
+    });
+
+    const createEmptyTransaction = () => ({
+        id: Date.now().toString(),
+        date: '',
+        reference: '',
+        receiptqty: '',
+        receiptunitcost: '',
+        receipttotalcost: '',
+        issueqty: '',
+        issueoffice: '',
+        balanceqty: '',
+        balanceunitcost: '',
+        balancetotalcost: '',
+        daystoconsume: ''
+    });
+
     const handleStockNumberChange = (value) => {
+        if (hasChanges) {
+            if (window.confirm('You have unsaved changes. Do you want to discard them?')) {
+                proceedWithStockNumberChange(value);
+            }
+        } else {
+            proceedWithStockNumberChange(value);
+        }
+    };
+
+    const proceedWithStockNumberChange = (value) => {
         const updatedData = {
             ...stockData,
             stocknumber: value
@@ -129,26 +132,17 @@ const StockCardsPage = () => {
         if (value) {
             fetchStockData(value);
         } else {
-            setStockData({
+            const emptyData = {
                 fundcluster: '',
                 stocknumber: '',
                 item: '',
                 description: '',
                 unitofmeasurement: '',
-                transactions: [{
-                    date: '',
-                    reference: '',
-                    receiptqty: '',
-                    receiptunitcost: '',
-                    receipttotalcost: '',
-                    issueqty: '',
-                    issueoffice: '',
-                    balanceqty: '',
-                    balanceunitcost: '',
-                    balancetotalcost: '',
-                    daystoconsume: ''
-                }]
-            });
+                transactions: [createEmptyTransaction()]
+            };
+            setStockData(emptyData);
+            setOriginalData(JSON.parse(JSON.stringify(emptyData)));
+            setHasChanges(false);
         }
     };
 
@@ -157,10 +151,10 @@ const StockCardsPage = () => {
             ...prev,
             [field]: value
         }));
+        checkForChanges({ ...stockData, [field]: value });
     };
 
     const handleTransactionChange = (index, field, value) => {
-        // For numeric fields, validate the input
         const numericFields = [
             'receiptqty', 'receiptunitcost', 'receipttotalcost',
             'issueqty', 'balanceqty', 'balanceunitcost',
@@ -175,7 +169,6 @@ const StockCardsPage = () => {
             [field]: validatedValue
         };
         
-        // Calculate totals if relevant fields change
         if (field === 'receiptqty' || field === 'receiptunitcost') {
             const qty = parseFloat(updatedTransactions[index].receiptqty) || 0;
             const unitCost = parseFloat(updatedTransactions[index].receiptunitcost) || 0;
@@ -188,58 +181,121 @@ const StockCardsPage = () => {
             updatedTransactions[index].balancetotalcost = (qty * unitCost).toFixed(2);
         }
         
-        setStockData(prev => ({
-            ...prev,
+        const updatedData = {
+            ...stockData,
             transactions: updatedTransactions
-        }));
+        };
+        
+        setStockData(updatedData);
+        checkForChanges(updatedData);
     };
 
-    const addNewRow = (index) => {
-        if (index === stockData.transactions.length - 1) {
-            const newTransaction = {
-                date: '',
-                reference: '',
-                receiptqty: '',
-                receiptunitcost: '',
-                receipttotalcost: '',
-                issueqty: '',
-                issueoffice: '',
-                balanceqty: '',
-                balanceunitcost: '',
-                balancetotalcost: '',
-                daystoconsume: ''
+    const checkForChanges = (currentData) => {
+        const changed = JSON.stringify(currentData) !== JSON.stringify(originalData);
+        setHasChanges(changed);
+    };
+
+    const addNewRow = () => {
+        const updatedData = {
+            ...stockData,
+            transactions: [...stockData.transactions, createEmptyTransaction()]
+        };
+        setStockData(updatedData);
+        checkForChanges(updatedData);
+        
+        setTimeout(() => {
+            const rows = tableRef.current?.querySelectorAll('tbody tr');
+            if (rows && rows.length > 0) {
+                const lastRow = rows[rows.length - 1];
+                const firstInput = lastRow.querySelector('input');
+                firstInput?.focus();
+            }
+        }, 50);
+    };
+
+    const deleteRow = (index) => {
+        if (stockData.transactions.length <= 1) {
+            setError('At least one transaction must remain');
+            return;
+        }
+
+        if (window.confirm('Are you sure you want to delete this transaction?')) {
+            const updatedTransactions = [...stockData.transactions];
+            updatedTransactions.splice(index, 1);
+            
+            const updatedData = {
+                ...stockData,
+                transactions: updatedTransactions
             };
             
-            setStockData(prev => ({
-                ...prev,
-                transactions: [...prev.transactions, newTransaction]
-            }));
+            setStockData(updatedData);
+            checkForChanges(updatedData);
+        }
+    };
+
+    const saveData = async () => {
+        try {
+            setLoading(true);
             
-            setTimeout(() => {
-                const rows = tableRef.current.querySelectorAll('tbody tr');
-                const lastRow = rows[rows.length - 1];
-                if (lastRow) {
-                    const firstInput = lastRow.querySelector('input');
-                    if (firstInput) {
-                        firstInput.focus();
-                    }
-                }
-            }, 50);
+            // Prepare the data with proper numeric values
+            const dataToSend = {
+                ...stockData,
+                transactions: stockData.transactions.map(t => ({
+                    ...t,
+                    receiptqty: parseFloat(t.receiptqty) || 0,
+                    receiptunitcost: parseFloat(t.receiptunitcost) || 0,
+                    receipttotalcost: parseFloat(t.receipttotalcost) || 0,
+                    issueqty: parseFloat(t.issueqty) || 0,
+                    balanceqty: parseFloat(t.balanceqty) || 0,
+                    balanceunitcost: parseFloat(t.balanceunitcost) || 0,
+                    balancetotalcost: parseFloat(t.balancetotalcost) || 0,
+                    daystoconsume: parseInt(t.daystoconsume) || 0
+                }))
+            };
+    
+            const response = await fetch('http://localhost/project/save_stockcards.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    stockData: dataToSend
+                })
+            });
+    
+            const result = await response.json();
+            
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || `Server error: ${response.status}`);
+            }
+    
+            setOriginalData(JSON.parse(JSON.stringify(stockData)));
+            setHasChanges(false);
+            alert('Data saved successfully!');
+        } catch (error) {
+            console.error('Error saving data:', error);
+            setError(error.message || 'Failed to save data. Check console for details.');
+        } finally {
+            setLoading(false);
+            setShowSaveConfirm(false);
         }
     };
 
-    const handleKeyDown = (index, e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addNewRow(index);
-        }
+    const confirmSave = () => {
+        setShowSaveConfirm(true);
     };
 
-    const onBack = () => {
-        navigate(-1);
+    const cancelSave = () => {
+        setShowSaveConfirm(false);
     };
 
     const onExport = () => {
+        if (!stockData.transactions.length) {
+            setError('No data to export');
+            return;
+        }
+
         const exportData = [
             ['Republic of the Philippines'],
             ['Department of National Defense'],
@@ -314,27 +370,41 @@ const StockCardsPage = () => {
                     <div className="loading-content">
                         <div className="loading-spinner"></div>
                         <p>Loading stock data...</p>
-                        {error && <p className="error-text">{error}</p>}
                     </div>
                 </div>
             )}
 
-            {error && !loading && (
+            {error && (
                 <div className="error-modal">
                     <div className="error-content">
                         <h3>Error</h3>
                         <p>{error}</p>
-                        <div className="error-actions">
-                            <button onClick={() => setError(null)}>OK</button>
+                        <button onClick={() => setError(null)}>OK</button>
+                    </div>
+                </div>
+            )}
+
+            {showSaveConfirm && (
+                <div className="confirmation-modal">
+                    <div className="confirmation-content">
+                        <h3>Confirm Save</h3>
+                        <p>Are you sure you want to save these changes?</p>
+                        <div className="confirmation-buttons">
+                            <button onClick={saveData}>Yes</button>
+                            <button onClick={cancelSave}>No</button>
                         </div>
                     </div>
                 </div>
             )}
 
             <div className="header-top">
-                <button className="return-button" onClick={onBack}> &larr; </button>
+                <button className="return-button" onClick={() => navigate(-1)}> &larr; </button>
                 <h1>Stock Card</h1>
+                {hasChanges && (
+                    <span className="unsaved-changes">Unsaved Changes</span>
+                )}
             </div>
+
             <div className="stock-cards-header">
                 <div className="header-text">
                     <p>Republic of the Philippines</p>
@@ -412,6 +482,7 @@ const StockCardsPage = () => {
                                                 <th colSpan="3">BALANCE</th>
                                                 <th colSpan="2">ISSUE</th>
                                                 <th>No. of Days to Consume</th>
+                                                <th>Action</th>
                                             </tr>
                                             <tr>
                                                 <th></th>
@@ -425,17 +496,17 @@ const StockCardsPage = () => {
                                                 <th>Qty</th>
                                                 <th>Office</th>
                                                 <th></th>
+                                                <th></th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {stockData.transactions.map((transaction, index) => (
-                                                <tr key={index}>
+                                            {stockData.transactions?.map((transaction, index) => (
+                                                <tr key={transaction.id}>
                                                     <td>
                                                         <input
                                                             type="date"
                                                             value={transaction.date}
                                                             onChange={(e) => handleTransactionChange(index, 'date', e.target.value)}
-                                                            onKeyDown={(e) => handleKeyDown(index, e)}
                                                         />
                                                     </td>
                                                     <td>
@@ -443,7 +514,6 @@ const StockCardsPage = () => {
                                                             type="text"
                                                             value={transaction.reference}
                                                             onChange={(e) => handleTransactionChange(index, 'reference', e.target.value)}
-                                                            onKeyDown={(e) => handleKeyDown(index, e)}
                                                         />
                                                     </td>
                                                     <td>
@@ -452,7 +522,6 @@ const StockCardsPage = () => {
                                                             min="0"
                                                             value={transaction.receiptqty}
                                                             onChange={(e) => handleTransactionChange(index, 'receiptqty', e.target.value)}
-                                                            onKeyDown={(e) => handleKeyDown(index, e)}
                                                         />
                                                     </td>
                                                     <td>
@@ -462,7 +531,6 @@ const StockCardsPage = () => {
                                                             step="0.01"
                                                             value={transaction.receiptunitcost}
                                                             onChange={(e) => handleTransactionChange(index, 'receiptunitcost', e.target.value)}
-                                                            onKeyDown={(e) => handleKeyDown(index, e)}
                                                         />
                                                     </td>
                                                     <td>
@@ -472,7 +540,6 @@ const StockCardsPage = () => {
                                                             step="0.01"
                                                             value={transaction.receipttotalcost}
                                                             onChange={(e) => handleTransactionChange(index, 'receipttotalcost', e.target.value)}
-                                                            onKeyDown={(e) => handleKeyDown(index, e)}
                                                             readOnly
                                                         />
                                                     </td>
@@ -482,7 +549,6 @@ const StockCardsPage = () => {
                                                             min="0"
                                                             value={transaction.balanceqty}
                                                             onChange={(e) => handleTransactionChange(index, 'balanceqty', e.target.value)}
-                                                            onKeyDown={(e) => handleKeyDown(index, e)}
                                                         />
                                                     </td>
                                                     <td>
@@ -492,7 +558,6 @@ const StockCardsPage = () => {
                                                             step="0.01"
                                                             value={transaction.balanceunitcost}
                                                             onChange={(e) => handleTransactionChange(index, 'balanceunitcost', e.target.value)}
-                                                            onKeyDown={(e) => handleKeyDown(index, e)}
                                                         />
                                                     </td>
                                                     <td>
@@ -502,7 +567,6 @@ const StockCardsPage = () => {
                                                             step="0.01"
                                                             value={transaction.balancetotalcost}
                                                             onChange={(e) => handleTransactionChange(index, 'balancetotalcost', e.target.value)}
-                                                            onKeyDown={(e) => handleKeyDown(index, e)}
                                                             readOnly
                                                         />
                                                     </td>
@@ -512,7 +576,6 @@ const StockCardsPage = () => {
                                                             min="0"
                                                             value={transaction.issueqty}
                                                             onChange={(e) => handleTransactionChange(index, 'issueqty', e.target.value)}
-                                                            onKeyDown={(e) => handleKeyDown(index, e)}
                                                         />
                                                     </td>
                                                     <td>
@@ -520,7 +583,6 @@ const StockCardsPage = () => {
                                                             type="text"
                                                             value={transaction.issueoffice}
                                                             onChange={(e) => handleTransactionChange(index, 'issueoffice', e.target.value)}
-                                                            onKeyDown={(e) => handleKeyDown(index, e)}
                                                         />
                                                     </td>
                                                     <td>
@@ -529,8 +591,15 @@ const StockCardsPage = () => {
                                                             min="0"
                                                             value={transaction.daystoconsume}
                                                             onChange={(e) => handleTransactionChange(index, 'daystoconsume', e.target.value)}
-                                                            onKeyDown={(e) => handleKeyDown(index, e)}
                                                         />
+                                                    </td>
+                                                    <td>
+                                                        <button 
+                                                            className="delete-row-button"
+                                                            onClick={() => deleteRow(index)}
+                                                        >
+                                                            Delete
+                                                        </button>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -542,9 +611,30 @@ const StockCardsPage = () => {
                     </table>
                 </div>
             </div>
+
             <div className="action-buttons">
-                <button className="export-button" onClick={onExport}>Export to Excel</button>
+                <button 
+                    className="add-row-button"
+                    onClick={addNewRow}
+                >
+                    Add New Row
+                </button>
+                <button 
+                    className="save-button"
+                    onClick={confirmSave}
+                    disabled={!hasChanges}
+                >
+                    Save Changes
+                </button>
+                <button 
+                    className="export-button" 
+                    onClick={onExport}
+                    disabled={!stockData.transactions.length}
+                >
+                    Export to Excel
+                </button>
             </div>
+
             <div className="right-image-section">
                 <img src={logo} alt="OCD logo" className="vertical-OCD-image" />
             </div>
