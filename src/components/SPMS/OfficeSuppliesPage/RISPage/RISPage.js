@@ -152,14 +152,7 @@ const RISPage = () => {
                             </tr>
                             <tr>
                                 <th className="Item-left-align">Responsibility Center Code:</th>
-                                <td>
-                                    <input
-                                        type="text"
-                                        value={responsibilityCenterCode}
-                                        onChange={(e) => setResponsibilityCenterCode(e.target.value)}
-                                        onKeyDown={handleKeyDown}
-                                    />
-                                </td>
+                                    <td><b> 2016 </b></td>
                                 <th className="Item-right-align">RIS No:</th>
                                 <td>
                                     <input
