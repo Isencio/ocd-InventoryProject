@@ -24,6 +24,8 @@ const StockCardsPage = () => {
     const tableRef = useRef(null);
     const exportRef = useRef(null);
 
+    const officeOptions = ['OS', 'CBTS', 'RRMS', 'PDPS', 'ORD', 'BAC', 'FMU', 'Admin', 'GSU', 'HRMU', 'DRMD'];
+
     useEffect(() => {
         if (stockData.stocknumber) {
             fetchStockData(stockData.stocknumber);
@@ -101,14 +103,14 @@ const StockCardsPage = () => {
         date: item.date || '',
         reference: item.reference || '',
         receiptqty: validateNumber(item.receiptqty),
-        receiptunitcost: validateNumber(item.receiptunitcost),
-        receipttotalcost: validateNumber(item.receipttotalcost),
+        receiptunitcost: item.receiptunitcost || '',
+        receipttotalcost: item.receipttotalcost || '',
         issueqty: validateNumber(item.issueqty),
         issueoffice: item.issueoffice || '',
         balanceqty: validateNumber(item.balanceqty),
-        balanceunitcost: validateNumber(item.balanceunitcost),
-        balancetotalcost: validateNumber(item.balancetotalcost),
-        daystoconsume: validateNumber(item.daystoconsume)
+        balanceunitcost: item.balanceunitcost || '',
+        balancetotalcost: item.balancetotalcost || '',
+        daystoconsume: item.daystoconsume || ''
     });
 
     const createEmptyTransaction = () => ({
@@ -169,11 +171,7 @@ const StockCardsPage = () => {
     };
 
     const handleTransactionChange = (index, field, value) => {
-        const numericFields = [
-            'receiptqty', 'receiptunitcost', 'receipttotalcost',
-            'issueqty', 'balanceqty', 'balanceunitcost',
-            'balancetotalcost', 'daystoconsume'
-        ];
+        const numericFields = ['receiptqty', 'issueqty', 'balanceqty'];
         
         const validatedValue = numericFields.includes(field) ? validateNumber(value) : value;
         
@@ -187,6 +185,10 @@ const StockCardsPage = () => {
             const qty = parseFloat(updatedTransactions[index].receiptqty) || 0;
             const unitCost = parseFloat(updatedTransactions[index].receiptunitcost) || 0;
             updatedTransactions[index].receipttotalcost = (qty * unitCost).toFixed(2);
+            
+            updatedTransactions[index].balanceqty = qty.toString();
+            updatedTransactions[index].balanceunitcost = unitCost.toString();
+            updatedTransactions[index].balancetotalcost = (qty * unitCost).toFixed(2);
         }
         
         if (field === 'balanceqty' || field === 'balanceunitcost') {
@@ -332,15 +334,15 @@ const StockCardsPage = () => {
             [
                 'Date', 'Reference', 
                 'RECEIPT', '', '', 
-                'BALANCE', '', '', 
                 'ISSUE', '', 
+                'BALANCE', '', '', 
                 'No. of Days to Consume'
             ],
             [
                 '', '', 
                 'Qty', 'Unit Cost', 'Total Cost', 
-                'Qty', 'Unit Cost', 'Total Cost', 
                 'Qty', 'Office', 
+                'Qty', 'Unit Cost', 'Total Cost', 
                 ''
             ],
             ...stockData.transactions.map(t => [
@@ -349,11 +351,11 @@ const StockCardsPage = () => {
                 t.receiptqty,
                 t.receiptunitcost,
                 t.receipttotalcost,
+                t.issueqty,
+                t.issueoffice,
                 t.balanceqty,
                 t.balanceunitcost,
                 t.balancetotalcost,
-                t.issueqty,
-                t.issueoffice,
                 t.daystoconsume
             ])
         ];
@@ -362,8 +364,8 @@ const StockCardsPage = () => {
         ws['!cols'] = [
             { width: 15 }, { width: 15 }, 
             { width: 10 }, { width: 12 }, { width: 12 },
-            { width: 10 }, { width: 12 }, { width: 12 },
             { width: 10 }, { width: 15 },
+            { width: 10 }, { width: 12 }, { width: 12 },
             { width: 20 }
         ];
 
@@ -502,8 +504,8 @@ const StockCardsPage = () => {
                                                 <th>Date</th>
                                                 <th>Reference</th>
                                                 <th colSpan="3">RECEIPT</th>
-                                                <th colSpan="3">BALANCE</th>
                                                 <th colSpan="2">ISSUE</th>
+                                                <th colSpan="3">BALANCE</th>
                                                 <th>No. of Days to Consume</th>
                                                 <th>Action</th>
                                             </tr>
@@ -514,10 +516,10 @@ const StockCardsPage = () => {
                                                 <th>Unit Cost</th>
                                                 <th>Total Cost</th>
                                                 <th>Qty</th>
+                                                <th>Office</th>
+                                                <th>Qty</th>
                                                 <th>Unit Cost</th>
                                                 <th>Total Cost</th>
-                                                <th>Qty</th>
-                                                <th>Office</th>
                                                 <th></th>
                                                 <th></th>
                                             </tr>
@@ -541,26 +543,23 @@ const StockCardsPage = () => {
                                                     </td>
                                                     <td>
                                                         <input
-                                                            type="number"
-                                                            min="0"
+                                                            type="text"
+                                                            inputMode="numeric"
                                                             value={transaction.receiptqty}
                                                             onChange={(e) => handleTransactionChange(index, 'receiptqty', e.target.value)}
+                                                            className="qty-input"
                                                         />
                                                     </td>
                                                     <td>
                                                         <input
-                                                            type="number"
-                                                            min="0"
-                                                            step="0.01"
+                                                            type="text"
                                                             value={transaction.receiptunitcost}
                                                             onChange={(e) => handleTransactionChange(index, 'receiptunitcost', e.target.value)}
                                                         />
                                                     </td>
                                                     <td>
                                                         <input
-                                                            type="number"
-                                                            min="0"
-                                                            step="0.01"
+                                                            type="text"
                                                             value={transaction.receipttotalcost}
                                                             onChange={(e) => handleTransactionChange(index, 'receipttotalcost', e.target.value)}
                                                             readOnly
@@ -568,26 +567,44 @@ const StockCardsPage = () => {
                                                     </td>
                                                     <td>
                                                         <input
-                                                            type="number"
-                                                            min="0"
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            value={transaction.issueqty}
+                                                            onChange={(e) => handleTransactionChange(index, 'issueqty', e.target.value)}
+                                                            className="qty-input"
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <select
+                                                            value={transaction.issueoffice}
+                                                            onChange={(e) => handleTransactionChange(index, 'issueoffice', e.target.value)}
+                                                            className="office-select"
+                                                        >
+                                                            <option value="">Select Office</option>
+                                                            {officeOptions.map(office => (
+                                                                <option key={office} value={office}>{office}</option>
+                                                            ))}
+                                                        </select>
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            inputMode="numeric"
                                                             value={transaction.balanceqty}
                                                             onChange={(e) => handleTransactionChange(index, 'balanceqty', e.target.value)}
+                                                            className="qty-input"
                                                         />
                                                     </td>
                                                     <td>
                                                         <input
-                                                            type="number"
-                                                            min="0"
-                                                            step="0.01"
+                                                            type="text"
                                                             value={transaction.balanceunitcost}
                                                             onChange={(e) => handleTransactionChange(index, 'balanceunitcost', e.target.value)}
                                                         />
                                                     </td>
                                                     <td>
                                                         <input
-                                                            type="number"
-                                                            min="0"
-                                                            step="0.01"
+                                                            type="text"
                                                             value={transaction.balancetotalcost}
                                                             onChange={(e) => handleTransactionChange(index, 'balancetotalcost', e.target.value)}
                                                             readOnly
@@ -595,23 +612,7 @@ const StockCardsPage = () => {
                                                     </td>
                                                     <td>
                                                         <input
-                                                            type="number"
-                                                            min="0"
-                                                            value={transaction.issueqty}
-                                                            onChange={(e) => handleTransactionChange(index, 'issueqty', e.target.value)}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
                                                             type="text"
-                                                            value={transaction.issueoffice}
-                                                            onChange={(e) => handleTransactionChange(index, 'issueoffice', e.target.value)}
-                                                        />
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="number"
-                                                            min="0"
                                                             value={transaction.daystoconsume}
                                                             onChange={(e) => handleTransactionChange(index, 'daystoconsume', e.target.value)}
                                                         />
