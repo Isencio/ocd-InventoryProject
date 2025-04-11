@@ -419,3 +419,14 @@ input {
   cursor: not-allowed;
   opacity: 0.65;
 }
+
+.qty-input::-webkit-outer-spin-button,
+.qty-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.qty-input {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
