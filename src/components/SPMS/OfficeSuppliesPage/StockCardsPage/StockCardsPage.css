@@ -148,11 +148,11 @@ input {
   background-color: #f28920;
 }
 
-/* Action Buttons Styles */
+/* Action Buttons Styles - Updated to bottom right */
 .action-buttons {
-  position: absolute;
-  right: 20px;
-  top: 80px;
+  position: fixed;
+  right: 50px;
+  bottom: 20px;
   display: flex;
   flex-direction: column;
   gap: 10px;
