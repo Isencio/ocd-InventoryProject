@@ -1,4 +1,4 @@
-import React,{ useState }  from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import './RSMIPage.css';
@@ -9,27 +9,44 @@ const RSMIPage = () => {
     const [fundCluster, setFundCluster] = useState('');
     const [serialNo, setSerialNo] = useState('');
     const [date, setDate] = useState('');
+    const [showMonthYearPicker, setShowMonthYearPicker] = useState(false);
+    const [showExportOptions, setShowExportOptions] = useState(false);
     const [rows, setRows] = useState(Array(5).fill({
         risNo: '',
         responsibilityCenterCode: '',
         stockNo: '',
-        item:'',
-        unit:'',
-        quantityIssued:'',
-        unitCost:'',
-        amount:'',
+        item: '',
+        unit: '',
+        quantityIssued: '',
+        unitCost: '',
+        amount: '',
     }));
 
     const navigate = useNavigate();
 
-  const onBack = () => {
-    navigate(-1);
-  };
+    const months = [
+        'January', 'February', 'March', 'April', 
+        'May', 'June', 'July', 'August',
+        'September', 'October', 'November', 'December'
+    ];
+    
+    const years = Array.from({length: 10}, (_, i) => new Date().getFullYear() - i);
 
-    const onExport = () => {
-        // Prepare the data for export
+    const onBack = () => {
+        navigate(-1);
+    };
+
+    const handleDateSelect = (month, year) => {
+        setDate(`${month}/${year}`);
+        setShowMonthYearPicker(false);
+    };
+
+    const toggleExportMenu = () => {
+        setShowExportOptions(!showExportOptions);
+    };
+
+    const onExportExcel = () => {
         const exportData = [
-            // Header row
             ['Republic of the Philippines'],
             ['Department of National Defense'],
             ['OFFICE OF CIVIL DEFENSE'],
@@ -40,7 +57,9 @@ const RSMIPage = () => {
             [],
             ['RSMI'],
             [],
-            // Table headers
+            ['Entity Name:', entityName, 'Fund Cluster:', fundCluster],
+            ['Serial No:', serialNo, 'Date:', date],
+            [],
             [
                 'RIS No.',
                 'Responsibility Center Code',
@@ -51,7 +70,6 @@ const RSMIPage = () => {
                 'Unit Cost',
                 'Amount',
             ],
-            // Data rows
             ...rows.map(row => [
                 row.risNo,
                 row.responsibilityCenterCode,
@@ -64,21 +82,23 @@ const RSMIPage = () => {
             ])
         ];
 
-        // Create a worksheet with column widths
         const ws = XLSX.utils.aoa_to_sheet(exportData);
         ws['!cols'] = [
             { width: 15 }, { width: 15 }, 
             { width: 10 }, { width: 12 }, { width: 12 },
             { width: 10 }, { width: 12 }, { width: 12 },
-            { width: 10 }, { width: 15 }
         ];
 
-        // Create a workbook
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "RSMI");
-
-        // Generate Excel file and trigger download
         XLSX.writeFile(wb, `RSMI_Inventory.xlsx`);
+        setShowExportOptions(false);
+    };
+
+    const onExportPDF = () => {
+        // PDF export functionality would go here
+        alert('PDF export functionality would be implemented here');
+        setShowExportOptions(false);
     };
 
     const handleAddRow = () => {
@@ -86,11 +106,11 @@ const RSMIPage = () => {
             risNo: '',
             responsibilityCenterCode: '',
             stockNo: '',
-            item:'',
-            unit:'',
-            quantityIssued:'',
-            unitCost:'',
-            amount:'',
+            item: '',
+            unit: '',
+            quantityIssued: '',
+            unitCost: '',
+            amount: '',
         }]);
     };
 
@@ -111,26 +131,26 @@ const RSMIPage = () => {
     };
 
     return (
-            <div className="rsmi-container">
-                <div className="header-top">
-                    <button className="return-button" onClick={onBack}> &larr; </button>
-                    <h1>RSMI</h1>
+        <div className="rsmi-container">
+            <div className="header-top">
+                <button className="return-button" onClick={onBack}> &larr; </button>
+                <h1>RSMI</h1>
+            </div>
+            <div className="rsmi-header">
+                <div className="header-text">
+                    <p>Republic of the Philippines</p>
+                    <p>Department of National Defense</p>
+                    <p>OFFICE OF CIVIL DEFENSE</p>
+                    <p>NATIONAL CAPITAL REGION</p>
+                    <p>NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY</p>
+                    <p>Telephone no. (02) 421-1918; OPCEN Mobile Number: 0917-827-6325</p>
+                    <p>E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com</p>
                 </div>
-                <div className="rsmi-header">
-                    <div className="header-text">
-                        <p>Republic of the Philippines</p>
-                        <p>Department of National Defense</p>
-                        <p>OFFICE OF CIVIL DEFENSE</p>
-                        <p>NATIONAL CAPITAL REGION</p>
-                        <p>NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY</p>
-                        <p>Telephone no. (02) 421-1918; OPCEN Mobile Number: 0917-827-6325</p>
-                        <p>E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com</p>
-                    </div>
-                    <div className="table-container">
+                <div className="table-container">
                     <table>
                         <thead>
                             <tr>
-                            <th className="Item-left-align">Entity Name:</th>
+                                <th className="Item-left-align">Entity Name:</th>
                                 <td>
                                     <input
                                         type="text"
@@ -139,7 +159,6 @@ const RSMIPage = () => {
                                         onKeyDown={handleKeyDown}
                                     />
                                 </td>
-                                
                                 <th className="Item-right-align">Fund Cluster :</th>
                                 <td className="input-fundcluster-cell">
                                     <input
@@ -162,15 +181,52 @@ const RSMIPage = () => {
                                 </td>
                                 <th className="Item-right-align">Date:</th>
                                 <td>
-                                    <input
-                                        type="text"
-                                        value={date}
-                                        onChange={(e) => setDate(e.target.value)}
-                                        onKeyDown={handleKeyDown}
-                                    />
+                                    <div className="date-input-container">
+                                        <input
+                                            type="text"
+                                            value={date}
+                                            readOnly
+                                            onClick={() => setShowMonthYearPicker(!showMonthYearPicker)}
+                                            placeholder="Select Month/Year"
+                                            className="date-input"
+                                        />
+                                        {showMonthYearPicker && (
+                                            <div className="month-year-picker">
+                                                <div className="picker-header">
+                                                    <select 
+                                                        className="year-select"
+                                                        onChange={(e) => {
+                                                            const selectedYear = e.target.value;
+                                                            const currentMonth = document.querySelector('.month-grid button.active')?.textContent;
+                                                            if (currentMonth) {
+                                                                handleDateSelect(currentMonth, selectedYear);
+                                                            }
+                                                        }}
+                                                    >
+                                                        {years.map(year => (
+                                                            <option key={year} value={year}>{year}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div className="month-grid">
+                                                    {months.map(month => (
+                                                        <button
+                                                            key={month}
+                                                            onClick={() => {
+                                                                const selectedYear = document.querySelector('.year-select')?.value || new Date().getFullYear();
+                                                                handleDateSelect(month, selectedYear);
+                                                            }}
+                                                            className={date.includes(month) ? 'active' : ''}
+                                                        >
+                                                            {month.substring(0, 3)}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 </td>
                             </tr>
-                
                             <tr>
                                 <th colSpan="4">
                                     <table className="inner-table">
@@ -261,14 +317,26 @@ const RSMIPage = () => {
                             </tr>
                         </thead>
                     </table>
-                    </div>
-                </div>
-                <button className="export-button" onClick={onExport}>Export to Excel</button>
-                <div className="right-image-section">
-                    <img src={logo} alt="OCD logo" className="vertical-OCD-image" />
                 </div>
             </div>
-        );
+            <div className="right-image-section">
+                <img src={logo} alt="OCD logo" className="vertical-OCD-image" />
+            </div>
+
+            {/* Export button in bottom right with pop-up menu */}
+            <div className={`export-container ${showExportOptions ? 'active' : ''}`}>
+                <button className="export-button" onClick={toggleExportMenu}>
+                    Export
+                </button>
+                {showExportOptions && (
+                    <div className="export-options">
+                        <button onClick={onExportExcel}>Export as Excel</button>
+                        <button onClick={onExportPDF}>Export as PDF</button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 };
 
 export default RSMIPage;
