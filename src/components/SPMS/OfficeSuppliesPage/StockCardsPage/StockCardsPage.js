@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import './StockCardsPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
-import { SiHackclub } from 'react-icons/si';
 
 const StockCardsPage = () => {
     const [loading, setLoading] = useState(false);
