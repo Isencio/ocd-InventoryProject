@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import './StockCardsPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
-import { SiHackclub } from 'react-icons/si';
 
 const StockCardsPage = () => {
     const [loading, setLoading] = useState(false);
@@ -44,10 +43,15 @@ const StockCardsPage = () => {
         };
     }, []);
 
-    const validateNumber = (value) => {
+    const formatNumber = (value, isCurrency = false) => {
         if (value === '' || value === null) return '';
         const num = parseFloat(value);
-        return isNaN(num) ? '' : Math.max(0, num).toString();
+        if (isNaN(num)) return '';
+        
+        if (isCurrency) {
+            return num.toFixed(2);
+        }
+        return Math.max(0, num).toString();
     };
 
     const fetchStockData = async (stockNumber) => {
@@ -102,13 +106,13 @@ const StockCardsPage = () => {
         id: item.StockID || Date.now().toString(),
         date: item.date || '',
         reference: item.reference || '',
-        receiptqty: validateNumber(item.receiptqty),
-        receiptunitcost: item.receiptunitcost || '',
+        receiptqty: formatNumber(item.receiptqty),
+        receiptunitcost: formatNumber(item.receiptunitcost, true),
         receipttotalcost: item.receipttotalcost || '',
-        issueqty: validateNumber(item.issueqty),
+        issueqty: formatNumber(item.issueqty),
         issueoffice: item.issueoffice || '',
-        balanceqty: validateNumber(item.balanceqty),
-        balanceunitcost: item.balanceunitcost || '',
+        balanceqty: formatNumber(item.balanceqty),
+        balanceunitcost: formatNumber(item.balanceunitcost, true),
         balancetotalcost: item.balancetotalcost || '',
         daystoconsume: item.daystoconsume || ''
     });
@@ -171,9 +175,29 @@ const StockCardsPage = () => {
     };
 
     const handleTransactionChange = (index, field, value) => {
-        const numericFields = ['receiptqty', 'issueqty', 'balanceqty'];
+        const numericFields = ['receiptqty', 'receiptunitcost', 'issueqty', 'balanceqty', 'balanceunitcost'];
+        const currencyFields = ['receiptunitcost', 'balanceunitcost'];
         
-        const validatedValue = numericFields.includes(field) ? validateNumber(value) : value;
+        let validatedValue = value;
+        
+        if (numericFields.includes(field)) {
+            // Remove any non-numeric characters except decimal point
+            validatedValue = value.replace(/[^0-9.]/g, '');
+            
+            // Ensure only one decimal point
+            const decimalCount = validatedValue.split('.').length - 1;
+            if (decimalCount > 1) {
+                validatedValue = validatedValue.substring(0, validatedValue.lastIndexOf('.'));
+            }
+            
+            // For currency fields, limit to 2 decimal places
+            if (currencyFields.includes(field)) {
+                const parts = validatedValue.split('.');
+                if (parts.length > 1) {
+                    validatedValue = parts[0] + '.' + parts[1].slice(0, 2);
+                }
+            }
+        }
         
         const updatedTransactions = [...stockData.transactions];
         updatedTransactions[index] = {
@@ -185,16 +209,43 @@ const StockCardsPage = () => {
             const qty = parseFloat(updatedTransactions[index].receiptqty) || 0;
             const unitCost = parseFloat(updatedTransactions[index].receiptunitcost) || 0;
             updatedTransactions[index].receipttotalcost = (qty * unitCost).toFixed(2);
-            
-            updatedTransactions[index].balanceqty = qty.toString();
-            updatedTransactions[index].balanceunitcost = unitCost.toString();
-            updatedTransactions[index].balancetotalcost = (qty * unitCost).toFixed(2);
         }
         
-        if (field === 'balanceqty' || field === 'balanceunitcost') {
-            const qty = parseFloat(updatedTransactions[index].balanceqty) || 0;
-            const unitCost = parseFloat(updatedTransactions[index].balanceunitcost) || 0;
-            updatedTransactions[index].balancetotalcost = (qty * unitCost).toFixed(2);
+        for (let i = 0; i < updatedTransactions.length; i++) {
+            if (i === 0) {
+                const receiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
+                const receiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
+                
+                updatedTransactions[i].balanceqty = receiptQty.toString();
+                updatedTransactions[i].balanceunitcost = receiptUnitCost.toFixed(2);
+                updatedTransactions[i].balancetotalcost = (receiptQty * receiptUnitCost).toFixed(2);
+            } else {
+                const prevBalanceQty = parseFloat(updatedTransactions[i-1].balanceqty) || 0;
+                const prevUnitCost = parseFloat(updatedTransactions[i-1].balanceunitcost) || 0;
+                const currentReceiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
+                const currentReceiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
+                const currentIssueQty = parseFloat(updatedTransactions[i].issueqty) || 0;
+                
+                let balanceQty = prevBalanceQty + currentReceiptQty;
+                
+                if (currentIssueQty > 0) {
+                    balanceQty = prevBalanceQty - currentIssueQty;
+                    if (balanceQty < 0) balanceQty = 0;
+                }
+                
+                updatedTransactions[i].balanceqty = balanceQty.toString();
+                
+                let balanceUnitCost = prevUnitCost;
+                if (currentReceiptQty > 0 && currentReceiptUnitCost > 0) {
+                    if (prevUnitCost > 0) {
+                        balanceUnitCost = ((prevUnitCost + currentReceiptUnitCost) / 2);
+                    } else {
+                        balanceUnitCost = currentReceiptUnitCost;
+                    }
+                }
+                updatedTransactions[i].balanceunitcost = balanceUnitCost.toFixed(2);
+                updatedTransactions[i].balancetotalcost = (balanceQty * balanceUnitCost).toFixed(2);
+            }
         }
         
         const updatedData = {
@@ -238,6 +289,43 @@ const StockCardsPage = () => {
         if (window.confirm('Are you sure you want to delete this transaction?')) {
             const updatedTransactions = [...stockData.transactions];
             updatedTransactions.splice(index, 1);
+            
+            for (let i = 0; i < updatedTransactions.length; i++) {
+                if (i === 0) {
+                    const receiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
+                    const receiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
+                    
+                    updatedTransactions[i].balanceqty = receiptQty.toString();
+                    updatedTransactions[i].balanceunitcost = receiptUnitCost.toFixed(2);
+                    updatedTransactions[i].balancetotalcost = (receiptQty * receiptUnitCost).toFixed(2);
+                } else {
+                    const prevBalanceQty = parseFloat(updatedTransactions[i-1].balanceqty) || 0;
+                    const prevUnitCost = parseFloat(updatedTransactions[i-1].balanceunitcost) || 0;
+                    const currentReceiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
+                    const currentReceiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
+                    const currentIssueQty = parseFloat(updatedTransactions[i].issueqty) || 0;
+                    
+                    let balanceQty = prevBalanceQty + currentReceiptQty;
+                    
+                    if (currentIssueQty > 0) {
+                        balanceQty = prevBalanceQty - currentIssueQty;
+                        if (balanceQty < 0) balanceQty = 0;
+                    }
+                    
+                    updatedTransactions[i].balanceqty = balanceQty.toString();
+                    
+                    let balanceUnitCost = prevUnitCost;
+                    if (currentReceiptQty > 0 && currentReceiptUnitCost > 0) {
+                        if (prevUnitCost > 0) {
+                            balanceUnitCost = ((prevUnitCost + currentReceiptUnitCost) / 2);
+                        } else {
+                            balanceUnitCost = currentReceiptUnitCost;
+                        }
+                    }
+                    updatedTransactions[i].balanceunitcost = balanceUnitCost.toFixed(2);
+                    updatedTransactions[i].balancetotalcost = (balanceQty * balanceUnitCost).toFixed(2);
+                }
+            }
             
             const updatedData = {
                 ...stockData,
@@ -554,7 +642,20 @@ const StockCardsPage = () => {
                                                         <input
                                                             type="text"
                                                             value={transaction.receiptunitcost}
-                                                            onChange={(e) => handleTransactionChange(index, 'receiptunitcost', e.target.value)}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value.replace(/[^0-9.]/g, '');
+                                                                const parts = value.split('.');
+                                                                if (parts.length > 1) {
+                                                                    e.target.value = parts[0] + '.' + parts[1].slice(0, 2);
+                                                                }
+                                                                handleTransactionChange(index, 'receiptunitcost', e.target.value);
+                                                            }}
+                                                            onBlur={(e) => {
+                                                                if (e.target.value && !isNaN(e.target.value)) {
+                                                                    const formatted = parseFloat(e.target.value).toFixed(2);
+                                                                    handleTransactionChange(index, 'receiptunitcost', formatted);
+                                                                }
+                                                            }}
                                                         />
                                                     </td>
                                                     <td>
@@ -599,7 +700,20 @@ const StockCardsPage = () => {
                                                         <input
                                                             type="text"
                                                             value={transaction.balanceunitcost}
-                                                            onChange={(e) => handleTransactionChange(index, 'balanceunitcost', e.target.value)}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value.replace(/[^0-9.]/g, '');
+                                                                const parts = value.split('.');
+                                                                if (parts.length > 1) {
+                                                                    e.target.value = parts[0] + '.' + parts[1].slice(0, 2);
+                                                                }
+                                                                handleTransactionChange(index, 'balanceunitcost', e.target.value);
+                                                            }}
+                                                            onBlur={(e) => {
+                                                                if (e.target.value && !isNaN(e.target.value)) {
+                                                                    const formatted = parseFloat(e.target.value).toFixed(2);
+                                                                    handleTransactionChange(index, 'balanceunitcost', formatted);
+                                                                }
+                                                            }}
                                                         />
                                                     </td>
                                                     <td>

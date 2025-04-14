@@ -66,7 +66,6 @@ th, td, tr {
   border: 1px solid #ddd;
 }
 
-
 th {
   background-color: #46407f;
 }
@@ -91,6 +90,7 @@ input {
   text-align: center;
   border: 1px solid #ddd;
 }
+
 .inner-table td {
   font-size: 5px;
 }
@@ -140,21 +140,132 @@ input {
   background-color: #f28920;
 }
 
-.rsmi-container .export-button {
+.date-input-container {
+  position: relative;
+}
+
+.date-input {
+  cursor: pointer;
+  width: 100%;
+  background: transparent;
+  color: #ffffff;
+  border: none;
+  padding: 10px;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.month-year-picker {
   position: absolute;
-  top: 20px;
+  top: 100%;
+  left: 0;
+  background: #46407f;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  z-index: 100;
+  width: 200px;
+}
+
+.picker-header {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.year-select {
+  background: #231e54;
+  color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+
+.month-grid button {
+  background: #231e54;
+  color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.month-grid button:hover {
+  background: #f28920;
+}
+
+.month-grid button.active {
+  background: #f28920;
+  font-weight: bold;
+}
+
+/* Export Button Styles - Bottom Right with Pop-up Menu */
+.export-container {
+  position: fixed;
+  bottom: 20px;
   right: 20px;
+  z-index: 1000;
+}
+
+.export-button {
   background-color: #1c1841;
-  color: rgb(255, 255, 255);
+  color: white;
   border: none;
   padding: 10px 20px;
   font-size: 1rem;
   font-weight: bold;
   border-radius: 5px;
   cursor: pointer;
-  z-index: 1;
+  transition: background-color 0.3s ease;
 }
 
-.rsmi-container .export-button:hover {
+.export-button:hover {
   background-color: #f28920;
+}
+
+.export-options {
+  position: absolute;
+  bottom: 100%; /* Positions menu above the button */
+  right: 0;
+  background-color: #46407f;
+  border: 1px solid #ddd;
+  border-radius: 5px 5px 0 0;
+  padding: 0;
+  min-width: 150px;
+  box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.export-options button {
+  background-color: #1c1841;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.export-options button:hover {
+  background-color: #f28920;
+}
+
+.export-options button:first-child {
+  border-radius: 5px 5px 0 0;
+}
+
+.export-options button:last-child {
+  border-radius: 0 0 5px 5px;
+}
+
+/* Make sure the dropdown stays visible when interacting */
+.export-container.active .export-options {
+  display: block;
 }
