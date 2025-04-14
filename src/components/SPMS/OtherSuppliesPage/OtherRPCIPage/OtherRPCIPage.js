@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
-import './OtherRPCIPage';
+import './OtherRPCIPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
 
 const OtherRPCIPage = () => {
