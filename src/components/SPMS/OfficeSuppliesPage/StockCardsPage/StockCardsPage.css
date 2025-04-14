@@ -108,7 +108,7 @@ input {
   outline: none;
   background: transparent;
   width: 100%;
-  padding: 10px;
+  padding: 1px;
   margin: 0px;
   font-family: inherit;
   font-size: 12px;
@@ -418,15 +418,4 @@ input {
   background-color: #cccccc;
   cursor: not-allowed;
   opacity: 0.65;
-}
-
-.qty-input::-webkit-outer-spin-button,
-.qty-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-.qty-input {
-  appearance: textfield;
-  -moz-appearance: textfield;
 }
