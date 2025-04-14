@@ -7,6 +7,8 @@ import RISPage from './components/SPMS/OfficeSuppliesPage/RISPage/RISPage';
 import RSMIPage from './components/SPMS/OfficeSuppliesPage/RSMIPage/RSMIPage';
 import StockCardsPage from './components/SPMS/OfficeSuppliesPage/StockCardsPage/StockCardsPage';
 import RPCIPage from './components/SPMS/OfficeSuppliesPage/RPCIPage/RPCIPage';
+import OtherSuppliesPage from './components/SPMS/OtherSuppliesPage/OtherSuppliesPage';
+import OtherRPCIPage from './components/SPMS/OtherSuppliesPage/OtherRPCIPage/OtherRPCIPage';
 
 function Main() {
   return (
@@ -19,6 +21,8 @@ function Main() {
             <Route path="/rsmi" element={<RSMIPage />} />
             <Route path="/ris" element={<RISPage />} />
             <Route path="/rpci" element={<RPCIPage />} />
+            <Route path="/other-supplies" element={<OtherSuppliesPage />} />
+            <Route path='/other-rpci' element={<OtherRPCIPage />}/>
       </Routes>
     </Router>
   );

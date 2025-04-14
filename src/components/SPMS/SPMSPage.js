@@ -249,7 +249,7 @@ const SPMSPage = () => {
           <button className="orange-button" onClick={() => handleNavigation('/office-supplies')}>
             OFFICE SUPPLIES
           </button>
-          <button className="orange-button">OTHER SUPPLIES</button>
+          <button className="orange-button" onClick={() => handleNavigation('/other-supplies')}>OTHER SUPPLIES</button>
           <button className="orange-button">FUEL AND OTHER LUBRICANT (FOL)</button>
           <button className="orange-button">PROPERTY AND PLANT EQUIPMENT</button>
           <button className="orange-button">SEMI-EXPENDABLE EQUIPMENT</button>

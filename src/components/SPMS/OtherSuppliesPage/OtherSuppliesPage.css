@@ -1,0 +1,122 @@
+/* Main Container */
+.other-supplies-container {
+  display: flex;
+  height: 100vh;
+  background-color: #231e54;
+}
+
+/* Other Supplies Section */
+.Other-Supplies-section {
+  width: 80%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 50px;
+}
+
+/* Title */
+.Other-Supplies-section h1 {
+  color: white;
+  font-size: 45px;
+  font-weight: bold;
+  margin-bottom: 80px;
+  text-align: center;
+  width: 100%;
+}
+
+/* Button Grid */
+.other-stock-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+  gap: 20px;
+  width: 60%;
+  margin: 0 auto;
+}
+
+/* Stock Cards */
+.stock-card {
+  background-color: #f28920;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 35px 80px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.stock-card:hover {
+  background-color: #e07b1f;
+  transform: scale(1.05);
+}
+
+.stock-card:hover {
+  background-position: left bottom;
+  transform: scale(1.05);
+}
+
+.stock-card:hover {
+  background-color: #b1631b;
+}
+
+.stock-card:hover {
+  transform: rotateX(10deg) rotateY(10deg) translateZ(20px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes float {
+  0%, 100% {
+      transform: translateY(0) rotateX(0) rotateY(0) translateZ(0);
+  }
+  50% {
+      transform: translateY(-10px) rotateX(5deg) rotateY(5deg) translateZ(10px);
+  }
+}
+
+.stock-card {
+  animation: float 3s ease-in-out infinite;
+}
+
+.stock-card:hover {
+  animation: none;
+  transform: rotateX(10deg) rotateY(10deg) translateZ(20px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Right Section - Image */
+.right-image-section {
+  width: 20%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #f0f0f0;
+}
+
+.vertical-OCD-image {
+  max-width: 100%;
+  height: 100%;
+}
+
+/* Return Button */
+.other-supplies-container .return-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background-color: #1c1841;
+  color: rgb(255, 255, 255);
+  border: none;
+  padding: 10px 20px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.other-supplies-container .return-button:hover {
+  background-color: #f28920;
+}
