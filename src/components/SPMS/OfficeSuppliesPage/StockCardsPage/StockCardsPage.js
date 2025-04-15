@@ -19,9 +19,21 @@ const StockCardsPage = () => {
     const [hasChanges, setHasChanges] = useState(false);
     const [originalData, setOriginalData] = useState(null);
     const [showExportOptions, setShowExportOptions] = useState(false);
+    const [stockNumberOptions, setStockNumberOptions] = useState([
+        { value: '', label: 'Select Stock No.' },
+        { value: 'A1', label: 'A1' },
+        { value: 'A2', label: 'A2' },
+        { value: 'A3', label: 'A3' },
+        { value: 'A4', label: 'A4' },
+    ]);
+    const [customStockNumber, setCustomStockNumber] = useState('');
+    const [showCustomInput, setShowCustomInput] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [stockNumberToDelete, setStockNumberToDelete] = useState(null);
     const navigate = useNavigate();
     const tableRef = useRef(null);
     const exportRef = useRef(null);
+    const stockNumberInputRef = useRef(null);
 
     const officeOptions = ['OS', 'CBTS', 'RRMS', 'PDPS', 'ORD', 'BAC', 'FMU', 'Admin', 'GSU', 'HRMU', 'DRMD'];
 
@@ -133,12 +145,65 @@ const StockCardsPage = () => {
     });
 
     const handleStockNumberChange = (value) => {
+        if (value === 'add-new') {
+            setShowCustomInput(true);
+            setTimeout(() => {
+                stockNumberInputRef.current?.focus();
+            }, 0);
+            return;
+        }
+
+        if (value === 'delete-mode') {
+            if (stockData.stocknumber && stockNumberOptions.some(opt => opt.value === stockData.stocknumber && opt.value !== '')) {
+                setStockNumberToDelete(stockData.stocknumber);
+                setShowDeleteConfirm(true);
+            } else {
+                setError('Please select a valid stock number to delete');
+            }
+            return;
+        }
+
         if (hasChanges) {
             if (window.confirm('You have unsaved changes. Do you want to discard them?')) {
                 proceedWithStockNumberChange(value);
             }
         } else {
             proceedWithStockNumberChange(value);
+        }
+    };
+
+    const deleteStockNumber = () => {
+        if (stockNumberToDelete) {
+            const updatedOptions = stockNumberOptions.filter(opt => opt.value !== stockNumberToDelete);
+            setStockNumberOptions(updatedOptions);
+            
+            if (stockData.stocknumber === stockNumberToDelete) {
+                proceedWithStockNumberChange('');
+            }
+            
+            setShowDeleteConfirm(false);
+            setStockNumberToDelete(null);
+            
+            // Here you would typically also make an API call to delete from backend
+            // deleteStockNumberFromBackend(stockNumberToDelete);
+        }
+    };
+
+    const cancelDelete = () => {
+        setShowDeleteConfirm(false);
+        setStockNumberToDelete(null);
+    };
+
+    const addCustomStockNumber = () => {
+        if (customStockNumber.trim() && !stockNumberOptions.some(opt => opt.value === customStockNumber)) {
+            const newOption = {
+                value: customStockNumber,
+                label: customStockNumber
+            };
+            setStockNumberOptions([...stockNumberOptions, newOption]);
+            setShowCustomInput(false);
+            setCustomStockNumber('');
+            proceedWithStockNumberChange(newOption.value);
         }
     };
 
@@ -181,16 +246,13 @@ const StockCardsPage = () => {
         let validatedValue = value;
         
         if (numericFields.includes(field)) {
-            // Remove any non-numeric characters except decimal point
             validatedValue = value.replace(/[^0-9.]/g, '');
             
-            // Ensure only one decimal point
             const decimalCount = validatedValue.split('.').length - 1;
             if (decimalCount > 1) {
                 validatedValue = validatedValue.substring(0, validatedValue.lastIndexOf('.'));
             }
             
-            // For currency fields, limit to 2 decimal places
             if (currencyFields.includes(field)) {
                 const parts = validatedValue.split('.');
                 if (parts.length > 1) {
@@ -468,14 +530,6 @@ const StockCardsPage = () => {
         setShowExportOptions(false);
     };
 
-    const stockNumberOptions = [
-        { value: '', label: 'Select Stock No.' },
-        { value: 'A1', label: 'A1' },
-        { value: 'A2', label: 'A2' },
-        { value: 'A3', label: 'A3' },
-        { value: 'A4', label: 'A4' },
-    ];
-
     return (
         <div className="stock-cards-container">
             {loading && (
@@ -505,6 +559,19 @@ const StockCardsPage = () => {
                         <div className="confirmation-buttons">
                             <button onClick={saveData}>Yes</button>
                             <button onClick={cancelSave}>No</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showDeleteConfirm && (
+                <div className="confirmation-modal">
+                    <div className="confirmation-content">
+                        <h3>Confirm Delete</h3>
+                        <p>Are you sure you want to delete stock number: {stockNumberToDelete}?</p>
+                        <div className="confirmation-buttons">
+                            <button onClick={deleteStockNumber}>Yes</button>
+                            <button onClick={cancelDelete}>No</button>
                         </div>
                     </div>
                 </div>
@@ -553,17 +620,48 @@ const StockCardsPage = () => {
                                 </td>
                                 <th className="Item-right-align">Stock No. :</th>
                                 <td className="input-stockno-cell">
-                                    <select
-                                        value={stockData.stocknumber}
-                                        onChange={(e) => handleStockNumberChange(e.target.value)}
-                                        className="dropdown-select"
-                                    >
-                                        {stockNumberOptions.map((option) => (
-                                            <option key={option.value} value={option.value}>
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    {showCustomInput ? (
+                                        <div className="custom-stocknumber-input">
+                                            <input
+                                                type="text"
+                                                ref={stockNumberInputRef}
+                                                value={customStockNumber}
+                                                onChange={(e) => setCustomStockNumber(e.target.value)}
+                                                placeholder="Enter new stock number"
+                                            />
+                                            <button onClick={addCustomStockNumber}>Add</button>
+                                            <button onClick={() => setShowCustomInput(false)}>Cancel</button>
+                                        </div>
+                                    ) : (
+                                        <div className="stock-number-controls">
+                                            <select
+                                                value={stockData.stocknumber}
+                                                onChange={(e) => handleStockNumberChange(e.target.value)}
+                                                className="dropdown-select"
+                                            >
+                                                {stockNumberOptions.map((option) => (
+                                                    <option key={option.value} value={option.value}>
+                                                        {option.label}
+                                                    </option>
+                                                ))}
+                                                <option value="add-new">+ Add New Stock Number</option>
+                                                {stockData.stocknumber && stockNumberOptions.some(opt => opt.value === stockData.stocknumber) && (
+                                                    <option value="delete-mode">- Delete Current Stock Number</option>
+                                                )}
+                                            </select>
+                                            {stockData.stocknumber && stockNumberOptions.some(opt => opt.value === stockData.stocknumber) && (
+                                                <button 
+                                                    className="delete-stocknumber-button"
+                                                    onClick={() => {
+                                                        setStockNumberToDelete(stockData.stocknumber);
+                                                        setShowDeleteConfirm(true);
+                                                    }}
+                                                >
+                                                    Delete
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
                                 </td>
                             </tr>
                             <tr>

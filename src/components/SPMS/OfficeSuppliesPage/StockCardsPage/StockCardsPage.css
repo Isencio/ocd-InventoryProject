@@ -419,3 +419,109 @@ input {
   cursor: not-allowed;
   opacity: 0.65;
 }
+
+/* Add these new styles to your existing CSS file */
+
+.stock-number-controls {
+  display: flex;
+  gap: 5px;
+}
+
+.stock-number-controls select {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.delete-stocknumber-button {
+  padding: 8px 12px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delete-stocknumber-button:hover {
+  background-color: #d32f2f;
+}
+
+.custom-stocknumber-input {
+  display: flex;
+  gap: 5px;
+}
+
+.custom-stocknumber-input input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.custom-stocknumber-input button {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.custom-stocknumber-input button:first-child {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.custom-stocknumber-input button:last-child {
+  background-color: #f44336;
+  color: white;
+}
+
+.confirmation-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.confirmation-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  max-width: 400px;
+  width: 100%;
+}
+
+.confirmation-content h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.confirmation-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.confirmation-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.confirmation-buttons button:first-child {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.confirmation-buttons button:last-child {
+  background-color: #f44336;
+  color: white;
+}
