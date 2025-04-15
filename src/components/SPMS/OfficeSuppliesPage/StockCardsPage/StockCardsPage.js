@@ -645,9 +645,7 @@ const StockCardsPage = () => {
                                                     </option>
                                                 ))}
                                                 <option value="add-new">+ Add New Stock Number</option>
-                                                {stockData.stocknumber && stockNumberOptions.some(opt => opt.value === stockData.stocknumber) && (
-                                                    <option value="delete-mode">- Delete Current Stock Number</option>
-                                                )}
+                                                
                                             </select>
                                             {stockData.stocknumber && stockNumberOptions.some(opt => opt.value === stockData.stocknumber) && (
                                                 <button 
