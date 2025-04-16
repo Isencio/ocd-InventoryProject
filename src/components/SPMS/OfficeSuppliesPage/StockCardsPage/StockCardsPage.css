@@ -525,3 +525,9 @@ input {
   background-color: #f44336;
   color: white;
 }
+
+table:first-of-type input[type="text"] {
+  background-color: white;
+  padding: 5px;
+  color: #000000; /* Black text color */
+}
