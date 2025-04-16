@@ -183,9 +183,6 @@ const StockCardsPage = () => {
             
             setShowDeleteConfirm(false);
             setStockNumberToDelete(null);
-            
-            // Here you would typically also make an API call to delete from backend
-            // deleteStockNumberFromBackend(stockNumberToDelete);
         }
     };
 
@@ -267,46 +264,73 @@ const StockCardsPage = () => {
             [field]: validatedValue
         };
         
-        if (field === 'receiptqty' || field === 'receiptunitcost') {
-            const qty = parseFloat(updatedTransactions[index].receiptqty) || 0;
-            const unitCost = parseFloat(updatedTransactions[index].receiptunitcost) || 0;
-            updatedTransactions[index].receipttotalcost = (qty * unitCost).toFixed(2);
+        // Calculate TotalCostReceipt for all rows
+        for (let i = 0; i < updatedTransactions.length; i++) {
+            const qty = parseFloat(updatedTransactions[i].receiptqty) || 0;
+            const unitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
+            updatedTransactions[i].receipttotalcost = (qty * unitCost).toFixed(2);
         }
         
+        // Calculate balance for each row
         for (let i = 0; i < updatedTransactions.length; i++) {
             if (i === 0) {
+                // First row calculations (unchanged)
                 const receiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
                 const receiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
+                const receiptTotalCost = receiptQty * receiptUnitCost;
                 
                 updatedTransactions[i].balanceqty = receiptQty.toString();
                 updatedTransactions[i].balanceunitcost = receiptUnitCost.toFixed(2);
-                updatedTransactions[i].balancetotalcost = (receiptQty * receiptUnitCost).toFixed(2);
+                updatedTransactions[i].balancetotalcost = receiptTotalCost.toFixed(2);
+                updatedTransactions[i].receipttotalcost = receiptTotalCost.toFixed(2);
             } else {
+                // Subsequent rows calculations
                 const prevBalanceQty = parseFloat(updatedTransactions[i-1].balanceqty) || 0;
-                const prevUnitCost = parseFloat(updatedTransactions[i-1].balanceunitcost) || 0;
                 const currentReceiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
                 const currentReceiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
                 const currentIssueQty = parseFloat(updatedTransactions[i].issueqty) || 0;
                 
-                let balanceQty = prevBalanceQty + currentReceiptQty;
+                // Calculate current receipt total
+                const currentReceiptTotalCost = currentReceiptQty * currentReceiptUnitCost;
+                updatedTransactions[i].receipttotalcost = currentReceiptTotalCost.toFixed(2);
                 
-                if (currentIssueQty > 0) {
-                    balanceQty = prevBalanceQty - currentIssueQty;
-                    if (balanceQty < 0) balanceQty = 0;
-                }
-                
+                // Calculate balance quantity
+                let balanceQty = prevBalanceQty + currentReceiptQty - currentIssueQty;
                 updatedTransactions[i].balanceqty = balanceQty.toString();
                 
-                let balanceUnitCost = prevUnitCost;
-                if (currentReceiptQty > 0 && currentReceiptUnitCost > 0) {
-                    if (prevUnitCost > 0) {
-                        balanceUnitCost = ((prevUnitCost + currentReceiptUnitCost) / 2);
+                // Calculate UnitCostBalance (SPECIAL FORMULA without parentheses)
+                let balanceUnitCost = 0;
+                if (currentReceiptQty > 0) {
+                    if (i === 1) {
+                        // Second row: First term + (Second term / 2)
+                        const prevReceiptUnitCost = parseFloat(updatedTransactions[i-1].receiptunitcost) || 0;
+                        balanceUnitCost = prevReceiptUnitCost + currentReceiptUnitCost / 2;
                     } else {
-                        balanceUnitCost = currentReceiptUnitCost;
+                        // Third row+: First term + (Second term / 2)
+                        const prevBalanceUnitCost = parseFloat(updatedTransactions[i-1].balanceunitcost) || 0;
+                        balanceUnitCost = prevBalanceUnitCost + currentReceiptUnitCost / 2;
                     }
+                } else {
+                    balanceUnitCost = parseFloat(updatedTransactions[i-1].balanceunitcost) || 0;
                 }
                 updatedTransactions[i].balanceunitcost = balanceUnitCost.toFixed(2);
-                updatedTransactions[i].balancetotalcost = (balanceQty * balanceUnitCost).toFixed(2);
+                
+                // Calculate TotalCostBalance (SPECIAL FORMULA without parentheses)
+                let balanceTotalCost = 0;
+                if (currentReceiptQty > 0) {
+                    if (i === 1) {
+                        // Second row: First term + (Second term / 2)
+                        const prevReceiptTotalCost = parseFloat(updatedTransactions[i-1].receipttotalcost) || 0;
+                        balanceTotalCost = prevReceiptTotalCost + currentReceiptTotalCost / 2;
+                    } else {
+                        // Third row+: First term + (Second term / 2)
+                        const prevBalanceTotalCost = parseFloat(updatedTransactions[i-1].balancetotalcost) || 0;
+                        balanceTotalCost = prevBalanceTotalCost + currentReceiptTotalCost / 2;
+                    }
+                } else {
+                    balanceTotalCost = parseFloat(updatedTransactions[i-1].balancetotalcost) || 0;
+                }
+                updatedTransactions[i].balancetotalcost = balanceTotalCost.toFixed(2);
             }
         }
         
