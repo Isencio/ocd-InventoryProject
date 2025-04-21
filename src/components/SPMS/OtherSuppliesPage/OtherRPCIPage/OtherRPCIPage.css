@@ -1,10 +1,10 @@
-.other-rpci-container {
+.rpci-container {
   display: flex;
   height: 100vh;
   background-color: #231e54;
   position: relative;
 }
-.other-rpci-header {
+.rpci-header {
   width: 85%;
   display: flex;
   flex-direction: column;
@@ -46,7 +46,7 @@
     height: 100%;
   }
 
-  .other-rpci-container .return-button {
+  .rpci-container .return-button {
   background-color: #1c1841;
   color: rgb(255, 255, 255);
   border: none;
@@ -57,7 +57,7 @@
   cursor: pointer;
   }
 
-  .other-rpci-container .export-button {
+  .rpci-container .export-button {
     position: absolute;
     top: 20px;
     right: 20px;
@@ -71,52 +71,6 @@
     cursor: pointer;
     z-index: 1;
   }
-  .other-rpci-container .return-button:hover {
+  .rpci-container .return-button:hover {
     background-color: #f28920;
-  }
-
-  /* Table styles */
-  .stock-cards-header {
-    width: 80%;
-    padding: 20px;
-    color: white;
-  }
-
-  .header-text {
-    text-align: center;
-    margin-bottom: 20px;
-  }
-
-  .header-text p {
-    margin: 5px 0;
-    font-size: 14px;
-  }
-
-  .table-container {
-    width: 100%;
-    overflow-x: auto;
-  }
-
-  .inner-table {
-    width: 100%;
-    border-collapse: collapse;
-    background-color: white;
-    color: black;
-  }
-
-  .inner-table th, .inner-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-  }
-
-  .inner-table th {
-    background-color: #f28920;
-    color: white;
-  }
-
-  .inner-table input {
-    width: 100%;
-    border: none;
-    background: transparent;
   }

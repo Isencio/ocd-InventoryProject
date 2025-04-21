@@ -51,10 +51,10 @@
 
 .stock-card:hover {
   background-color: #e07b1f;
-  transform: scale(1.05); /* Slightly increase the size of the button */
+  transform: scale(1.05); 
 }
 .stock-card:hover {
-background-position: left bottom; /* Transition the background color */
+background-position: left bottom; 
 transform: scale(1.05);
 }
 
@@ -63,8 +63,8 @@ transform: scale(1.05);
 }
 
 .stock-card:hover {
-  transform: rotateX(10deg) rotateY(10deg) translateZ(20px); /* 3D rotation and movement */
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5); /* Enhanced shadow for depth */
+  transform: rotateX(10deg) rotateY(10deg) translateZ(20px); 
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5); 
 }
 
 @keyframes float {
@@ -77,12 +77,12 @@ transform: scale(1.05);
 }
 
 .stock-card {
-animation: float 3s ease-in-out infinite; /* Apply the floating animation */
+animation: float 3s ease-in-out infinite; 
 }
 
 .stock-card:hover {
-animation: none; /* Stop the continuous animation on hover */
-transform: rotateX(10deg) rotateY(10deg) translateZ(20px); /* Keep the hover effect */
+animation: none; 
+transform: rotateX(10deg) rotateY(10deg) translateZ(20px); 
 box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
 }
 
