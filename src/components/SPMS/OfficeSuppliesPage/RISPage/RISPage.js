@@ -157,6 +157,14 @@ const RISPage = () => {
                                 <td>
                                     <input
                                         type="text"
+                                        value={responsibilityCenterCode}
+                                        onChange={(e) => setResponsibilityCenterCode(e.target.value)}
+                                        onKeyDown={handleKeyDown}
+                                    />
+                                    </td>
+                                <td>
+                                    <input
+                                        type="text"
                                         value={risNo}
                                         onChange={(e) => setRisNo(e.target.value)}
                                         onKeyDown={handleKeyDown}
