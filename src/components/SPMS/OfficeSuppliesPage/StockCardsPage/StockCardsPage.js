@@ -31,6 +31,15 @@ const StockCardsPage = () => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [stockNumberToDelete, setStockNumberToDelete] = useState(null);
     const [showAddRowOptions, setShowAddRowOptions] = useState(false);
+    const [showItemForm, setShowItemForm] = useState(false);
+    const [newItemData, setNewItemData] = useState({
+        fundcluster: '',
+        description: '',
+        item: '',
+        stocknumber: '',
+        unitofmeasurement: ''
+    });
+    const [searchTerm, setSearchTerm] = useState('');
     const navigate = useNavigate();
     const tableRef = useRef(null);
     const exportRef = useRef(null);
@@ -70,7 +79,7 @@ const StockCardsPage = () => {
             setLoading(true);
             setError(null);
             
-            const response = await fetch(`http://localhost/project/stockcards.php?stocknumber=${stockNumber}`);
+            const response = await fetch(`http://10.16.4.158/project/stockcards.php?stocknumber=${stockNumber}`);
             
             if (!response.ok) {
                 throw new Error(`Server responded with status ${response.status}`);
@@ -274,6 +283,51 @@ const StockCardsPage = () => {
         }));
         checkForChanges({ ...stockData, [field]: value });
     };
+
+    const handleNewItemChange = (field, value) => {
+        setNewItemData(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    const saveNewItem = () => {
+        if (!newItemData.stocknumber.trim()) {
+            setError('Stock Number is required');
+            return;
+        }
+
+        // Add the new stock number to options if it doesn't exist
+        if (!stockNumberOptions.some(opt => opt.value === newItemData.stocknumber)) {
+            const newOption = {
+                value: newItemData.stocknumber,
+                label: newItemData.stocknumber
+            };
+            setStockNumberOptions([...stockNumberOptions, newOption]);
+        }
+
+        // Update the current stock data
+        const updatedData = {
+            ...newItemData,
+            transactions: [createEmptyTransaction()]
+        };
+        
+        setStockData(updatedData);
+        setOriginalData(JSON.parse(JSON.stringify(updatedData)));
+        setShowItemForm(false);
+        setNewItemData({
+            fundcluster: '',
+            description: '',
+            item: '',
+            stocknumber: '',
+            unitofmeasurement: ''
+        });
+        setHasChanges(true);
+    };
+
+    const filteredStockNumbers = stockNumberOptions.filter(option => 
+        option.label.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     const handleTransactionChange = (index, field, value) => {
         const numericFields = ['receiptqty', 'receiptunitcost', 'issueqty', 'balanceqty', 'balanceunitcost'];
@@ -666,6 +720,65 @@ const StockCardsPage = () => {
                 </div>
             )}
 
+            {showItemForm && (
+                <div className="item-form-modal">
+                    <div className="item-form-content">
+                        <h3>Add New Item</h3>
+                        
+                        <div className="form-group">
+                            <label>Fund Cluster:</label>
+                            <input
+                                type="text"
+                                value={newItemData.fundcluster}
+                                onChange={(e) => handleNewItemChange('fundcluster', e.target.value)}
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Description:</label>
+                            <input
+                                type="text"
+                                value={newItemData.description}
+                                onChange={(e) => handleNewItemChange('description', e.target.value)}
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Item:</label>
+                            <input
+                                type="text"
+                                value={newItemData.item}
+                                onChange={(e) => handleNewItemChange('item', e.target.value)}
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Stock No.:</label>
+                            <input
+                                type="text"
+                                value={newItemData.stocknumber}
+                                onChange={(e) => handleNewItemChange('stocknumber', e.target.value)}
+                                required
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Unit of Measurement:</label>
+                            <input
+                                type="text"
+                                value={newItemData.unitofmeasurement}
+                                onChange={(e) => handleNewItemChange('unitofmeasurement', e.target.value)}
+                            />
+                        </div>
+                        
+                        <div className="form-buttons">
+                            <button onClick={saveNewItem}>Save</button>
+                            <button onClick={() => setShowItemForm(false)}>Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="header-top">
                 <button className="return-button" onClick={() => navigate(-1)}> &larr; </button>
                 <h1>Stock Card</h1>
@@ -683,6 +796,25 @@ const StockCardsPage = () => {
                     <p>NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY</p>
                     <p>Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325</p>
                     <p>E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com</p>
+                </div>
+
+                <div className="item-controls">
+                    <div className="search-container">
+                        <input
+                            type="text"
+                            placeholder="Search stock number..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="search-input"
+                        />
+                    </div>
+                    
+                    <button 
+                        className="add-item-button"
+                        onClick={() => setShowItemForm(true)}
+                    >
+                        Add New Item
+                    </button>
                 </div>
 
                 <div className="table-container" ref={tableRef}>
@@ -728,7 +860,7 @@ const StockCardsPage = () => {
                                                 onChange={(e) => handleStockNumberChange(e.target.value)}
                                                 className="dropdown-select"
                                             >
-                                                {stockNumberOptions.map((option) => (
+                                                {filteredStockNumbers.map((option) => (
                                                     <option key={option.value} value={option.value}>
                                                         {option.label}
                                                     </option>

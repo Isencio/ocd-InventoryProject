@@ -46,6 +46,41 @@
   margin: 5px 0;
 }
 
+.item-controls {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  width: 90%;
+}
+
+.search-container {
+  flex: 1;
+  margin-right: 10px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background: white;
+  color: #000;
+}
+
+.add-item-button {
+  padding: 8px 15px;
+  background-color: #337ab7;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.add-item-button:hover {
+  background-color: #286090;
+}
+
 .table-container {
   width: 90%;
   padding: 10px;
@@ -148,7 +183,6 @@ input {
   background-color: #f28920;
 }
 
-/* Action Buttons Styles - Updated to bottom right */
 .action-buttons {
   position: fixed;
   right: 50px;
@@ -203,7 +237,6 @@ input {
   opacity: 0.65;
 }
 
-/* Loading Modal Styles */
 .loading-modal {
   position: fixed;
   top: 0;
@@ -420,7 +453,6 @@ input {
   opacity: 0.65;
 }
 
-/* Stock Number Controls */
 .stock-number-controls {
   display: flex;
   gap: 5px;
@@ -546,7 +578,6 @@ table:first-of-type input[type="text"] {
   color: #000000;
 }
 
-/* Add Row Dropdown Styles */
 .add-row-dropdown {
   position: relative;
   display: inline-block;
@@ -579,7 +610,77 @@ table:first-of-type input[type="text"] {
   background-color: #f5f5f5;
 }
 
-/* Responsive adjustments */
+.item-form-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.item-form-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  width: 400px;
+  max-width: 90%;
+  color: #000;
+}
+
+.item-form-content h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+  background: white;
+  color: #000;
+}
+
+.form-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.form-buttons button {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.form-buttons button:first-child {
+  background-color: #5cb85c;
+  color: white;
+}
+
+.form-buttons button:last-child {
+  background-color: #d9534f;
+  color: white;
+}
+
 @media (max-width: 768px) {
   .stock-cards-header {
     width: 75%;
