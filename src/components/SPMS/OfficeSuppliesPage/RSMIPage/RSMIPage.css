@@ -232,7 +232,7 @@ input {
 
 .export-options {
   position: absolute;
-  bottom: 100%; /* Positions menu above the button */
+  bottom: 100%; 
   right: 0;
   background-color: #46407f;
   border: 1px solid #ddd;
@@ -265,7 +265,6 @@ input {
   border-radius: 0 0 5px 5px;
 }
 
-/* Make sure the dropdown stays visible when interacting */
 .export-container.active .export-options {
   display: block;
 }

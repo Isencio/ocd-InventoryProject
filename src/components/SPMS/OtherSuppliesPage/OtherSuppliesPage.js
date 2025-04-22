@@ -15,14 +15,14 @@ const OtherSuppliesPage = () => {
   };
   
   return (
-    <div className="other-supplies-container">
+    <div className="office-supplies-container">
       <button className="return-button" onClick={onBack}> &larr; </button>
-          <div className="Other-Supplies-section">
+          <div className="Office-Supplies-section">
             <h1>OTHER SUPPLIES</h1>
-            <div className="other-stock-grid">
-              <button className="other-supplies" onClick={() => handleNavigation('/otherrpci')}>RPCI</button>
-              <button className="other-supplies" onClick={() => handleNavigation('/otherrsmi')}>RSMI</button>
-              <button className="other-supplies" onClick={() => handleNavigation('/otherris')}>RIS</button>
+            <div className="office-stock-grid">
+              <button className="stock-card" onClick={() => handleNavigation('/other-rpci')}>RPCI</button>
+              <button className="stock-card" onClick={() => handleNavigation('/other-rsmi')}>RSMI</button>
+              <button className="stock-card" onClick={() => handleNavigation('/other-ris')}>RIS</button>
             </div>
           </div>
           <div className="right-image-section">
