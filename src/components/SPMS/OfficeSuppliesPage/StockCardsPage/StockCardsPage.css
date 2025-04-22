@@ -405,8 +405,9 @@ input {
 }
 
 .export-options {
+  display: none;
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   left: 0;
   background-color: white;
   border: 1px solid #ddd;
@@ -416,19 +417,23 @@ input {
   width: 150px;
 }
 
+.export-dropdown:hover .export-options {
+  display: block;
+}
+
 .export-options button {
   display: block;
   width: 100%;
   padding: 10px;
   text-align: left;
   border: none;
-  background: none;
+  background-color: white; /* Changed to white */
   cursor: pointer;
   color: #333;
 }
 
 .export-options button:hover {
-  background-color: #f5f5f5;
+  background-color: #f5f5f5; /* Light gray on hover */
 }
 
 .export-button {
@@ -584,6 +589,7 @@ table:first-of-type input[type="text"] {
 }
 
 .add-row-options {
+  display: none;
   position: absolute;
   bottom: 100%;
   left: 0;
@@ -593,6 +599,10 @@ table:first-of-type input[type="text"] {
   box-shadow: 0 2px 5px rgba(0,0,0,0.2);
   z-index: 1;
   width: 150px;
+}
+
+.add-row-dropdown:hover .add-row-options {
+  display: block;
 }
 
 .add-row-options button {
