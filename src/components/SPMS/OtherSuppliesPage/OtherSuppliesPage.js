@@ -20,9 +20,9 @@ const OtherSuppliesPage = () => {
           <div className="Office-Supplies-section">
             <h1>OTHER SUPPLIES</h1>
             <div className="office-stock-grid">
-              <button className="stock-card" onClick={() => handleNavigation('/otherrpci')}>RPCI</button>
-              <button className="stock-card" onClick={() => handleNavigation('/otherrsmi')}>RSMI</button>
-              <button className="stock-card" onClick={() => handleNavigation('/otherris')}>RIS</button>
+              <button className="stock-card" onClick={() => handleNavigation('/other-rpci')}>RPCI</button>
+              <button className="stock-card" onClick={() => handleNavigation('/other-rsmi')}>RSMI</button>
+              <button className="stock-card" onClick={() => handleNavigation('/other-ris')}>RIS</button>
             </div>
           </div>
           <div className="right-image-section">

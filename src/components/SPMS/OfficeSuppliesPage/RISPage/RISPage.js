@@ -162,14 +162,7 @@ const RISPage = () => {
                                         onKeyDown={handleKeyDown}
                                     />
                                     </td>
-                                <td>
-                                    <input
-                                        type="text"
-                                        value={risNo}
-                                        onChange={(e) => setRisNo(e.target.value)}
-                                        onKeyDown={handleKeyDown}
-                                    />
-                                </td>
+                                
                             </tr>
                             <tr>
                                 <th colSpan="4">
