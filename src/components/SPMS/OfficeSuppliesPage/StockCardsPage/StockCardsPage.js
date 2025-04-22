@@ -1101,13 +1101,6 @@ const StockCardsPage = () => {
                         </div>
                     )}
                 </div>
-                <button 
-                    className="save-button"
-                    onClick={confirmSave}
-                    disabled={!hasChanges}
-                >
-                    Save Changes
-                </button>
                 <div className="export-dropdown" ref={exportRef}>
                     <button 
                         className="export-button"
@@ -1123,6 +1116,14 @@ const StockCardsPage = () => {
                         </div>
                     )}
                 </div>
+                <button 
+                    className="save-button"
+                    onClick={confirmSave}
+                    disabled={!hasChanges}
+                >
+                    Save Changes
+                </button>
+                
             </div>
 
             <div className="right-image-section">
