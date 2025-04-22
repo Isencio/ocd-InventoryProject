@@ -30,23 +30,22 @@ const StockCardsPage = () => {
     const [showCustomInput, setShowCustomInput] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [stockNumberToDelete, setStockNumberToDelete] = useState(null);
+    const [showAddRowOptions, setShowAddRowOptions] = useState(false);
     const navigate = useNavigate();
     const tableRef = useRef(null);
     const exportRef = useRef(null);
     const stockNumberInputRef = useRef(null);
+    const addRowButtonRef = useRef(null);
 
     const officeOptions = ['OS', 'CBTS', 'RRMS', 'PDPS', 'ORD', 'BAC', 'FMU', 'Admin', 'GSU', 'HRMU', 'DRMD'];
-
-    useEffect(() => {
-        if (stockData.stocknumber) {
-            fetchStockData(stockData.stocknumber);
-        }
-    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (exportRef.current && !exportRef.current.contains(event.target)) {
                 setShowExportOptions(false);
+            }
+            if (addRowButtonRef.current && !addRowButtonRef.current.contains(event.target)) {
+                setShowAddRowOptions(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -144,6 +143,36 @@ const StockCardsPage = () => {
         daystoconsume: ''
     });
 
+    const createEmptyDRRow = () => ({
+        id: Date.now().toString(),
+        date: '',
+        reference: '',
+        receiptqty: '',
+        receiptunitcost: '',
+        receipttotalcost: '',
+        issueqty: '',
+        issueoffice: '',
+        balanceqty: '',
+        balanceunitcost: '',
+        balancetotalcost: '',
+        daystoconsume: ''
+    });
+
+    const createEmptyRISRow = () => ({
+        id: Date.now().toString(),
+        date: '',
+        reference: '',
+        receiptqty: '',
+        receiptunitcost: '',
+        receipttotalcost: '',
+        issueqty: '',
+        issueoffice: '',
+        balanceqty: '',
+        balanceunitcost: '',
+        balancetotalcost: '',
+        daystoconsume: ''
+    });
+
     const handleStockNumberChange = (value) => {
         if (value === 'add-new') {
             setShowCustomInput(true);
@@ -212,7 +241,17 @@ const StockCardsPage = () => {
         setStockData(updatedData);
         
         if (value) {
-            fetchStockData(value);
+            // Reset to empty data structure when stock number changes
+            const emptyData = {
+                fundcluster: '',
+                stocknumber: value,
+                item: '',
+                description: '',
+                unitofmeasurement: '',
+                transactions: [createEmptyTransaction()]
+            };
+            setStockData(emptyData);
+            setOriginalData(JSON.parse(JSON.stringify(emptyData)));
         } else {
             const emptyData = {
                 fundcluster: '',
@@ -224,8 +263,8 @@ const StockCardsPage = () => {
             };
             setStockData(emptyData);
             setOriginalData(JSON.parse(JSON.stringify(emptyData)));
-            setHasChanges(false);
         }
+        setHasChanges(false);
     };
 
     const handleHeaderChange = (field, value) => {
@@ -348,13 +387,19 @@ const StockCardsPage = () => {
         setHasChanges(changed);
     };
 
-    const addNewRow = () => {
+    const toggleAddRowOptions = () => {
+        setShowAddRowOptions(!showAddRowOptions);
+    };
+
+    const addDRRow = () => {
+        const newRow = createEmptyDRRow();
         const updatedData = {
             ...stockData,
-            transactions: [...stockData.transactions, createEmptyTransaction()]
+            transactions: [...stockData.transactions, newRow]
         };
         setStockData(updatedData);
         checkForChanges(updatedData);
+        setShowAddRowOptions(false);
         
         setTimeout(() => {
             const rows = tableRef.current?.querySelectorAll('tbody tr');
@@ -362,6 +407,26 @@ const StockCardsPage = () => {
                 const lastRow = rows[rows.length - 1];
                 const firstInput = lastRow.querySelector('input');
                 firstInput?.focus();
+            }
+        }, 50);
+    };
+
+    const addRISRow = () => {
+        const newRow = createEmptyRISRow();
+        const updatedData = {
+            ...stockData,
+            transactions: [...stockData.transactions, newRow]
+        };
+        setStockData(updatedData);
+        checkForChanges(updatedData);
+        setShowAddRowOptions(false);
+        
+        setTimeout(() => {
+            const rows = tableRef.current?.querySelectorAll('tbody tr');
+            if (rows && rows.length > 0) {
+                const lastRow = rows[rows.length - 1];
+                const issueQtyInput = lastRow.querySelectorAll('input')[5]; // 6th input is issueqty
+                issueQtyInput?.focus();
             }
         }, 50);
     };
@@ -671,6 +736,16 @@ const StockCardsPage = () => {
                                                 <option value="add-new">+ Add New Stock Number</option>
                                                 
                                             </select>
+                                            
+                                            {stockData.stocknumber && (
+                                                <button 
+                                                    className="fetch-button"
+                                                    onClick={() => fetchStockData(stockData.stocknumber)}
+                                                >
+                                                    Load Data
+                                                </button>
+                                            )}
+                                            
                                             {stockData.stocknumber && stockNumberOptions.some(opt => opt.value === stockData.stocknumber) && (
                                                 <button 
                                                     className="delete-stocknumber-button"
@@ -871,12 +946,20 @@ const StockCardsPage = () => {
             </div>
 
             <div className="action-buttons">
-                <button 
-                    className="add-row-button"
-                    onClick={addNewRow}
-                >
-                    Add New Row
-                </button>
+                <div className="add-row-dropdown" ref={addRowButtonRef}>
+                    <button 
+                        className="add-row-button"
+                        onClick={toggleAddRowOptions}
+                    >
+                        Add New Row
+                    </button>
+                    {showAddRowOptions && (
+                        <div className="add-row-options">
+                            <button onClick={addDRRow}>Add DR Row</button>
+                            <button onClick={addRISRow}>Add RIS Row</button>
+                        </div>
+                    )}
+                </div>
                 <button 
                     className="save-button"
                     onClick={confirmSave}
