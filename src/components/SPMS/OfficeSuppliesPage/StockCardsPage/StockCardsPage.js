@@ -221,16 +221,35 @@ const StockCardsPage = () => {
     };
 
     const addCustomStockNumber = () => {
-        if (customStockNumber.trim() && !stockNumberOptions.some(opt => opt.value === customStockNumber)) {
-            const newOption = {
-                value: customStockNumber,
-                label: customStockNumber
-            };
-            setStockNumberOptions([...stockNumberOptions, newOption]);
-            setShowCustomInput(false);
-            setCustomStockNumber('');
-            proceedWithStockNumberChange(newOption.value);
+        const trimmedValue = customStockNumber.trim();
+        
+        if (!trimmedValue) {
+            setError('Please enter a stock number');
+            return;
         }
+        
+        if (stockNumberOptions.some(opt => opt.value === trimmedValue)) {
+            setError('This stock number already exists');
+            return;
+        }
+        
+        const newOption = {
+            value: trimmedValue,
+            label: trimmedValue
+        };
+        
+        const updatedOptions = [
+            ...stockNumberOptions.filter(opt => opt.value !== ''),
+            newOption
+        ].sort((a, b) => a.value.localeCompare(b.value));
+        
+        updatedOptions.unshift({ value: '', label: 'Select Stock No.' });
+        
+        setStockNumberOptions(updatedOptions);
+        setShowCustomInput(false);
+        setCustomStockNumber('');
+        setError(null);
+        proceedWithStockNumberChange(newOption.value);
     };
 
     const proceedWithStockNumberChange = (value) => {
@@ -241,7 +260,6 @@ const StockCardsPage = () => {
         setStockData(updatedData);
         
         if (value) {
-            // Reset to empty data structure when stock number changes
             const emptyData = {
                 fundcluster: '',
                 stocknumber: value,
@@ -303,17 +321,14 @@ const StockCardsPage = () => {
             [field]: validatedValue
         };
         
-        // Calculate TotalCostReceipt for all rows
         for (let i = 0; i < updatedTransactions.length; i++) {
             const qty = parseFloat(updatedTransactions[i].receiptqty) || 0;
             const unitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
             updatedTransactions[i].receipttotalcost = (qty * unitCost).toFixed(2);
         }
         
-        // Calculate balance for each row
         for (let i = 0; i < updatedTransactions.length; i++) {
             if (i === 0) {
-                // First row calculations (unchanged)
                 const receiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
                 const receiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
                 const receiptTotalCost = receiptQty * receiptUnitCost;
@@ -323,29 +338,23 @@ const StockCardsPage = () => {
                 updatedTransactions[i].balancetotalcost = receiptTotalCost.toFixed(2);
                 updatedTransactions[i].receipttotalcost = receiptTotalCost.toFixed(2);
             } else {
-                // Subsequent rows calculations
                 const prevBalanceQty = parseFloat(updatedTransactions[i-1].balanceqty) || 0;
                 const currentReceiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
                 const currentReceiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
                 const currentIssueQty = parseFloat(updatedTransactions[i].issueqty) || 0;
                 
-                // Calculate current receipt total
                 const currentReceiptTotalCost = currentReceiptQty * currentReceiptUnitCost;
                 updatedTransactions[i].receipttotalcost = currentReceiptTotalCost.toFixed(2);
                 
-                // Calculate balance quantity
                 let balanceQty = prevBalanceQty + currentReceiptQty - currentIssueQty;
                 updatedTransactions[i].balanceqty = balanceQty.toString();
                 
-                // Calculate UnitCostBalance (SPECIAL FORMULA without parentheses)
                 let balanceUnitCost = 0;
                 if (currentReceiptQty > 0) {
                     if (i === 1) {
-                        // Second row: First term + (Second term / 2)
                         const prevReceiptUnitCost = parseFloat(updatedTransactions[i-1].receiptunitcost) || 0;
                         balanceUnitCost = prevReceiptUnitCost + currentReceiptUnitCost / 2;
                     } else {
-                        // Third row+: First term + (Second term / 2)
                         const prevBalanceUnitCost = parseFloat(updatedTransactions[i-1].balanceunitcost) || 0;
                         balanceUnitCost = prevBalanceUnitCost + currentReceiptUnitCost / 2;
                     }
@@ -354,15 +363,12 @@ const StockCardsPage = () => {
                 }
                 updatedTransactions[i].balanceunitcost = balanceUnitCost.toFixed(2);
                 
-                // Calculate TotalCostBalance (SPECIAL FORMULA without parentheses)
                 let balanceTotalCost = 0;
                 if (currentReceiptQty > 0) {
                     if (i === 1) {
-                        // Second row: First term + (Second term / 2)
                         const prevReceiptTotalCost = parseFloat(updatedTransactions[i-1].receipttotalcost) || 0;
                         balanceTotalCost = prevReceiptTotalCost + currentReceiptTotalCost / 2;
                     } else {
-                        // Third row+: First term + (Second term / 2)
                         const prevBalanceTotalCost = parseFloat(updatedTransactions[i-1].balancetotalcost) || 0;
                         balanceTotalCost = prevBalanceTotalCost + currentReceiptTotalCost / 2;
                     }
@@ -425,7 +431,7 @@ const StockCardsPage = () => {
             const rows = tableRef.current?.querySelectorAll('tbody tr');
             if (rows && rows.length > 0) {
                 const lastRow = rows[rows.length - 1];
-                const issueQtyInput = lastRow.querySelectorAll('input')[5]; // 6th input is issueqty
+                const issueQtyInput = lastRow.querySelectorAll('input')[5];
                 issueQtyInput?.focus();
             }
         }, 50);
@@ -717,9 +723,13 @@ const StockCardsPage = () => {
                                                 value={customStockNumber}
                                                 onChange={(e) => setCustomStockNumber(e.target.value)}
                                                 placeholder="Enter new stock number"
+                                                onKeyDown={(e) => e.key === 'Enter' && addCustomStockNumber()}
                                             />
                                             <button onClick={addCustomStockNumber}>Add</button>
-                                            <button onClick={() => setShowCustomInput(false)}>Cancel</button>
+                                            <button onClick={() => {
+                                                setShowCustomInput(false);
+                                                setCustomStockNumber('');
+                                            }}>Cancel</button>
                                         </div>
                                     ) : (
                                         <div className="stock-number-controls">
@@ -734,7 +744,6 @@ const StockCardsPage = () => {
                                                     </option>
                                                 ))}
                                                 <option value="add-new">+ Add New Stock Number</option>
-                                                
                                             </select>
                                             
                                             {stockData.stocknumber && (
@@ -746,7 +755,7 @@ const StockCardsPage = () => {
                                                 </button>
                                             )}
                                             
-                                            {stockData.stocknumber && stockNumberOptions.some(opt => opt.value === stockData.stocknumber) && (
+                                            {stockData.stocknumber && stockNumberOptions.some(opt => opt.value === stockData.stocknumber && opt.value !== '') && (
                                                 <button 
                                                     className="delete-stocknumber-button"
                                                     onClick={() => {
