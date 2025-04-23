@@ -117,7 +117,7 @@ const OtherRPCIPage = () => {
         <div className="other-rpci-container">
             <div className="header-top">
                 <button className="return-button" onClick={onBack}> &larr; </button>
-                <h1>OTHER SUPPLIES RPCI</h1>
+                <h1>RPCI</h1>
             </div>
             <div className="stock-cards-header">
                 <div className="header-text">
