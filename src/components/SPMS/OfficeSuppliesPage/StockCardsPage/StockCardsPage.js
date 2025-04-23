@@ -813,13 +813,6 @@ const StockCardsPage = () => {
                             className="search-input"
                         />
                     </div>
-                    
-                    <button 
-                        className="add-item-button"
-                        onClick={() => setShowItemForm(true)}
-                    >
-                        Add New Item
-                    </button>
                 </div>
 
                 <div className="table-container" ref={tableRef}>
@@ -1086,6 +1079,13 @@ const StockCardsPage = () => {
             </div>
 
             <div className="action-buttons">
+                <button 
+                    className="add-item-button"
+                    onClick={() => setShowItemForm(true)}
+                >
+                    Add New Item
+                </button>
+                
                 <div className="add-row-dropdown" ref={addRowButtonRef}>
                     <button 
                         className="add-row-button"
@@ -1100,6 +1100,7 @@ const StockCardsPage = () => {
                         </div>
                     )}
                 </div>
+                
                 <div className="export-dropdown" ref={exportRef}>
                     <button 
                         className="export-button"

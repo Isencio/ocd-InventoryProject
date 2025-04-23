@@ -85,20 +85,6 @@
   color: #000;
 }
 
-.add-item-button {
-  padding: 8px 15px;
-  background-color: #337ab7;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.add-item-button:hover {
-  background-color: #286090;
-}
-
 .table-container {
   width: 90%;
   padding: 10px;
@@ -219,6 +205,15 @@ input {
   cursor: pointer;
   font-weight: bold;
   text-align: center;
+}
+
+.add-item-button {
+  background-color: #337ab7;
+  color: white;
+}
+
+.add-item-button:hover {
+  background-color: #286090;
 }
 
 .add-row-button {
