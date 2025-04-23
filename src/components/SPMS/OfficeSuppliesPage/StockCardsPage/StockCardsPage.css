@@ -22,6 +22,24 @@
   margin: #ddd;
 }
 
+.save-notification {
+  position: fixed;
+  top: 20px;
+  right: 45px;
+  background-color: #f0ad4e;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 100;
+}
+
+.save-notification.visible {
+  opacity: 1;
+}
+
 .stock-cards-header {
   width: 85%;
   display: flex;
@@ -332,12 +350,6 @@ input {
   color: #333;
 }
 
-.unsaved-changes {
-  color: #d9534f;
-  font-weight: bold;
-  margin-left: 20px;
-}
-
 .confirmation-modal {
   position: fixed;
   top: 0;
@@ -427,35 +439,13 @@ input {
   padding: 10px;
   text-align: left;
   border: none;
-  background-color: white; /* Changed to white */
+  background-color: white;
   cursor: pointer;
   color: #333;
 }
 
 .export-options button:hover {
-  background-color: #f5f5f5; /* Light gray on hover */
-}
-
-.export-button {
-  background-color: #5bc0de;
-  color: white;
-  border: none;
-  padding: 10px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  text-align: center;
-  width: 150px;
-}
-
-.export-button:hover {
-  background-color: #31b0d5;
-}
-
-.export-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-  opacity: 0.65;
+  background-color: #f5f5f5;
 }
 
 .stock-number-controls {
@@ -525,99 +515,6 @@ input {
 .custom-stocknumber-input button:last-child {
   background-color: #f44336;
   color: white;
-}
-
-.confirmation-modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.confirmation-content {
-  background-color: white;
-  padding: 20px;
-  border-radius: 5px;
-  max-width: 400px;
-  width: 100%;
-}
-
-.confirmation-content h3 {
-  margin-top: 0;
-  color: #333;
-}
-
-.confirmation-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.confirmation-buttons button {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.confirmation-buttons button:first-child {
-  background-color: #4CAF50;
-  color: white;
-}
-
-.confirmation-buttons button:last-child {
-  background-color: #f44336;
-  color: white;
-}
-
-table:first-of-type input[type="text"] {
-  background-color: white;
-  padding: 5px;
-  color: #000000;
-}
-
-.add-row-dropdown {
-  position: relative;
-  display: inline-block;
-}
-
-.add-row-options {
-  display: none;
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  z-index: 1;
-  width: 150px;
-}
-
-.add-row-dropdown:hover .add-row-options {
-  display: block;
-}
-
-.add-row-options button {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  text-align: left;
-  border: none;
-  background: none;
-  cursor: pointer;
-  color: #333;
-}
-
-.add-row-options button:hover {
-  background-color: #f5f5f5;
 }
 
 .item-form-modal {
@@ -690,6 +587,43 @@ table:first-of-type input[type="text"] {
 .form-buttons button:last-child {
   background-color: #d9534f;
   color: white;
+}
+
+.add-row-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.add-row-options {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1;
+  width: 150px;
+}
+
+.add-row-dropdown:hover .add-row-options {
+  display: block;
+}
+
+.add-row-options button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #333;
+}
+
+.add-row-options button:hover {
+  background-color: #f5f5f5;
 }
 
 @media (max-width: 768px) {

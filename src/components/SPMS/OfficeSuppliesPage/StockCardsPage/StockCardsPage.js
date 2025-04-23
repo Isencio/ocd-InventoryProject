@@ -315,7 +315,6 @@ const StockCardsPage = () => {
             return;
         }
 
-        // Add the new stock number to options if it doesn't exist
         if (!stockNumberOptions.some(opt => opt.value === newItemData.stocknumber)) {
             const newOption = {
                 value: newItemData.stocknumber,
@@ -324,7 +323,6 @@ const StockCardsPage = () => {
             setStockNumberOptions([...stockNumberOptions, newOption]);
         }
 
-        // Update the current stock data
         const updatedData = {
             ...newItemData,
             transactions: [createEmptyTransaction()]
@@ -788,9 +786,10 @@ const StockCardsPage = () => {
             <div className="header-top">
                 <button className="return-button" onClick={() => navigate(-1)}> &larr; </button>
                 <h1>Stock Card</h1>
-                {hasChanges && (
-                    <span className="unsaved-changes">Unsaved Changes</span>
-                )}
+            </div>
+
+            <div className={`save-notification ${hasChanges ? 'visible' : ''}`}>
+                Pending Changes
             </div>
 
             <div className="stock-cards-header">
@@ -1123,7 +1122,6 @@ const StockCardsPage = () => {
                 >
                     Save Changes
                 </button>
-                
             </div>
 
             <div className="right-image-section">
