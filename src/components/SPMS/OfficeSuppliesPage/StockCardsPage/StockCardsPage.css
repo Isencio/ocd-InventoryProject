@@ -74,6 +74,7 @@
 .search-container {
   flex: 1;
   margin-right: 10px;
+  position: relative;
 }
 
 .search-input {
@@ -83,6 +84,36 @@
   border: 1px solid #ddd;
   background: white;
   color: #000;
+}
+
+.suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 100;
+  color: #000;
+}
+
+.suggestion-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #333;
+  border-bottom: 1px solid #eee;
+}
+
+.suggestion-item:hover {
+  background-color: #f5f5f5;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
 }
 
 .table-container {
@@ -670,4 +701,45 @@ input {
     padding: 8px;
     font-size: 14px;
   }
+}
+
+.stock-number-controls {
+  display: flex;
+  gap: 5px;
+}
+
+.stock-number-controls input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  color: #000;
+}
+
+.fetch-button {
+  padding: 8px 12px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.fetch-button:hover {
+  background-color: #45a049;
+}
+
+.delete-stocknumber-button {
+  padding: 8px 12px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delete-stocknumber-button:hover {
+  background-color: #d32f2f;
 }

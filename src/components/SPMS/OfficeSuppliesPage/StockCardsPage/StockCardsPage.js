@@ -19,17 +19,7 @@ const StockCardsPage = () => {
     const [hasChanges, setHasChanges] = useState(false);
     const [originalData, setOriginalData] = useState(null);
     const [showExportOptions, setShowExportOptions] = useState(false);
-    const [stockNumberOptions, setStockNumberOptions] = useState([
-        { value: '', label: 'Select Stock No.' },
-        { value: 'A1', label: 'A1' },
-        { value: 'A2', label: 'A2' },
-        { value: 'A3', label: 'A3' },
-        { value: 'A4', label: 'A4' },
-    ]);
-    const [customStockNumber, setCustomStockNumber] = useState('');
-    const [showCustomInput, setShowCustomInput] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [stockNumberToDelete, setStockNumberToDelete] = useState(null);
     const [showAddRowOptions, setShowAddRowOptions] = useState(false);
     const [showItemForm, setShowItemForm] = useState(false);
     const [newItemData, setNewItemData] = useState({
@@ -40,11 +30,13 @@ const StockCardsPage = () => {
         unitofmeasurement: ''
     });
     const [searchTerm, setSearchTerm] = useState('');
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
     const navigate = useNavigate();
     const tableRef = useRef(null);
     const exportRef = useRef(null);
-    const stockNumberInputRef = useRef(null);
     const addRowButtonRef = useRef(null);
+    const suggestionsRef = useRef(null);
 
     const officeOptions = ['OS', 'CBTS', 'RRMS', 'PDPS', 'ORD', 'BAC', 'FMU', 'Admin', 'GSU', 'HRMU', 'DRMD'];
 
@@ -55,6 +47,9 @@ const StockCardsPage = () => {
             }
             if (addRowButtonRef.current && !addRowButtonRef.current.contains(event.target)) {
                 setShowAddRowOptions(false);
+            }
+            if (suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {
+                setShowSuggestions(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -122,6 +117,45 @@ const StockCardsPage = () => {
         }
     };
 
+    const fetchSuggestions = async (searchTerm) => {
+        if (!searchTerm) {
+            setSuggestions([]);
+            return;
+        }
+        
+        try {
+            const response = await fetch(`http://10.16.4.158/project/stockcards.php?search=${searchTerm}`);
+            if (!response.ok) {
+                throw new Error(`Server responded with status ${response.status}`);
+            }
+            
+            const data = await response.json();
+            if (Array.isArray(data)) {
+                setSuggestions(data.map(item => item.stocknumber));
+            }
+        } catch (error) {
+            console.error('Error fetching suggestions:', error);
+            setSuggestions([]);
+        }
+    };
+
+    const handleSearchChange = (e) => {
+        const value = e.target.value;
+        setSearchTerm(value);
+        fetchSuggestions(value);
+        setShowSuggestions(true);
+    };
+
+    const handleSuggestionClick = (suggestion) => {
+        setSearchTerm(suggestion);
+        setStockData(prev => ({
+            ...prev,
+            stocknumber: suggestion
+        }));
+        setShowSuggestions(false);
+        fetchStockData(suggestion);
+    };
+
     const processTransaction = (item) => ({
         id: item.StockID || Date.now().toString(),
         date: item.date || '',
@@ -182,116 +216,46 @@ const StockCardsPage = () => {
         daystoconsume: ''
     });
 
-    const handleStockNumberChange = (value) => {
-        if (value === 'add-new') {
-            setShowCustomInput(true);
-            setTimeout(() => {
-                stockNumberInputRef.current?.focus();
-            }, 0);
-            return;
-        }
-
-        if (value === 'delete-mode') {
-            if (stockData.stocknumber && stockNumberOptions.some(opt => opt.value === stockData.stocknumber && opt.value !== '')) {
-                setStockNumberToDelete(stockData.stocknumber);
-                setShowDeleteConfirm(true);
-            } else {
-                setError('Please select a valid stock number to delete');
-            }
-            return;
-        }
-
-        if (hasChanges) {
-            if (window.confirm('You have unsaved changes. Do you want to discard them?')) {
-                proceedWithStockNumberChange(value);
-            }
-        } else {
-            proceedWithStockNumberChange(value);
-        }
-    };
-
-    const deleteStockNumber = () => {
-        if (stockNumberToDelete) {
-            const updatedOptions = stockNumberOptions.filter(opt => opt.value !== stockNumberToDelete);
-            setStockNumberOptions(updatedOptions);
-            
-            if (stockData.stocknumber === stockNumberToDelete) {
-                proceedWithStockNumberChange('');
-            }
-            
-            setShowDeleteConfirm(false);
-            setStockNumberToDelete(null);
-        }
-    };
-
-    const cancelDelete = () => {
-        setShowDeleteConfirm(false);
-        setStockNumberToDelete(null);
-    };
-
-    const addCustomStockNumber = () => {
-        const trimmedValue = customStockNumber.trim();
-        
-        if (!trimmedValue) {
+    const handleLoadData = () => {
+        if (!stockData.stocknumber) {
             setError('Please enter a stock number');
             return;
         }
         
-        if (stockNumberOptions.some(opt => opt.value === trimmedValue)) {
-            setError('This stock number already exists');
+        if (hasChanges) {
+            if (window.confirm('You have unsaved changes. Do you want to discard them?')) {
+                fetchStockData(stockData.stocknumber);
+            }
+        } else {
+            fetchStockData(stockData.stocknumber);
+        }
+    };
+
+    const handleDeleteStock = () => {
+        if (!stockData.stocknumber) {
+            setError('Please enter a stock number to delete');
             return;
         }
         
-        const newOption = {
-            value: trimmedValue,
-            label: trimmedValue
-        };
-        
-        const updatedOptions = [
-            ...stockNumberOptions.filter(opt => opt.value !== ''),
-            newOption
-        ].sort((a, b) => a.value.localeCompare(b.value));
-        
-        updatedOptions.unshift({ value: '', label: 'Select Stock No.' });
-        
-        setStockNumberOptions(updatedOptions);
-        setShowCustomInput(false);
-        setCustomStockNumber('');
-        setError(null);
-        proceedWithStockNumberChange(newOption.value);
+        setShowDeleteConfirm(true);
     };
 
-    const proceedWithStockNumberChange = (value) => {
-        const updatedData = {
-            ...stockData,
-            stocknumber: value
+    const deleteStockNumber = () => {
+        const emptyData = {
+            fundcluster: '',
+            stocknumber: '',
+            item: '',
+            description: '',
+            unitofmeasurement: '',
+            transactions: [createEmptyTransaction()]
         };
-        setStockData(updatedData);
-        
-        if (value) {
-            const emptyData = {
-                fundcluster: '',
-                stocknumber: value,
-                item: '',
-                description: '',
-                unitofmeasurement: '',
-                transactions: [createEmptyTransaction()]
-            };
-            setStockData(emptyData);
-            setOriginalData(JSON.parse(JSON.stringify(emptyData)));
-        } else {
-            const emptyData = {
-                fundcluster: '',
-                stocknumber: '',
-                item: '',
-                description: '',
-                unitofmeasurement: '',
-                transactions: [createEmptyTransaction()]
-            };
-            setStockData(emptyData);
-            setOriginalData(JSON.parse(JSON.stringify(emptyData)));
-        }
-        setHasChanges(false);
+        setStockData(emptyData);
+        setOriginalData(JSON.parse(JSON.stringify(emptyData)));
+        setShowDeleteConfirm(false);
+    };
+
+    const cancelDelete = () => {
+        setShowDeleteConfirm(false);
     };
 
     const handleHeaderChange = (field, value) => {
@@ -315,14 +279,6 @@ const StockCardsPage = () => {
             return;
         }
 
-        if (!stockNumberOptions.some(opt => opt.value === newItemData.stocknumber)) {
-            const newOption = {
-                value: newItemData.stocknumber,
-                label: newItemData.stocknumber
-            };
-            setStockNumberOptions([...stockNumberOptions, newOption]);
-        }
-
         const updatedData = {
             ...newItemData,
             transactions: [createEmptyTransaction()]
@@ -340,10 +296,6 @@ const StockCardsPage = () => {
         });
         setHasChanges(true);
     };
-
-    const filteredStockNumbers = stockNumberOptions.filter(option => 
-        option.label.toLowerCase().includes(searchTerm.toLowerCase())
-    );
 
     const handleTransactionChange = (index, field, value) => {
         const numericFields = ['receiptqty', 'receiptunitcost', 'issueqty', 'balanceqty', 'balanceunitcost'];
@@ -715,7 +667,7 @@ const StockCardsPage = () => {
                 <div className="confirmation-modal">
                     <div className="confirmation-content">
                         <h3>Confirm Delete</h3>
-                        <p>Are you sure you want to delete stock number: {stockNumberToDelete}?</p>
+                        <p>Are you sure you want to delete stock number: {stockData.stocknumber}?</p>
                         <div className="confirmation-buttons">
                             <button onClick={deleteStockNumber}>Yes</button>
                             <button onClick={cancelDelete}>No</button>
@@ -809,9 +761,23 @@ const StockCardsPage = () => {
                             type="text"
                             placeholder="Search stock number..."
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={handleSearchChange}
                             className="search-input"
+                            onFocus={() => setShowSuggestions(true)}
                         />
+                        {showSuggestions && suggestions.length > 0 && (
+                            <div className="suggestions-dropdown" ref={suggestionsRef}>
+                                {suggestions.map((suggestion, index) => (
+                                    <div 
+                                        key={index}
+                                        className="suggestion-item"
+                                        onClick={() => handleSuggestionClick(suggestion)}
+                                    >
+                                        {suggestion}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -839,59 +805,26 @@ const StockCardsPage = () => {
                                 </td>
                                 <th className="Item-right-align">Stock No. :</th>
                                 <td className="input-stockno-cell">
-                                    {showCustomInput ? (
-                                        <div className="custom-stocknumber-input">
-                                            <input
-                                                type="text"
-                                                ref={stockNumberInputRef}
-                                                value={customStockNumber}
-                                                onChange={(e) => setCustomStockNumber(e.target.value)}
-                                                placeholder="Enter new stock number"
-                                                onKeyDown={(e) => e.key === 'Enter' && addCustomStockNumber()}
-                                            />
-                                            <button onClick={addCustomStockNumber}>Add</button>
-                                            <button onClick={() => {
-                                                setShowCustomInput(false);
-                                                setCustomStockNumber('');
-                                            }}>Cancel</button>
-                                        </div>
-                                    ) : (
-                                        <div className="stock-number-controls">
-                                            <select
-                                                value={stockData.stocknumber}
-                                                onChange={(e) => handleStockNumberChange(e.target.value)}
-                                                className="dropdown-select"
-                                            >
-                                                {filteredStockNumbers.map((option) => (
-                                                    <option key={option.value} value={option.value}>
-                                                        {option.label}
-                                                    </option>
-                                                ))}
-                                                <option value="add-new">+ Add New Stock Number</option>
-                                            </select>
-                                            
-                                            {stockData.stocknumber && (
-                                                <button 
-                                                    className="fetch-button"
-                                                    onClick={() => fetchStockData(stockData.stocknumber)}
-                                                >
-                                                    Load Data
-                                                </button>
-                                            )}
-                                            
-                                            {stockData.stocknumber && stockNumberOptions.some(opt => opt.value === stockData.stocknumber && opt.value !== '') && (
-                                                <button 
-                                                    className="delete-stocknumber-button"
-                                                    onClick={() => {
-                                                        setStockNumberToDelete(stockData.stocknumber);
-                                                        setShowDeleteConfirm(true);
-                                                    }}
-                                                >
-                                                    Delete
-                                                </button>
-                                            )}
-                                        </div>
-                                    )}
+                                    <div className="stock-number-controls">
+                                        <input
+                                            type="text"
+                                            value={stockData.stocknumber}
+                                            onChange={(e) => handleHeaderChange('stocknumber', e.target.value)}
+                                            placeholder="Enter stock number"
+                                        />
+                                        <button 
+                                            className="fetch-button"
+                                            onClick={handleLoadData}
+                                        >
+                                            Load Data
+                                        </button>
+                                        <button 
+                                            className="delete-stocknumber-button"
+                                            onClick={handleDeleteStock}
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             <tr>
