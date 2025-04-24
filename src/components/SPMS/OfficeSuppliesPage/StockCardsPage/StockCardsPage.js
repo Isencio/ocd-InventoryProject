@@ -687,6 +687,7 @@ const StockCardsPage = () => {
                                 type="text"
                                 value={newItemData.fundcluster}
                                 onChange={(e) => handleNewItemChange('fundcluster', e.target.value)}
+                                className="custom-stocknumber-input"
                             />
                         </div>
                         
@@ -696,6 +697,7 @@ const StockCardsPage = () => {
                                 type="text"
                                 value={newItemData.description}
                                 onChange={(e) => handleNewItemChange('description', e.target.value)}
+                                className="custom-stocknumber-input"
                             />
                         </div>
                         
@@ -705,6 +707,7 @@ const StockCardsPage = () => {
                                 type="text"
                                 value={newItemData.item}
                                 onChange={(e) => handleNewItemChange('item', e.target.value)}
+                                className="custom-stocknumber-input"
                             />
                         </div>
                         
@@ -714,6 +717,7 @@ const StockCardsPage = () => {
                                 type="text"
                                 value={newItemData.stocknumber}
                                 onChange={(e) => handleNewItemChange('stocknumber', e.target.value)}
+                                className="custom-stocknumber-input"
                                 required
                             />
                         </div>
@@ -724,6 +728,7 @@ const StockCardsPage = () => {
                                 type="text"
                                 value={newItemData.unitofmeasurement}
                                 onChange={(e) => handleNewItemChange('unitofmeasurement', e.target.value)}
+                                className="custom-stocknumber-input"
                             />
                         </div>
                         
@@ -787,21 +792,27 @@ const StockCardsPage = () => {
                             <tr>
                                 <th className="Item-right-align">Fund Cluster:</th>
                                 <td className="input-Fundcluster-cell">
-                                    <input
-                                        type="text"
-                                        value={stockData.fundcluster}
-                                        onChange={(e) => handleHeaderChange('fundcluster', e.target.value)}
-                                    />
+                                    <div className="stock-number-controls">
+                                        <input
+                                            type="text"
+                                            value={stockData.fundcluster}
+                                            onChange={(e) => handleHeaderChange('fundcluster', e.target.value)}
+                                            className="custom-stocknumber-input"
+                                        />
+                                    </div>
                                 </td>
                             </tr>
                             <tr>
                                 <th className="Item-left-align">Item:</th>
                                 <td className="input-Item-cell">
-                                    <input
-                                        type="text"
-                                        value={stockData.item}
-                                        onChange={(e) => handleHeaderChange('item', e.target.value)}
-                                    />
+                                    <div className="stock-number-controls">
+                                        <input
+                                            type="text"
+                                            value={stockData.item}
+                                            onChange={(e) => handleHeaderChange('item', e.target.value)}
+                                            className="custom-stocknumber-input"
+                                        />
+                                    </div>
                                 </td>
                                 <th className="Item-right-align">Stock No. :</th>
                                 <td className="input-stockno-cell">
@@ -811,6 +822,7 @@ const StockCardsPage = () => {
                                             value={stockData.stocknumber}
                                             onChange={(e) => handleHeaderChange('stocknumber', e.target.value)}
                                             placeholder="Enter stock number"
+                                            className="custom-stocknumber-input"
                                         />
                                         <button 
                                             className="fetch-button"
@@ -830,19 +842,25 @@ const StockCardsPage = () => {
                             <tr>
                                 <th className="Item-left-align">Description:</th>
                                 <td>
-                                    <input
-                                        type="text"
-                                        value={stockData.description}
-                                        onChange={(e) => handleHeaderChange('description', e.target.value)}
-                                    />
+                                    <div className="stock-number-controls">
+                                        <input
+                                            type="text"
+                                            value={stockData.description}
+                                            onChange={(e) => handleHeaderChange('description', e.target.value)}
+                                            className="custom-stocknumber-input"
+                                        />
+                                    </div>
                                 </td>
                                 <th className="Item-right-align">Unit of Measurement:</th>
                                 <td>
-                                    <input
-                                        type="text"
-                                        value={stockData.unitofmeasurement}
-                                        onChange={(e) => handleHeaderChange('unitofmeasurement', e.target.value)}
-                                    />
+                                    <div className="stock-number-controls">
+                                        <input
+                                            type="text"
+                                            value={stockData.unitofmeasurement}
+                                            onChange={(e) => handleHeaderChange('unitofmeasurement', e.target.value)}
+                                            className="custom-stocknumber-input"
+                                        />
+                                    </div>
                                 </td>
                             </tr>
                             <tr>

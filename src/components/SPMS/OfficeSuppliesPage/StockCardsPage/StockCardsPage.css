@@ -140,23 +140,31 @@ th {
   background-color: #46407f;
 }
 
-.input-Item-cell, .input-stockno-cell {
+.custom-stocknumber-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  color: #000;
   width: 100%;
+  box-sizing: border-box;
 }
 
-.dropdown-select {
-  width: 100%;
-  padding: 5px;
-  border: 1px solid #ffffff;
-  border-radius: 6px;
-  font-size: 15px;
+.stock-number-controls {
+  display: flex;
+  gap: 5px;
+  align-items: center;
 }
 
 input {
-  width: 100%;
+  width: auto;
   box-sizing: border-box;
-  background: transparent;
+  background: white;
   color: #000000;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px;
 }
 
 .inner-table {
@@ -168,6 +176,7 @@ input {
   text-align: center;
   border: 1px solid #ddd;
 }
+
 .inner-table td {
   font-size: 5px;
   padding: 10px;
@@ -474,18 +483,6 @@ input {
   background-color: #f5f5f5;
 }
 
-.stock-number-controls {
-  display: flex;
-  gap: 5px;
-}
-
-.stock-number-controls select {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
 .fetch-button {
   padding: 8px 12px;
   background-color: #4CAF50;
@@ -511,36 +508,6 @@ input {
 
 .delete-stocknumber-button:hover {
   background-color: #d32f2f;
-}
-
-.custom-stocknumber-input {
-  display: flex;
-  gap: 5px;
-}
-
-.custom-stocknumber-input input {
-  flex: 1;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background: white;
-}
-
-.custom-stocknumber-input button {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.custom-stocknumber-input button:first-child {
-  background-color: #4CAF50;
-  color: white;
-}
-
-.custom-stocknumber-input button:last-child {
-  background-color: #f44336;
-  color: white;
 }
 
 .item-form-modal {
@@ -694,7 +661,7 @@ input {
   .inner-table th, 
   .inner-table td {
     padding: 5px;
-  }
+  } 
   
   .action-buttons button {
     width: 120px;
@@ -703,43 +670,16 @@ input {
   }
 }
 
-.stock-number-controls {
-  display: flex;
-  gap: 5px;
+.qty-input {
+  text-align: right;
 }
 
-.stock-number-controls input {
-  flex: 1;
-  padding: 8px;
+.office-select {
+  width: 100%;
+  padding: 5px;
   border: 1px solid #ccc;
   border-radius: 4px;
   background: white;
   color: #000;
-}
-
-.fetch-button {
-  padding: 8px 12px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.fetch-button:hover {
-  background-color: #45a049;
-}
-
-.delete-stocknumber-button {
-  padding: 8px 12px;
-  background-color: #f44336;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.delete-stocknumber-button:hover {
-  background-color: #d32f2f;
+  font-size: 12px;
 }
