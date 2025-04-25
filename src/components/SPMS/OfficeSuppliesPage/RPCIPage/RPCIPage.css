@@ -74,3 +74,85 @@
   .rpci-container .return-button:hover {
     background-color: #f28920;
   }
+  .action-buttons-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 100;
+  }
+  
+  .action-buttons {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .add-row-button,
+  .save-button,
+  .export-main-button {
+    background-color: #1c1841;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .add-row-button:hover,
+  .save-button:hover,
+  .export-main-button:hover {
+    background-color: #f28920;
+  }
+  
+  .export-dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .export-dropdown-content {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    background-color: #1c1841;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  
+  .export-dropdown-content button {
+    color: white;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .export-dropdown-content button:hover {
+    background-color: #f28920;
+  }
+  
+  .export-dropdown:hover .export-dropdown-content {
+    display: block;
+  }
+
+.pending-changes-notification {
+    position: fixed;
+    top: 20px;
+    right: 40px;
+    background-color: #f0ad4e;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 100;
+}
