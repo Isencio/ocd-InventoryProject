@@ -74,7 +74,7 @@ const StockCardsPage = () => {
             setLoading(true);
             setError(null);
             
-            const response = await fetch(`http://10.16.4.158/project/stockcards.php?stocknumber=${stockNumber}`);
+            const response = await fetch(`http://10.16.2.82/project/stockcards.php?stocknumber=${stockNumber}`);
             
             if (!response.ok) {
                 throw new Error(`Server responded with status ${response.status}`);
@@ -124,7 +124,7 @@ const StockCardsPage = () => {
         }
         
         try {
-            const response = await fetch(`http://10.16.4.158/project/stockcards.php?search=${searchTerm}`);
+            const response = await fetch(`http://10.16.2.82/project/stockcards.php?search=${searchTerm}`);
             if (!response.ok) {
                 throw new Error(`Server responded with status ${response.status}`);
             }
@@ -168,7 +168,8 @@ const StockCardsPage = () => {
         balanceqty: formatNumber(item.balanceqty),
         balanceunitcost: formatNumber(item.balanceunitcost, true),
         balancetotalcost: item.balancetotalcost || '',
-        daystoconsume: item.daystoconsume || ''
+        daystoconsume: item.daystoconsume || '',
+        isRISRow: item.isRISRow || false
     });
 
     const createEmptyTransaction = () => ({
@@ -183,7 +184,8 @@ const StockCardsPage = () => {
         balanceqty: '',
         balanceunitcost: '',
         balancetotalcost: '',
-        daystoconsume: ''
+        daystoconsume: '',
+        isRISRow: false
     });
 
     const createEmptyDRRow = () => ({
@@ -198,7 +200,8 @@ const StockCardsPage = () => {
         balanceqty: '',
         balanceunitcost: '',
         balancetotalcost: '',
-        daystoconsume: ''
+        daystoconsume: '',
+        isRISRow: false
     });
 
     const createEmptyRISRow = () => ({
@@ -213,7 +216,8 @@ const StockCardsPage = () => {
         balanceqty: '',
         balanceunitcost: '',
         balancetotalcost: '',
-        daystoconsume: ''
+        daystoconsume: '',
+        isRISRow: true
     });
 
     const handleLoadData = () => {
@@ -325,61 +329,77 @@ const StockCardsPage = () => {
             [field]: validatedValue
         };
         
-        for (let i = 0; i < updatedTransactions.length; i++) {
-            const qty = parseFloat(updatedTransactions[i].receiptqty) || 0;
-            const unitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
-            updatedTransactions[i].receipttotalcost = (qty * unitCost).toFixed(2);
-        }
-        
-        for (let i = 0; i < updatedTransactions.length; i++) {
-            if (i === 0) {
-                const receiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
-                const receiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
+        // For RIS rows, we only care about issue quantity and balance quantity
+        if (updatedTransactions[index].isRISRow) {
+            if (field === 'issueqty') {
+                // Calculate balance quantity based on previous row's balance
+                const prevBalanceQty = index > 0 ? parseFloat(updatedTransactions[index-1].balanceqty) || 0 : 0;
+                const currentIssueQty = parseFloat(validatedValue) || 0;
+                updatedTransactions[index].balanceqty = (prevBalanceQty - currentIssueQty).toString();
+                
+                // Clear all receipt and balance cost fields for RIS rows
+                updatedTransactions[index].receiptqty = '';
+                updatedTransactions[index].receiptunitcost = '';
+                updatedTransactions[index].receipttotalcost = '';
+                updatedTransactions[index].balanceunitcost = '';
+                updatedTransactions[index].balancetotalcost = '';
+            }
+        } else {
+            // Regular DR row calculations
+            // Calculate receipt total cost
+            const qty = parseFloat(updatedTransactions[index].receiptqty) || 0;
+            const unitCost = parseFloat(updatedTransactions[index].receiptunitcost) || 0;
+            updatedTransactions[index].receipttotalcost = (qty * unitCost).toFixed(2);
+            
+            // Calculate balance quantities and costs
+            if (index === 0) {
+                const receiptQty = parseFloat(updatedTransactions[index].receiptqty) || 0;
+                const receiptUnitCost = parseFloat(updatedTransactions[index].receiptunitcost) || 0;
                 const receiptTotalCost = receiptQty * receiptUnitCost;
                 
-                updatedTransactions[i].balanceqty = receiptQty.toString();
-                updatedTransactions[i].balanceunitcost = receiptUnitCost.toFixed(2);
-                updatedTransactions[i].balancetotalcost = receiptTotalCost.toFixed(2);
-                updatedTransactions[i].receipttotalcost = receiptTotalCost.toFixed(2);
+                updatedTransactions[index].balanceqty = receiptQty.toString();
+                updatedTransactions[index].balanceunitcost = receiptUnitCost.toFixed(2);
+                updatedTransactions[index].balancetotalcost = receiptTotalCost.toFixed(2);
+                updatedTransactions[index].receipttotalcost = receiptTotalCost.toFixed(2);
             } else {
-                const prevBalanceQty = parseFloat(updatedTransactions[i-1].balanceqty) || 0;
-                const currentReceiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
-                const currentReceiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
-                const currentIssueQty = parseFloat(updatedTransactions[i].issueqty) || 0;
+                const prevBalanceQty = parseFloat(updatedTransactions[index-1].balanceqty) || 0;
+                const currentReceiptQty = parseFloat(updatedTransactions[index].receiptqty) || 0;
+                const currentReceiptUnitCost = parseFloat(updatedTransactions[index].receiptunitcost) || 0;
+                const currentIssueQty = parseFloat(updatedTransactions[index].issueqty) || 0;
                 
                 const currentReceiptTotalCost = currentReceiptQty * currentReceiptUnitCost;
-                updatedTransactions[i].receipttotalcost = currentReceiptTotalCost.toFixed(2);
+                updatedTransactions[index].receipttotalcost = currentReceiptTotalCost.toFixed(2);
                 
                 let balanceQty = prevBalanceQty + currentReceiptQty - currentIssueQty;
-                updatedTransactions[i].balanceqty = balanceQty.toString();
+                updatedTransactions[index].balanceqty = balanceQty.toString();
                 
                 let balanceUnitCost = 0;
                 if (currentReceiptQty > 0) {
-                    if (i === 1) {
-                        const prevReceiptUnitCost = parseFloat(updatedTransactions[i-1].receiptunitcost) || 0;
+                    if (index === 1) {
+                        const prevReceiptUnitCost = parseFloat(updatedTransactions[index-1].receiptunitcost) || 0;
                         balanceUnitCost = prevReceiptUnitCost + currentReceiptUnitCost / 2;
                     } else {
-                        const prevBalanceUnitCost = parseFloat(updatedTransactions[i-1].balanceunitcost) || 0;
+                        const prevBalanceUnitCost = parseFloat(updatedTransactions[index-1].balanceunitcost) || 0;
                         balanceUnitCost = prevBalanceUnitCost + currentReceiptUnitCost / 2;
                     }
                 } else {
-                    balanceUnitCost = parseFloat(updatedTransactions[i-1].balanceunitcost) || 0;
+                    balanceUnitCost = parseFloat(updatedTransactions[index-1].balanceunitcost) || 0;
                 }
-                updatedTransactions[i].balanceunitcost = balanceUnitCost.toFixed(2);
+                updatedTransactions[index].balanceunitcost = balanceUnitCost.toFixed(2);
                 
                 let balanceTotalCost = 0;
                 if (currentReceiptQty > 0) {
-                    if (i === 1) {
-                        const prevReceiptTotalCost = parseFloat(updatedTransactions[i-1].receipttotalcost) || 0;
+                    if (index === 1) {
+                        const prevReceiptTotalCost = parseFloat(updatedTransactions[index-1].receipttotalcost) || 0;
                         balanceTotalCost = prevReceiptTotalCost + currentReceiptTotalCost / 2;
                     } else {
-                        const prevBalanceTotalCost = parseFloat(updatedTransactions[i-1].balancetotalcost) || 0;
+                        const prevBalanceTotalCost = parseFloat(updatedTransactions[index-1].balancetotalcost) || 0;
                         balanceTotalCost = prevBalanceTotalCost + currentReceiptTotalCost / 2;
                     }
                 } else {
-                    balanceTotalCost = parseFloat(updatedTransactions[i-1].balancetotalcost) || 0;
+                    balanceTotalCost = parseFloat(updatedTransactions[index-1].balancetotalcost) || 0;
                 }
-                updatedTransactions[i].balancetotalcost = balanceTotalCost.toFixed(2);
+                updatedTransactions[index].balancetotalcost = balanceTotalCost.toFixed(2);
             }
         }
         
@@ -435,6 +455,7 @@ const StockCardsPage = () => {
             const rows = tableRef.current?.querySelectorAll('tbody tr');
             if (rows && rows.length > 0) {
                 const lastRow = rows[rows.length - 1];
+                // Focus on the issue quantity input (6th input in the row)
                 const issueQtyInput = lastRow.querySelectorAll('input')[5];
                 issueQtyInput?.focus();
             }
@@ -476,7 +497,7 @@ const StockCardsPage = () => {
                     updatedTransactions[i].balanceqty = balanceQty.toString();
                     
                     let balanceUnitCost = prevUnitCost;
-                    if (currentReceiptQty > 0 && currentReceiptUnitCost > 0) {
+                    if (currentReceiptQty > 0 && currentReceiptUnitCost > 0 && !updatedTransactions[i].isRISRow) {
                         if (prevUnitCost > 0) {
                             balanceUnitCost = ((prevUnitCost + currentReceiptUnitCost) / 2);
                         } else {
@@ -760,32 +781,6 @@ const StockCardsPage = () => {
                     <p>E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com</p>
                 </div>
 
-                <div className="item-controls">
-                    <div className="search-container">
-                        <input
-                            type="text"
-                            placeholder="Search stock number..."
-                            value={searchTerm}
-                            onChange={handleSearchChange}
-                            className="search-input"
-                            onFocus={() => setShowSuggestions(true)}
-                        />
-                        {showSuggestions && suggestions.length > 0 && (
-                            <div className="suggestions-dropdown" ref={suggestionsRef}>
-                                {suggestions.map((suggestion, index) => (
-                                    <div 
-                                        key={index}
-                                        className="suggestion-item"
-                                        onClick={() => handleSuggestionClick(suggestion)}
-                                    >
-                                        {suggestion}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-
                 <div className="table-container" ref={tableRef}>
                     <table>
                         <thead>
@@ -899,6 +894,7 @@ const StockCardsPage = () => {
                                                             type="date"
                                                             value={transaction.date}
                                                             onChange={(e) => handleTransactionChange(index, 'date', e.target.value)}
+                                                            disabled={transaction.isRISRow}
                                                         />
                                                     </td>
                                                     <td>
@@ -906,6 +902,7 @@ const StockCardsPage = () => {
                                                             type="text"
                                                             value={transaction.reference}
                                                             onChange={(e) => handleTransactionChange(index, 'reference', e.target.value)}
+                                                            disabled={transaction.isRISRow}
                                                         />
                                                     </td>
                                                     <td>
@@ -915,6 +912,7 @@ const StockCardsPage = () => {
                                                             value={transaction.receiptqty}
                                                             onChange={(e) => handleTransactionChange(index, 'receiptqty', e.target.value)}
                                                             className="qty-input"
+                                                            disabled={transaction.isRISRow}
                                                         />
                                                     </td>
                                                     <td>
@@ -935,6 +933,7 @@ const StockCardsPage = () => {
                                                                     handleTransactionChange(index, 'receiptunitcost', formatted);
                                                                 }
                                                             }}
+                                                            disabled={transaction.isRISRow}
                                                         />
                                                     </td>
                                                     <td>
@@ -943,6 +942,7 @@ const StockCardsPage = () => {
                                                             value={transaction.receipttotalcost}
                                                             onChange={(e) => handleTransactionChange(index, 'receipttotalcost', e.target.value)}
                                                             readOnly
+                                                            disabled={transaction.isRISRow}
                                                         />
                                                     </td>
                                                     <td>
@@ -959,6 +959,7 @@ const StockCardsPage = () => {
                                                             value={transaction.issueoffice}
                                                             onChange={(e) => handleTransactionChange(index, 'issueoffice', e.target.value)}
                                                             className="office-select"
+                                                            disabled={transaction.isRISRow}
                                                         >
                                                             <option value="">Select Office</option>
                                                             {officeOptions.map(office => (
@@ -993,6 +994,7 @@ const StockCardsPage = () => {
                                                                     handleTransactionChange(index, 'balanceunitcost', formatted);
                                                                 }
                                                             }}
+                                                            disabled={transaction.isRISRow}
                                                         />
                                                     </td>
                                                     <td>
@@ -1001,6 +1003,7 @@ const StockCardsPage = () => {
                                                             value={transaction.balancetotalcost}
                                                             onChange={(e) => handleTransactionChange(index, 'balancetotalcost', e.target.value)}
                                                             readOnly
+                                                            disabled={transaction.isRISRow}
                                                         />
                                                     </td>
                                                     <td>
@@ -1008,6 +1011,7 @@ const StockCardsPage = () => {
                                                             type="text"
                                                             value={transaction.daystoconsume}
                                                             onChange={(e) => handleTransactionChange(index, 'daystoconsume', e.target.value)}
+                                                            disabled={transaction.isRISRow}
                                                         />
                                                     </td>
                                                     <td>
