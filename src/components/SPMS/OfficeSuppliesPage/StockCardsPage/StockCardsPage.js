@@ -913,7 +913,7 @@ const StockCardsPage = () => {
                                                             value={transaction.issueoffice}
                                                             onChange={(e) => handleTransactionChange(index, 'issueoffice', e.target.value)}
                                                             className="office-select"
-                                                            disabled={transaction.isRISRow}
+                                                            //disabled={transaction.isRISRow}
                                                         >
                                                             <option value="">Select Office</option>
                                                             {officeOptions.map(office => (
