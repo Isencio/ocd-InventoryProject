@@ -29,14 +29,10 @@ const StockCardsPage = () => {
         stocknumber: '',
         unitofmeasurement: ''
     });
-    const [searchTerm, setSearchTerm] = useState('');
-    const [suggestions, setSuggestions] = useState([]);
-    const [showSuggestions, setShowSuggestions] = useState(false);
     const navigate = useNavigate();
     const tableRef = useRef(null);
     const exportRef = useRef(null);
     const addRowButtonRef = useRef(null);
-    const suggestionsRef = useRef(null);
 
     const officeOptions = ['OS', 'CBTS', 'RRMS', 'PDPS', 'ORD', 'BAC', 'FMU', 'Admin', 'GSU', 'HRMU', 'DRMD'];
 
@@ -47,9 +43,6 @@ const StockCardsPage = () => {
             }
             if (addRowButtonRef.current && !addRowButtonRef.current.contains(event.target)) {
                 setShowAddRowOptions(false);
-            }
-            if (suggestionsRef.current && !suggestionsRef.current.contains(event.target)) {
-                setShowSuggestions(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -115,45 +108,6 @@ const StockCardsPage = () => {
         } finally {
             setLoading(false);
         }
-    };
-
-    const fetchSuggestions = async (searchTerm) => {
-        if (!searchTerm) {
-            setSuggestions([]);
-            return;
-        }
-        
-        try {
-            const response = await fetch(`http://10.16.2.82/project/stockcards.php?search=${searchTerm}`);
-            if (!response.ok) {
-                throw new Error(`Server responded with status ${response.status}`);
-            }
-            
-            const data = await response.json();
-            if (Array.isArray(data)) {
-                setSuggestions(data.map(item => item.stocknumber));
-            }
-        } catch (error) {
-            console.error('Error fetching suggestions:', error);
-            setSuggestions([]);
-        }
-    };
-
-    const handleSearchChange = (e) => {
-        const value = e.target.value;
-        setSearchTerm(value);
-        fetchSuggestions(value);
-        setShowSuggestions(true);
-    };
-
-    const handleSuggestionClick = (suggestion) => {
-        setSearchTerm(suggestion);
-        setStockData(prev => ({
-            ...prev,
-            stocknumber: suggestion
-        }));
-        setShowSuggestions(false);
-        fetchStockData(suggestion);
     };
 
     const processTransaction = (item) => ({
