@@ -26,6 +26,12 @@ const RPCIPage = () => {
         navigate(-1);
     };
 
+    const onFetchData = () => {
+        // This is where you would implement your data fetching logic
+        // For now, we'll just show an alert
+        alert('Fetching data...');
+    };
+
     const onExportExcel = () => {
         const exportData = [
             ['Republic of the Philippines'],
@@ -305,6 +311,9 @@ const RPCIPage = () => {
 
             <div className="action-buttons-container">
                 <div className="action-buttons">
+                    <button className="fetch-button" onClick={onFetchData}>
+                        Fetch Data
+                    </button>
                     <button className="add-row-button" onClick={handleAddRow}>
                         Add New Row
                     </button>
