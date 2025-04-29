@@ -289,7 +289,7 @@ const StockCardsPage = () => {
                 // Calculate balance quantity based on previous row's balance
                 const prevBalanceQty = index > 0 ? parseFloat(updatedTransactions[index-1].balanceqty) || 0 : 0;
                 const currentIssueQty = parseFloat(validatedValue) || 0;
-                updatedTransactions[index].balanceqty = (prevBalanceQty - currentIssueQty).toString();
+                updatedTransactions[index].balanceqty = Math.max(0, prevBalanceQty - currentIssueQty).toString();
                 
                 // Clear all receipt and balance cost fields for RIS rows
                 updatedTransactions[index].receiptqty = '';
@@ -325,35 +325,78 @@ const StockCardsPage = () => {
                 updatedTransactions[index].receipttotalcost = currentReceiptTotalCost.toFixed(2);
                 
                 let balanceQty = prevBalanceQty + currentReceiptQty - currentIssueQty;
-                updatedTransactions[index].balanceqty = balanceQty.toString();
+                updatedTransactions[index].balanceqty = Math.max(0, balanceQty).toString();
+                
+                // Find the last non-RIS row to get the proper unit cost
+                let lastNonRISIndex = index - 1;
+                while (lastNonRISIndex >= 0 && updatedTransactions[lastNonRISIndex].isRISRow) {
+                    lastNonRISIndex--;
+                }
                 
                 let balanceUnitCost = 0;
+                let balanceTotalCost = 0;
+                
                 if (currentReceiptQty > 0) {
-                    if (index === 1) {
-                        const prevReceiptUnitCost = parseFloat(updatedTransactions[index-1].receiptunitcost) || 0;
-                        balanceUnitCost = prevReceiptUnitCost + currentReceiptUnitCost / 2;
+                    if (lastNonRISIndex >= 0) {
+                        const lastUnitCost = parseFloat(updatedTransactions[lastNonRISIndex].balanceunitcost) || 0;
+                        balanceUnitCost = lastUnitCost + currentReceiptUnitCost / 2;
+                        
+                        const lastTotalCost = parseFloat(updatedTransactions[lastNonRISIndex].balancetotalcost) || 0;
+                        balanceTotalCost = lastTotalCost + currentReceiptTotalCost / 2;
                     } else {
-                        const prevBalanceUnitCost = parseFloat(updatedTransactions[index-1].balanceunitcost) || 0;
-                        balanceUnitCost = prevBalanceUnitCost + currentReceiptUnitCost / 2;
+                        balanceUnitCost = currentReceiptUnitCost;
+                        balanceTotalCost = currentReceiptTotalCost;
                     }
                 } else {
                     balanceUnitCost = parseFloat(updatedTransactions[index-1].balanceunitcost) || 0;
-                }
-                updatedTransactions[index].balanceunitcost = balanceUnitCost.toFixed(2);
-                
-                let balanceTotalCost = 0;
-                if (currentReceiptQty > 0) {
-                    if (index === 1) {
-                        const prevReceiptTotalCost = parseFloat(updatedTransactions[index-1].receipttotalcost) || 0;
-                        balanceTotalCost = prevReceiptTotalCost + currentReceiptTotalCost / 2;
-                    } else {
-                        const prevBalanceTotalCost = parseFloat(updatedTransactions[index-1].balancetotalcost) || 0;
-                        balanceTotalCost = prevBalanceTotalCost + currentReceiptTotalCost / 2;
-                    }
-                } else {
                     balanceTotalCost = parseFloat(updatedTransactions[index-1].balancetotalcost) || 0;
                 }
+                
+                updatedTransactions[index].balanceunitcost = balanceUnitCost.toFixed(2);
                 updatedTransactions[index].balancetotalcost = balanceTotalCost.toFixed(2);
+            }
+        }
+        
+        // Update subsequent rows' balances
+        for (let i = index + 1; i < updatedTransactions.length; i++) {
+            const prevBalanceQty = parseFloat(updatedTransactions[i-1].balanceqty) || 0;
+            const currentIssueQty = parseFloat(updatedTransactions[i].issueqty) || 0;
+            
+            if (updatedTransactions[i].isRISRow) {
+                // For RIS rows, just update the balance based on previous balance and current issue
+                updatedTransactions[i].balanceqty = Math.max(0, prevBalanceQty - currentIssueQty).toString();
+                updatedTransactions[i].balanceunitcost = updatedTransactions[i-1].balanceunitcost;
+                updatedTransactions[i].balancetotalcost = (parseFloat(updatedTransactions[i].balanceqty) * 
+                    parseFloat(updatedTransactions[i].balanceunitcost)).toFixed(2);
+            } else {
+                // For DR rows, update balance considering receipt and issue
+                const currentReceiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
+                const currentReceiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
+                const currentReceiptTotalCost = currentReceiptQty * currentReceiptUnitCost;
+                
+                updatedTransactions[i].balanceqty = Math.max(0, prevBalanceQty + currentReceiptQty - currentIssueQty).toString();
+                
+                // Find the last non-RIS row to get the proper unit cost
+                let lastNonRISIndex = i - 1;
+                while (lastNonRISIndex >= 0 && updatedTransactions[lastNonRISIndex].isRISRow) {
+                    lastNonRISIndex--;
+                }
+                
+                if (currentReceiptQty > 0) {
+                    if (lastNonRISIndex >= 0) {
+                        const lastUnitCost = parseFloat(updatedTransactions[lastNonRISIndex].balanceunitcost) || 0;
+                        updatedTransactions[i].balanceunitcost = (lastUnitCost + currentReceiptUnitCost / 2).toFixed(2);
+                        
+                        const lastTotalCost = parseFloat(updatedTransactions[lastNonRISIndex].balancetotalcost) || 0;
+                        updatedTransactions[i].balancetotalcost = (lastTotalCost + currentReceiptTotalCost / 2).toFixed(2);
+                    } else {
+                        updatedTransactions[i].balanceunitcost = currentReceiptUnitCost.toFixed(2);
+                        updatedTransactions[i].balancetotalcost = currentReceiptTotalCost.toFixed(2);
+                    }
+                } else {
+                    updatedTransactions[i].balanceunitcost = updatedTransactions[i-1].balanceunitcost;
+                    updatedTransactions[i].balancetotalcost = updatedTransactions[i-1].balancetotalcost;
+                }
             }
         }
         
@@ -453,7 +496,7 @@ const StockCardsPage = () => {
                     let balanceUnitCost = prevUnitCost;
                     if (currentReceiptQty > 0 && currentReceiptUnitCost > 0 && !updatedTransactions[i].isRISRow) {
                         if (prevUnitCost > 0) {
-                            balanceUnitCost = ((prevUnitCost + currentReceiptUnitCost) / 2);
+                            balanceUnitCost = (prevUnitCost + currentReceiptUnitCost / 2);
                         } else {
                             balanceUnitCost = currentReceiptUnitCost;
                         }
@@ -856,7 +899,7 @@ const StockCardsPage = () => {
                                                             type="text"
                                                             value={transaction.reference}
                                                             onChange={(e) => handleTransactionChange(index, 'reference', e.target.value)}
-                                                            disabled={transaction.isRISRow}
+                                                            //disabled={transaction.isRISRow}
                                                         />
                                                     </td>
                                                     <td>
