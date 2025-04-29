@@ -64,12 +64,12 @@
   margin: 5px 0;
 }
 
-.item-controls {
+/*.item-controls {
   display: flex;
   justify-content: space-between;
   margin-bottom: 15px;
   width: 90%;
-}
+}*/
 
 .search-container {
   flex: 1;
