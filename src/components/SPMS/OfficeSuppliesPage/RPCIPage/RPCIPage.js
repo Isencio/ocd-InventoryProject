@@ -26,10 +26,43 @@ const RPCIPage = () => {
         navigate(-1);
     };
 
-    const onFetchData = () => {
-        // This is where you would implement your data fetching logic
-        // For now, we'll just show an alert
-        alert('Fetching data...');
+    const onFetchData = async () => {
+        try {
+            // Fetch data from the API
+            const response = await fetch('http://10.16.4.183/project/stockcards.php');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            // Sort the data alphabetically by stockNumber
+            const sortedData = [...data].sort((a, b) => 
+                a.stockNumber.localeCompare(b.stockNumber)
+            );
+            
+            // Map the API data to match our row structure
+            const formattedData = sortedData.map(item => ({
+                article: item.article || '',
+                description: item.description || '',
+                stockNumber: item.stockNumber || '',
+                unitofMeasure: item.unitofMeasure || '',
+                unitValue: item.unitValue || '',
+                balancePerCard: item.balancePerCard || '',
+                onhandPerCount: item.onhandPerCount || '',
+                shortageOverage: item.shortageOverage || '',
+                totalCost: item.totalCost || '',
+                remarks: item.remarks || ''
+            }));
+            
+            setRows(formattedData);
+            setHasChanges(true);
+            alert('Data fetched and sorted by Stock Number!');
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            alert('Failed to fetch data. Please try again.');
+        }
     };
 
     const onExportExcel = () => {
