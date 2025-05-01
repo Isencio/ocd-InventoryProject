@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import './RSMIPage.css';
@@ -21,6 +21,7 @@ const RSMIPage = () => {
         unitCost: '',
         amount: '',
     }));
+    const [isLoading, setIsLoading] = useState(false);
 
     const navigate = useNavigate();
 
@@ -30,15 +31,70 @@ const RSMIPage = () => {
         'September', 'October', 'November', 'December'
     ];
     
-    const years = Array.from({length: 10}, (_, i) => new Date().getFullYear() - i);
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({length: 5}, (_, i) => currentYear + i);
+
+    // Mock function to fetch data - replace with your actual API call
+    const fetchRSMIData = async (month, year) => {
+        setIsLoading(true);
+        try {
+            // Simulate API call delay
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Replace this with your actual data fetching logic
+            const mockData = [
+                {
+                    risNo: 'RIS001',
+                    responsibilityCenterCode: 'RC001',
+                    stockNo: 'ST001',
+                    item: 'Item 1',
+                    unit: 'pc',
+                    quantityIssued: '10',
+                    unitCost: '100',
+                    amount: '1000'
+                },
+                {
+                    risNo: 'RIS002',
+                    responsibilityCenterCode: 'RC002',
+                    stockNo: 'ST002',
+                    item: 'Item 2',
+                    unit: 'pc',
+                    quantityIssued: '5',
+                    unitCost: '200',
+                    amount: '1000'
+                }
+            ];
+            
+            // Fill remaining rows with empty data if needed
+            const emptyRows = Array(3).fill({
+                risNo: '',
+                responsibilityCenterCode: '',
+                stockNo: '',
+                item: '',
+                unit: '',
+                quantityIssued: '',
+                unitCost: '',
+                amount: '',
+            });
+            
+            setRows([...mockData, ...emptyRows]);
+        } catch (error) {
+            console.error('Error fetching RSMI data:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const onBack = () => {
         navigate(-1);
     };
 
     const handleDateSelect = (month, year) => {
-        setDate(`${month}/${year}`);
+        const selectedDate = `${month}/${year}`;
+        setDate(selectedDate);
         setShowMonthYearPicker(false);
+        // Automatically fetch data when date is selected
+        fetchRSMIData(month, year);
     };
 
     const toggleExportMenu = () => {
@@ -91,35 +147,15 @@ const RSMIPage = () => {
 
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "RSMI");
-        XLSX.writeFile(wb, `RSMI_Inventory.xlsx`);
+        XLSX.writeFile(wb, `RSMI_Inventory_${date.replace('/', '-')}.xlsx`);
         setShowExportOptions(false);
     };
 
     const onExportPDF = () => {
-        // PDF export functionality would go here
-        alert('PDF export functionality would be implemented here');
+        alert(`PDF export functionality would be implemented here for ${date}`);
         setShowExportOptions(false);
     };
 
-    const handleAddRow = () => {
-        setRows([...rows, {
-            risNo: '',
-            responsibilityCenterCode: '',
-            stockNo: '',
-            item: '',
-            unit: '',
-            quantityIssued: '',
-            unitCost: '',
-            amount: '',
-        }]);
-    };
-
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter') {
-            handleAddRow();
-        }
-    };
-    
     const handleInputChange = (index, field, value) => {
         const updatedRows = rows.map((row, i) => {
             if (i === index) {
@@ -130,8 +166,25 @@ const RSMIPage = () => {
         setRows(updatedRows);
     };
 
+    // Automatically select current month/year and fetch data on component mount
+    useEffect(() => {
+        const currentMonth = months[new Date().getMonth()];
+        const currentYear = new Date().getFullYear();
+        handleDateSelect(currentMonth, currentYear);
+    }, []);
+
     return (
         <div className="rsmi-container">
+            {/* Loading Popup */}
+            {isLoading && (
+            <div className="loading-popup">
+                <div className="loading-content">
+                <div className="loading-spinner"></div>
+                <p>Fetching data...</p>
+                </div>
+            </div>
+            )}
+
             <div className="header-top">
                 <button className="return-button" onClick={onBack}> &larr; </button>
                 <h1>RSMI</h1>
@@ -156,7 +209,6 @@ const RSMIPage = () => {
                                         type="text"
                                         value={entityName}
                                         onChange={(e) => setEntityName(e.target.value)}
-                                        onKeyDown={handleKeyDown}
                                     />
                                 </td>
                                 <th className="Item-right-align">Fund Cluster :</th>
@@ -165,7 +217,6 @@ const RSMIPage = () => {
                                         type="text"
                                         value={fundCluster}
                                         onChange={(e) => setFundCluster(e.target.value)}
-                                        onKeyDown={handleKeyDown} 
                                     />
                                 </td>
                             </tr>
@@ -176,7 +227,6 @@ const RSMIPage = () => {
                                         type="text"
                                         value={serialNo}
                                         onChange={(e) => setSerialNo(e.target.value)}
-                                        onKeyDown={handleKeyDown}
                                     />
                                 </td>
                                 <th className="Item-right-align">Date:</th>
@@ -195,12 +245,11 @@ const RSMIPage = () => {
                                                 <div className="picker-header">
                                                     <select 
                                                         className="year-select"
+                                                        defaultValue={currentYear}
                                                         onChange={(e) => {
                                                             const selectedYear = e.target.value;
-                                                            const currentMonth = document.querySelector('.month-grid button.active')?.textContent;
-                                                            if (currentMonth) {
-                                                                handleDateSelect(currentMonth, selectedYear);
-                                                            }
+                                                            const currentMonth = document.querySelector('.month-grid button.active')?.textContent || months[0];
+                                                            handleDateSelect(currentMonth, selectedYear);
                                                         }}
                                                     >
                                                         {years.map(year => (
@@ -213,7 +262,7 @@ const RSMIPage = () => {
                                                         <button
                                                             key={month}
                                                             onClick={() => {
-                                                                const selectedYear = document.querySelector('.year-select')?.value || new Date().getFullYear();
+                                                                const selectedYear = document.querySelector('.year-select')?.value || currentYear;
                                                                 handleDateSelect(month, selectedYear);
                                                             }}
                                                             className={date.includes(month) ? 'active' : ''}
@@ -250,7 +299,6 @@ const RSMIPage = () => {
                                                             type="text"
                                                             value={row.risNo}
                                                             onChange={(e) => handleInputChange(index, 'risNo', e.target.value)}
-                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                     <td>
@@ -258,7 +306,6 @@ const RSMIPage = () => {
                                                             type="text"
                                                             value={row.responsibilityCenterCode}
                                                             onChange={(e) => handleInputChange(index, 'responsibilityCenterCode', e.target.value)}
-                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                     <td>
@@ -266,7 +313,6 @@ const RSMIPage = () => {
                                                             type="text"
                                                             value={row.stockNo}
                                                             onChange={(e) => handleInputChange(index, 'stockNo', e.target.value)}
-                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                     <td>
@@ -274,7 +320,6 @@ const RSMIPage = () => {
                                                             type="text"
                                                             value={row.item}
                                                             onChange={(e) => handleInputChange(index, 'item', e.target.value)}
-                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                     <td>
@@ -282,7 +327,6 @@ const RSMIPage = () => {
                                                             type="text"
                                                             value={row.unit}
                                                             onChange={(e) => handleInputChange(index, 'unit', e.target.value)}
-                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                     <td>
@@ -290,7 +334,6 @@ const RSMIPage = () => {
                                                             type="text"
                                                             value={row.quantityIssued}
                                                             onChange={(e) => handleInputChange(index, 'quantityIssued', e.target.value)}
-                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                     <td>
@@ -298,7 +341,6 @@ const RSMIPage = () => {
                                                             type="text"
                                                             value={row.unitCost}
                                                             onChange={(e) => handleInputChange(index, 'unitCost', e.target.value)}
-                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                     <td>
@@ -306,7 +348,6 @@ const RSMIPage = () => {
                                                             type="text"
                                                             value={row.amount}
                                                             onChange={(e) => handleInputChange(index, 'amount', e.target.value)}
-                                                            onKeyDown={handleKeyDown}
                                                         />
                                                     </td>
                                                 </tr>
