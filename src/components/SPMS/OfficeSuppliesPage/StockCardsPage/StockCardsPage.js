@@ -67,7 +67,7 @@ const StockCardsPage = () => {
             setLoading(true);
             setError(null);
             
-            const response = await fetch(`http://10.16.4.183/project/stockcards.php?stocknumber=${stockNumber}`);
+            const response = await fetch(`http://10.16.4.136/project/stockcards.php?stocknumber=${stockNumber}`);
             
             if (!response.ok) {
                 throw new Error(`Server responded with status ${response.status}`);
@@ -255,7 +255,23 @@ const StockCardsPage = () => {
         setHasChanges(true);
     };
 
-    const handleTransactionChange = (index, field, value) => {
+    const handleNonCalculatingFieldChange = (index, field, value) => {
+        const updatedTransactions = [...stockData.transactions];
+        updatedTransactions[index] = {
+            ...updatedTransactions[index],
+            [field]: value
+        };
+        
+        const updatedData = {
+            ...stockData,
+            transactions: updatedTransactions
+        };
+        
+        setStockData(updatedData);
+        checkForChanges(updatedData);
+    };
+
+    const handleNumericFieldChange = (index, field, value) => {
         const numericFields = ['receiptqty', 'receiptunitcost', 'issueqty', 'balanceqty', 'balanceunitcost'];
         const currencyFields = ['receiptunitcost', 'balanceunitcost'];
         
@@ -369,7 +385,7 @@ const StockCardsPage = () => {
                         currentRow.balanceqty = '';
                     }
                     
-                    // Calculate unit cost and total cost
+                    // Calculate unit cost and total cost using the new formula
                     if (currentReceiptQty !== '' && currentReceiptQty > 0 && currentReceiptUnitCost !== '') {
                         // Find the last non-RIS row to get proper unit cost
                         let lastNonRISIndex = i - 1;
@@ -377,23 +393,31 @@ const StockCardsPage = () => {
                             lastNonRISIndex--;
                         }
                         
-                        if (lastNonRISIndex >= 0 && updatedTransactions[lastNonRISIndex].balanceunitcost !== '') {
-                            const lastUnitCost = parseFloat(updatedTransactions[lastNonRISIndex].balanceunitcost);
-                            currentRow.balanceunitcost = ((lastUnitCost + currentReceiptUnitCost) / 2).toFixed(2);
+                        if (lastNonRISIndex >= 0 && updatedTransactions[lastNonRISIndex].balancetotalcost !== '') {
+                            const prevTotalCost = parseFloat(updatedTransactions[lastNonRISIndex].balancetotalcost);
+                            const currentTotalCost = parseFloat(currentRow.receipttotalcost);
+                            
+                            // New formula: average of previous and current receipt total costs
+                            currentRow.balancetotalcost = (prevTotalCost + currentTotalCost / 2).toFixed(2);
+                            
+                            // Calculate unit cost based on the new total cost and quantity
+                            if (currentRow.balanceqty !== '' && parseFloat(currentRow.balanceqty) > 0) {
+                                currentRow.balanceunitcost = (parseFloat(currentRow.balancetotalcost) / parseFloat(currentRow.balanceqty)).toFixed(2);
+                            } else {
+                                currentRow.balanceunitcost = '0.00';
+                            }
                         } else {
+                            // If no previous total cost, use current receipt total cost
+                            currentRow.balancetotalcost = currentRow.receipttotalcost;
                             currentRow.balanceunitcost = currentReceiptUnitCost.toFixed(2);
                         }
-                    } else if (prevRow.balanceunitcost !== '') {
+                    } else if (prevRow.balancetotalcost !== '') {
+                        // Carry forward previous values if no new receipt
+                        currentRow.balancetotalcost = prevRow.balancetotalcost;
                         currentRow.balanceunitcost = prevRow.balanceunitcost;
                     } else {
-                        currentRow.balanceunitcost = '';
-                    }
-                    
-                    if (currentRow.balanceqty !== '' && currentRow.balanceunitcost !== '') {
-                        currentRow.balancetotalcost = (parseFloat(currentRow.balanceqty) * 
-                            parseFloat(currentRow.balanceunitcost)).toFixed(2);
-                    } else {
                         currentRow.balancetotalcost = '';
+                        currentRow.balanceunitcost = '';
                     }
                 }
             }
@@ -406,6 +430,19 @@ const StockCardsPage = () => {
         
         setStockData(updatedData);
         checkForChanges(updatedData);
+    };
+
+    const handleTransactionChange = (index, field, value) => {
+        // Fields that don't require recalculation
+        const nonCalculatingFields = ['date', 'reference', 'issueoffice', 'daystoconsume'];
+        
+        if (nonCalculatingFields.includes(field)) {
+            handleNonCalculatingFieldChange(index, field, value);
+            return;
+        }
+        
+        // Numeric fields that require calculation
+        handleNumericFieldChange(index, field, value);
     };
 
     const checkForChanges = (currentData) => {
@@ -451,7 +488,6 @@ const StockCardsPage = () => {
             const rows = tableRef.current?.querySelectorAll('tbody tr');
             if (rows && rows.length > 0) {
                 const lastRow = rows[rows.length - 1];
-                // Focus on the issue quantity input (6th input in the row)
                 const issueQtyInput = lastRow.querySelectorAll('input')[5];
                 issueQtyInput?.focus();
             }
