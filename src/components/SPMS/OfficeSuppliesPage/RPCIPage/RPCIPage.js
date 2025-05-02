@@ -29,7 +29,7 @@ const RPCIPage = () => {
     const onFetchData = async () => {
         try {
             // Fetch data from the API
-            const response = await fetch('http://10.16.4.183/project/stockcards.php');
+            const response = await fetch('http://10.16.4.136/project/stockcards.php');
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
