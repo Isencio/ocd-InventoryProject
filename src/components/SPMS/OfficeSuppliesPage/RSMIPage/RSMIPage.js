@@ -22,6 +22,8 @@ const RSMIPage = () => {
         amount: '',
     }));
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [abortController, setAbortController] = useState(new AbortController());
 
     const navigate = useNavigate();
 
@@ -34,39 +36,47 @@ const RSMIPage = () => {
     const currentYear = new Date().getFullYear();
     const years = Array.from({length: 5}, (_, i) => currentYear + i);
 
-    // Mock function to fetch data - replace with your actual API call
     const fetchRSMIData = async (month, year) => {
+        // Abort any pending request
+        abortController.abort();
+        const newAbortController = new AbortController();
+        setAbortController(newAbortController);
+
         setIsLoading(true);
+        setError(null);
         try {
-            // Simulate API call delay
-            await new Promise(resolve => setTimeout(resolve, 500));
+            const monthIndex = months.indexOf(month) + 1;
             
-            // Replace this with your actual data fetching logic
-            const mockData = [
-                {
-                    risNo: 'RIS001',
-                    responsibilityCenterCode: 'RC001',
-                    stockNo: 'ST001',
-                    item: 'Item 1',
-                    unit: 'pc',
-                    quantityIssued: '10',
-                    unitCost: '100',
-                    amount: '1000'
-                },
-                {
-                    risNo: 'RIS002',
-                    responsibilityCenterCode: 'RC002',
-                    stockNo: 'ST002',
-                    item: 'Item 2',
-                    unit: 'pc',
-                    quantityIssued: '5',
-                    unitCost: '200',
-                    amount: '1000'
-                }
-            ];
+            const response = await fetch(`http://10.16.4.136/project/stockcards.php?month=${monthIndex}&year=${year}`, {
+                signal: newAbortController.signal
+            });
             
+            if (!response.ok) {
+                throw new Error(`Server responded with status ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Fetched data for', month, year, ':', data);
+
+            if (!Array.isArray(data)) {
+                throw new Error('Expected array but received different data structure');
+            }
+
+            // Process data with proper field mappings
+            const processedData = data.map(item => ({
+                risNo: item.reference || '',
+                responsibilityCenterCode: item.issueoffice || '',
+                stockNo: item.stocknumber || '',
+                item: item.item || item.description || '',
+                unit: item.unitofmeasurement || '',
+                quantityIssued: item.issueqty || '',
+                unitCost: item.balanceunitcost || '',
+                amount: item.balancetotalcost || ''
+            }));
+
             // Fill remaining rows with empty data if needed
-            const emptyRows = Array(3).fill({
+            const emptyRowsCount = Math.max(0, 5 - processedData.length);
+            const emptyRows = Array(emptyRowsCount).fill({
                 risNo: '',
                 responsibilityCenterCode: '',
                 stockNo: '',
@@ -77,15 +87,32 @@ const RSMIPage = () => {
                 amount: '',
             });
             
-            setRows([...mockData, ...emptyRows]);
+            setRows([...processedData, ...emptyRows]);
+            
         } catch (error) {
-            console.error('Error fetching RSMI data:', error);
+            if (error.name !== 'AbortError') {
+                console.error('Error fetching RSMI data:', error);
+                setError(error.message || 'Failed to load RSMI data');
+                setRows(Array(5).fill({
+                    risNo: '',
+                    responsibilityCenterCode: '',
+                    stockNo: '',
+                    item: '',
+                    unit: '',
+                    quantityIssued: '',
+                    unitCost: '',
+                    amount: '',
+                }));
+            }
         } finally {
             setIsLoading(false);
         }
     };
 
     const onBack = () => {
+        // Abort any pending request when leaving
+        abortController.abort();
+        setDate('');
         navigate(-1);
     };
 
@@ -93,7 +120,6 @@ const RSMIPage = () => {
         const selectedDate = `${month}/${year}`;
         setDate(selectedDate);
         setShowMonthYearPicker(false);
-        // Automatically fetch data when date is selected
         fetchRSMIData(month, year);
     };
 
@@ -122,7 +148,7 @@ const RSMIPage = () => {
                 'Stock No.',
                 'Item',
                 'Unit',
-                'QuantityIssued',
+                'Quantity Issued',
                 'Unit Cost',
                 'Amount',
             ],
@@ -141,8 +167,9 @@ const RSMIPage = () => {
         const ws = XLSX.utils.aoa_to_sheet(exportData);
         ws['!cols'] = [
             { width: 15 }, { width: 15 }, 
-            { width: 10 }, { width: 12 }, { width: 12 },
-            { width: 10 }, { width: 12 }, { width: 12 },
+            { width: 15 }, { width: 25 }, 
+            { width: 10 }, { width: 15 }, 
+            { width: 12 }, { width: 15 }
         ];
 
         const wb = XLSX.utils.book_new();
@@ -166,23 +193,36 @@ const RSMIPage = () => {
         setRows(updatedRows);
     };
 
-    // Automatically select current month/year and fetch data on component mount
     useEffect(() => {
         const currentMonth = months[new Date().getMonth()];
         const currentYear = new Date().getFullYear();
         handleDateSelect(currentMonth, currentYear);
+
+        return () => {
+            // Cleanup: abort any pending request when component unmounts
+            abortController.abort();
+            setDate('');
+        };
     }, []);
 
     return (
         <div className="rsmi-container">
-            {/* Loading Popup */}
             {isLoading && (
-            <div className="loading-popup">
-                <div className="loading-content">
-                <div className="loading-spinner"></div>
-                <p>Fetching data...</p>
+                <div className="loading-popup">
+                    <div className="loading-content">
+                        <div className="loading-spinner"></div>
+                        <p>Fetching data...</p>
+                    </div>
                 </div>
-            </div>
+            )}
+
+            {error && (
+                <div className="error-popup">
+                    <div className="error-content">
+                        <p>Error: {error}</p>
+                        <button onClick={() => setError(null)}>Close</button>
+                    </div>
+                </div>
             )}
 
             <div className="header-top">
@@ -364,7 +404,6 @@ const RSMIPage = () => {
                 <img src={logo} alt="OCD logo" className="vertical-OCD-image" />
             </div>
 
-            {/* Export button in bottom right with pop-up menu */}
             <div className={`export-container ${showExportOptions ? 'active' : ''}`}>
                 <button className="export-button" onClick={toggleExportMenu}>
                     Export
