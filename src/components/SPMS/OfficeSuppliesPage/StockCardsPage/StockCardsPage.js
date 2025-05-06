@@ -67,27 +67,35 @@ const StockCardsPage = () => {
             setLoading(true);
             setError(null);
             
-            const response = await fetch(`http://10.16.4.136/project/stockcards.php?stocknumber=${stockNumber}`);
+            const response = await fetch(`http://10.16.4.247/project/stockcards.php?stocknumber=${encodeURIComponent(stockNumber)}`);
             
             if (!response.ok) {
                 throw new Error(`Server responded with status ${response.status}`);
             }
-
-            const data = await response.json();
-
-            if (!Array.isArray(data)) {
-                throw new Error('Expected array but received different data structure');
+    
+            const text = await response.text();
+            let data;
+            
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                console.error('Failed to parse JSON:', text);
+                throw new Error('Invalid JSON response from server');
             }
-
+    
+            if (!Array.isArray(data.data)) {
+                throw new Error(data.error || 'Expected array but received different data structure');
+            }
+    
             const processedData = {
-                fundcluster: data[0]?.fundcluster || '',
-                stocknumber: data[0]?.stocknumber || stockNumber,
-                item: data[0]?.item || '',
-                description: data[0]?.description || '',
-                unitofmeasurement: data[0]?.unitofmeasurement || '',
-                transactions: data.length > 0 ? data.map(processTransaction) : [createEmptyTransaction()]
+                fundcluster: data.data[0]?.fundcluster || '',
+                stocknumber: data.data[0]?.stocknumber || stockNumber,
+                item: data.data[0]?.item || '',
+                description: data.data[0]?.description || '',
+                unitofmeasurement: data.data[0]?.unitofmeasurement || '',
+                transactions: data.data.length > 0 ? data.data.map(processTransaction) : [createEmptyTransaction()]
             };
-
+    
             setStockData(processedData);
             setOriginalData(JSON.parse(JSON.stringify(processedData)));
             setHasChanges(false);
