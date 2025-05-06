@@ -359,3 +359,46 @@ input {
     width: 180px;
   }
 }
+
+/* Error Popup Styles */
+.error-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.error-content {
+  background-color: #46407f;
+  padding: 30px;
+  border-radius: 8px;
+  max-width: 80%;
+  text-align: center;
+  color: rgb(0, 0, 0);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.error-content p {
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.error-content button {
+  background-color: #1c1841;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.error-content button:hover {
+  background-color: #f28920;
+}
