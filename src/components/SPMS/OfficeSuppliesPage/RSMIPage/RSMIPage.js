@@ -5,10 +5,12 @@ import './RSMIPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
 
 const RSMIPage = () => {
-    const [entityName, setEntityName] = useState('');
-    const [fundCluster, setFundCluster] = useState('');
+    const [entityName, setEntityName] = useState('OFFICE OF CIVIL DEFENSE - NCR');
+    const [fundCluster, setFundCluster] = useState('01');
     const [serialNo, setSerialNo] = useState('');
     const [date, setDate] = useState('');
+    const [selectedMonth, setSelectedMonth] = useState('');
+    const [selectedYear, setSelectedYear] = useState('');
     const [showMonthYearPicker, setShowMonthYearPicker] = useState(false);
     const [showExportOptions, setShowExportOptions] = useState(false);
     const [rows, setRows] = useState(Array(5).fill({
@@ -23,7 +25,6 @@ const RSMIPage = () => {
     }));
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [abortController, setAbortController] = useState(new AbortController());
 
     const navigate = useNavigate();
 
@@ -34,47 +35,47 @@ const RSMIPage = () => {
     ];
     
     const currentYear = new Date().getFullYear();
-    const years = Array.from({length: 5}, (_, i) => currentYear + i);
+    const years = Array.from({length: 5}, (_, i) => currentYear - i);
 
     const fetchRSMIData = async (month, year) => {
-        // Abort any pending request
-        abortController.abort();
-        const newAbortController = new AbortController();
-        setAbortController(newAbortController);
-
+        if (!month || !year) {
+            setError('Please select both month and year');
+            return;
+        }
+        
         setIsLoading(true);
         setError(null);
+        
         try {
             const monthIndex = months.indexOf(month) + 1;
+            const response = await fetch(`http://10.16.4.247/project/rsmi_api.php?month=${monthIndex}&year=${year}`);
             
-            const response = await fetch(`http://10.16.4.136/project/stockcards.php?month=${monthIndex}&year=${year}`, {
-                signal: newAbortController.signal
-            });
+            if (!response.ok) throw new Error(`Server error: ${response.status}`);
+    
+            const result = await response.json();
             
-            if (!response.ok) {
-                throw new Error(`Server responded with status ${response.status}`);
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to fetch RSMI data');
+            }
+    
+            if (!result.data || result.data.length === 0) {
+                throw new Error(`No RSMI data found for ${month} ${year}`);
             }
 
-            const data = await response.json();
-            console.log('Fetched data for', month, year, ':', data);
-
-            if (!Array.isArray(data)) {
-                throw new Error('Expected array but received different data structure');
-            }
-
-            // Process data with proper field mappings
-            const processedData = data.map(item => ({
-                risNo: item.reference || '',
-                responsibilityCenterCode: item.issueoffice || '',
-                stockNo: item.stocknumber || '',
-                item: item.item || item.description || '',
-                unit: item.unitofmeasurement || '',
-                quantityIssued: item.issueqty || '',
-                unitCost: item.balanceunitcost || '',
-                amount: item.balancetotalcost || ''
+            // Process the data to match RSMI format
+            const processedData = result.data.map(item => ({
+                risNo: item.reference || 'N/A',
+                responsibilityCenterCode: item.issueoffice || 'N/A',
+                stockNo: item.stocknumber || 'N/A',
+                item: item.item || item.description || 'N/A',
+                unit: item.unitofmeasurement || 'N/A',
+                quantityIssued: item.issueqty || '0',
+                unitCost: item.balanceunitcost || '0.00',
+                amount: item.balancetotalcost || '0.00',
+                date: item.formatted_date || ''
             }));
 
-            // Fill remaining rows with empty data if needed
+            // Ensure minimum 5 rows
             const emptyRowsCount = Math.max(0, 5 - processedData.length);
             const emptyRows = Array(emptyRowsCount).fill({
                 risNo: '',
@@ -85,42 +86,50 @@ const RSMIPage = () => {
                 quantityIssued: '',
                 unitCost: '',
                 amount: '',
+                date: ''
             });
             
             setRows([...processedData, ...emptyRows]);
             
         } catch (error) {
-            if (error.name !== 'AbortError') {
-                console.error('Error fetching RSMI data:', error);
-                setError(error.message || 'Failed to load RSMI data');
-                setRows(Array(5).fill({
-                    risNo: '',
-                    responsibilityCenterCode: '',
-                    stockNo: '',
-                    item: '',
-                    unit: '',
-                    quantityIssued: '',
-                    unitCost: '',
-                    amount: '',
-                }));
-            }
+            console.error('Fetch error:', error);
+            setError(error.message);
+            setRows(Array(5).fill({
+                risNo: '',
+                responsibilityCenterCode: '',
+                stockNo: '',
+                item: '',
+                unit: '',
+                quantityIssued: '',
+                unitCost: '',
+                amount: '',
+                date: ''
+            }));
         } finally {
             setIsLoading(false);
         }
     };
 
     const onBack = () => {
-        // Abort any pending request when leaving
-        abortController.abort();
-        setDate('');
         navigate(-1);
     };
 
-    const handleDateSelect = (month, year) => {
-        const selectedDate = `${month}/${year}`;
-        setDate(selectedDate);
-        setShowMonthYearPicker(false);
-        fetchRSMIData(month, year);
+    const handleMonthSelect = (month) => {
+        setSelectedMonth(month);
+        if (selectedYear) {
+            const selectedDate = `${month} ${selectedYear}`;
+            setDate(selectedDate);
+            fetchRSMIData(month, selectedYear);
+        }
+    };
+
+    const handleYearSelect = (year) => {
+        setSelectedYear(year);
+        if (selectedMonth) {
+            const selectedDate = `${selectedMonth} ${year}`;
+            setDate(selectedDate);
+            fetchRSMIData(selectedMonth, year);
+        }
     };
 
     const toggleExportMenu = () => {
@@ -128,6 +137,11 @@ const RSMIPage = () => {
     };
 
     const onExportExcel = () => {
+        if (!date) {
+            alert('Please select a date first');
+            return;
+        }
+
         const exportData = [
             ['Republic of the Philippines'],
             ['Department of National Defense'],
@@ -137,7 +151,7 @@ const RSMIPage = () => {
             ['Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325'],
             ['E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com'],
             [],
-            ['RSMI'],
+            ['REPORT OF SUPPLIES AND MATERIALS ISSUED (RSMI)'],
             [],
             ['Entity Name:', entityName, 'Fund Cluster:', fundCluster],
             ['Serial No:', serialNo, 'Date:', date],
@@ -151,6 +165,7 @@ const RSMIPage = () => {
                 'Quantity Issued',
                 'Unit Cost',
                 'Amount',
+                'Date'
             ],
             ...rows.map(row => [
                 row.risNo,
@@ -161,48 +176,39 @@ const RSMIPage = () => {
                 row.quantityIssued,
                 row.unitCost,
                 row.amount,
+                row.date
             ])
         ];
 
         const ws = XLSX.utils.aoa_to_sheet(exportData);
-        ws['!cols'] = [
-            { width: 15 }, { width: 15 }, 
-            { width: 15 }, { width: 25 }, 
-            { width: 10 }, { width: 15 }, 
-            { width: 12 }, { width: 15 }
-        ];
-
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "RSMI");
-        XLSX.writeFile(wb, `RSMI_Inventory_${date.replace('/', '-')}.xlsx`);
-        setShowExportOptions(false);
-    };
-
-    const onExportPDF = () => {
-        alert(`PDF export functionality would be implemented here for ${date}`);
+        XLSX.writeFile(wb, `RSMI_${selectedMonth}_${selectedYear}.xlsx`);
         setShowExportOptions(false);
     };
 
     const handleInputChange = (index, field, value) => {
-        const updatedRows = rows.map((row, i) => {
-            if (i === index) {
-                return { ...row, [field]: value };
-            }
-            return row;
-        });
+        const updatedRows = [...rows];
+        updatedRows[index] = { ...updatedRows[index], [field]: value };
+        
+        // Recalculate amount if unit cost or quantity changes
+        if (field === 'unitCost' || field === 'quantityIssued') {
+            const quantity = parseFloat(updatedRows[index].quantityIssued) || 0;
+            const unitCost = parseFloat(updatedRows[index].unitCost) || 0;
+            updatedRows[index].amount = (quantity * unitCost).toFixed(2);
+        }
+        
         setRows(updatedRows);
     };
 
+    // Load current month/year data on initial render
     useEffect(() => {
         const currentMonth = months[new Date().getMonth()];
         const currentYear = new Date().getFullYear();
-        handleDateSelect(currentMonth, currentYear);
-
-        return () => {
-            // Cleanup: abort any pending request when component unmounts
-            abortController.abort();
-            setDate('');
-        };
+        setSelectedMonth(currentMonth);
+        setSelectedYear(currentYear);
+        setDate(`${currentMonth} ${currentYear}`);
+        fetchRSMIData(currentMonth, currentYear);
     }, []);
 
     return (
@@ -211,7 +217,7 @@ const RSMIPage = () => {
                 <div className="loading-popup">
                     <div className="loading-content">
                         <div className="loading-spinner"></div>
-                        <p>Fetching data...</p>
+                        <p>Fetching RSMI data for {selectedMonth} {selectedYear}...</p>
                     </div>
                 </div>
             )}
@@ -229,6 +235,7 @@ const RSMIPage = () => {
                 <button className="return-button" onClick={onBack}> &larr; </button>
                 <h1>RSMI</h1>
             </div>
+            
             <div className="rsmi-header">
                 <div className="header-text">
                     <p>Republic of the Philippines</p>
@@ -239,6 +246,7 @@ const RSMIPage = () => {
                     <p>Telephone no. (02) 421-1918; OPCEN Mobile Number: 0917-827-6325</p>
                     <p>E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com</p>
                 </div>
+                
                 <div className="table-container">
                     <table>
                         <thead>
@@ -285,13 +293,10 @@ const RSMIPage = () => {
                                                 <div className="picker-header">
                                                     <select 
                                                         className="year-select"
-                                                        defaultValue={currentYear}
-                                                        onChange={(e) => {
-                                                            const selectedYear = e.target.value;
-                                                            const currentMonth = document.querySelector('.month-grid button.active')?.textContent || months[0];
-                                                            handleDateSelect(currentMonth, selectedYear);
-                                                        }}
+                                                        value={selectedYear}
+                                                        onChange={(e) => handleYearSelect(e.target.value)}
                                                     >
+                                                        <option value="">Select Year</option>
                                                         {years.map(year => (
                                                             <option key={year} value={year}>{year}</option>
                                                         ))}
@@ -301,11 +306,8 @@ const RSMIPage = () => {
                                                     {months.map(month => (
                                                         <button
                                                             key={month}
-                                                            onClick={() => {
-                                                                const selectedYear = document.querySelector('.year-select')?.value || currentYear;
-                                                                handleDateSelect(month, selectedYear);
-                                                            }}
-                                                            className={date.includes(month) ? 'active' : ''}
+                                                            onClick={() => handleMonthSelect(month)}
+                                                            className={selectedMonth === month ? 'active' : ''}
                                                         >
                                                             {month.substring(0, 3)}
                                                         </button>
@@ -329,6 +331,7 @@ const RSMIPage = () => {
                                                 <th>Quantity Issued</th>
                                                 <th>Unit Cost</th>
                                                 <th>Amount</th>
+                                                <th>Date</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -371,24 +374,25 @@ const RSMIPage = () => {
                                                     </td>
                                                     <td>
                                                         <input
-                                                            type="text"
+                                                            type="number"
+                                                            step="0.01"
                                                             value={row.quantityIssued}
                                                             onChange={(e) => handleInputChange(index, 'quantityIssued', e.target.value)}
                                                         />
                                                     </td>
                                                     <td>
                                                         <input
-                                                            type="text"
+                                                            type="number"
+                                                            step="0.01"
                                                             value={row.unitCost}
                                                             onChange={(e) => handleInputChange(index, 'unitCost', e.target.value)}
                                                         />
                                                     </td>
                                                     <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.amount}
-                                                            onChange={(e) => handleInputChange(index, 'amount', e.target.value)}
-                                                        />
+                                                        {row.amount}
+                                                    </td>
+                                                    <td>
+                                                        {row.date}
                                                     </td>
                                                 </tr>
                                             ))}
@@ -400,6 +404,7 @@ const RSMIPage = () => {
                     </table>
                 </div>
             </div>
+            
             <div className="right-image-section">
                 <img src={logo} alt="OCD logo" className="vertical-OCD-image" />
             </div>
@@ -411,7 +416,6 @@ const RSMIPage = () => {
                 {showExportOptions && (
                     <div className="export-options">
                         <button onClick={onExportExcel}>Export as Excel</button>
-                        <button onClick={onExportPDF}>Export as PDF</button>
                     </div>
                 )}
             </div>
