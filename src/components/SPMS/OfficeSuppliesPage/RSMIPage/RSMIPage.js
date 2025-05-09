@@ -48,7 +48,7 @@ const RSMIPage = () => {
         
         try {
             const monthIndex = months.indexOf(month) + 1;
-            const response = await fetch(`http://10.16.4.247/project/rsmi_api.php?month=${monthIndex}&year=${year}`);
+            const response = await fetch(`http://10.16.2.168/project/rsmi_api.php?month=${monthIndex}&year=${year}`);
             
             if (!response.ok) throw new Error(`Server error: ${response.status}`);
     
