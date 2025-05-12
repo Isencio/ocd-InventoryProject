@@ -67,7 +67,7 @@ const StockCardsPage = () => {
             setLoading(true);
             setError(null);
             
-            const response = await fetch(`http://10.16.2.168/project/stockcards.php?stocknumber=${encodeURIComponent(stockNumber)}`);
+            const response = await fetch(`http://10.16.2.222/project/stockcards.php?stocknumber=${encodeURIComponent(stockNumber)}`);
             
             if (!response.ok) {
                 throw new Error(`Server responded with status ${response.status}`);
