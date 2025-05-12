@@ -1,72 +1,788 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ExcelJS from 'exceljs';
 import './StockCardsPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
 
 const StockCardsPage = () => {
+    // State declarations
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [stockData, setStockData] = useState({
+        fundcluster: '',
+        stocknumber: '',
+        item: '',
+        description: '',
+        unitofmeasurement: '',
+        transactions: []
+    });
+    const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+    const [hasChanges, setHasChanges] = useState(false);
+    const [originalData, setOriginalData] = useState(null);
+    const [showExportOptions, setShowExportOptions] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [showAddRowOptions, setShowAddRowOptions] = useState(false);
+    const [showItemForm, setShowItemForm] = useState(false);
+    const [newItemData, setNewItemData] = useState({
+        fundcluster: '',
+        description: '',
+        item: '',
+        stocknumber: '',
+        unitofmeasurement: ''
+    });
+
     const navigate = useNavigate();
     const tableRef = useRef(null);
-    const [item, setItem] = useState('');
-    const [stockNo, setStockNo] = useState('');
-    const [description, setDescription] = useState('');
-    const [reorderPoint, setReorderPoint] = useState('');
-    const [unitofmeasurement, setUnitofMeasurement] = useState('');
+    const exportRef = useRef(null);
+    const addRowButtonRef = useRef(null);
 
-    const onBack = () => {
-        navigate(-1);
+    const officeOptions = ['OS', 'CBTS', 'RRMS', 'PDPS', 'ORD', 'BAC', 'FMU', 'Admin', 'GSU', 'HRMU', 'DRMD'];
+
+    // Helper functions
+    const formatNumber = (value, isCurrency = false) => {
+        if (value === '' || value === null) return '';
+        const num = parseFloat(value);
+        if (isNaN(num)) return '';
+        return isCurrency ? num.toFixed(2) : Math.max(0, num).toString();
     };
 
-    const onExport = () => {
-        console.log('Export button clicked');
-    };
+    // Transaction processing
+    const processTransaction = (item) => ({
+        id: item.StockID || Date.now().toString(),
+        date: item.date || '',
+        reference: item.reference || '',
+        receiptqty: formatNumber(item.receiptqty),
+        receiptunitcost: formatNumber(item.receiptunitcost, true),
+        receipttotalcost: item.receipttotalcost || '',
+        issueqty: formatNumber(item.issueqty),
+        issueoffice: item.issueoffice || '',
+        balanceqty: formatNumber(item.balanceqty),
+        balanceunitcost: formatNumber(item.balanceunitcost, true),
+        balancetotalcost: item.balancetotalcost || '',
+        daystoconsume: item.daystoconsume || '',
+        isRISRow: item.isRISRow || false
+    });
 
-    const handleKeyDown = (event) => {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            addNewRow();
-        }
-    };
+    // Empty transaction templates
+    const createEmptyTransaction = () => ({
+        id: Date.now().toString(),
+        date: '',
+        reference: '',
+        receiptqty: '',
+        receiptunitcost: '',
+        receipttotalcost: '',
+        issueqty: '',
+        issueoffice: '',
+        balanceqty: '',
+        balanceunitcost: '',
+        balancetotalcost: '',
+        daystoconsume: '',
+        isRISRow: false
+    });
 
-    const addNewRow = () => {
-        const table = tableRef.current;
-        const newRow = table.insertRow(-1);
-        
-        const columns = [
-            { editable: true }, // DATE
-            { editable: true }, // REFERENCE
-            { editable: true }, // RECEIPT Qty
-            { editable: true }, // RECEIPT Unit Cost
-            { editable: true }, // RECEIPT Total Cost
-            { editable: true }, // BALANCE Qty
-            { editable: true }, // BALANCE Unit Cost
-            { editable: true }, // BALANCE Total Cost
-            { editable: true }, // ISSUE Qty
-            { editable: true }, // ISSUE Office
-            { editable: true }, // No. of Days to Consume
-        ];
+    const createEmptyDRRow = () => createEmptyTransaction();
+    const createEmptyRISRow = () => ({ ...createEmptyTransaction(), isRISRow: true });
 
-        columns.forEach((column) => {
-            const cell = newRow.insertCell();
-            if (column.editable) {
-                cell.contentEditable = true;
-                cell.addEventListener('keydown', handleKeyDown); // Add event listener to new cells
+    // Data fetching
+    const fetchStockData = async (stockNumber) => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const apiUrl = `http://10.16.4.183/project/stockcards.php?stocknumber=${stockNumber}`;
+            const response = await fetch(apiUrl, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Server error: ${response.status} ${response.statusText}`);
             }
-        });
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const responseData = await response.text();
+                throw new Error('Invalid response format - expected JSON');
+            }
+
+            const data = await response.json();
+            if (!data) throw new Error('No data received from server');
+            if (data.error) throw new Error(data.error);
+
+            const responseData = Array.isArray(data) ? data : [data];
+            const processedData = {
+                fundcluster: responseData[0]?.fundcluster || '',
+                stocknumber: responseData[0]?.stocknumber || stockNumber,
+                item: responseData[0]?.item || '',
+                description: responseData[0]?.description || '',
+                unitofmeasurement: responseData[0]?.unitofmeasurement || '',
+                transactions: responseData.length > 0 ? responseData.map(processTransaction) : [createEmptyTransaction()]
+            };
+
+            setStockData(processedData);
+            setOriginalData(JSON.parse(JSON.stringify(processedData)));
+            setHasChanges(false);
+            
+        } catch (error) {
+            console.error('Fetch error:', error);
+            setError(`Failed to load data: ${error.message}`);
+            
+            // Fallback to empty data
+            const emptyData = {
+                fundcluster: '',
+                stocknumber: stockNumber,
+                item: '',
+                description: '',
+                unitofmeasurement: '',
+                transactions: [createEmptyTransaction()]
+            };
+            setStockData(emptyData);
+            setOriginalData(JSON.parse(JSON.stringify(emptyData)));
+        } finally {
+            setLoading(false);
+        }
     };
 
-    useEffect(() => {
-        const table = tableRef.current;
-        for (let i = 0; i < 5; i++) {
-            addNewRow();
+    // Event handlers
+    const handleLoadData = () => {
+        if (!stockData.stocknumber) {
+            setError('Please enter a stock number');
+            return;
         }
-    }, []);
+        
+        if (hasChanges) {
+            if (window.confirm('You have unsaved changes. Do you want to discard them?')) {
+                fetchStockData(stockData.stocknumber);
+            }
+        } else {
+            fetchStockData(stockData.stocknumber);
+        }
+    };
+
+    const handleDeleteStock = () => {
+        if (!stockData.stocknumber) {
+            setError('Please enter a stock number to delete');
+            return;
+        }
+        setShowDeleteConfirm(true);
+    };
+
+    const deleteStockNumber = () => {
+        const emptyData = {
+            fundcluster: '',
+            stocknumber: '',
+            item: '',
+            description: '',
+            unitofmeasurement: '',
+            transactions: [createEmptyTransaction()]
+        };
+        setStockData(emptyData);
+        setOriginalData(JSON.parse(JSON.stringify(emptyData)));
+        setShowDeleteConfirm(false);
+    };
+
+    const cancelDelete = () => setShowDeleteConfirm(false);
+
+    const handleHeaderChange = (field, value) => {
+        setStockData(prev => ({ ...prev, [field]: value }));
+        checkForChanges({ ...stockData, [field]: value });
+    };
+
+    const handleNewItemChange = (field, value) => {
+        setNewItemData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const saveNewItem = () => {
+        if (!newItemData.stocknumber.trim()) {
+            setError('Stock Number is required');
+            return;
+        }
+
+        const updatedData = {
+            ...newItemData,
+            transactions: [createEmptyTransaction()]
+        };
+        
+        setStockData(updatedData);
+        setOriginalData(JSON.parse(JSON.stringify(updatedData)));
+        setShowItemForm(false);
+        setNewItemData({
+            fundcluster: '',
+            description: '',
+            item: '',
+            stocknumber: '',
+            unitofmeasurement: ''
+        });
+        setHasChanges(true);
+    };
+
+    const handleTransactionChange = (index, field, value) => {
+        const numericFields = ['receiptqty', 'receiptunitcost', 'issueqty', 'balanceqty', 'balanceunitcost'];
+        const currencyFields = ['receiptunitcost', 'balanceunitcost'];
+        
+        let validatedValue = value;
+        
+        if (numericFields.includes(field)) {
+            validatedValue = value.replace(/[^0-9.]/g, '');
+            const decimalCount = validatedValue.split('.').length - 1;
+            if (decimalCount > 1) {
+                validatedValue = validatedValue.substring(0, validatedValue.lastIndexOf('.'));
+            }
+            
+            if (currencyFields.includes(field)) {
+                const parts = validatedValue.split('.');
+                if (parts.length > 1) {
+                    validatedValue = parts[0] + '.' + parts[1].slice(0, 2);
+                }
+            }
+        }
+        
+        const updatedTransactions = [...stockData.transactions];
+        updatedTransactions[index] = {
+            ...updatedTransactions[index],
+            [field]: validatedValue
+        };
+        
+        // Transaction calculations
+        if (updatedTransactions[index].isRISRow) {
+            if (field === 'issueqty') {
+                const prevBalanceQty = index > 0 ? parseFloat(updatedTransactions[index-1].balanceqty) || 0 : 0;
+                const currentIssueQty = parseFloat(validatedValue) || 0;
+                updatedTransactions[index].balanceqty = Math.max(0, prevBalanceQty - currentIssueQty).toString();
+                
+                updatedTransactions[index].receiptqty = '';
+                updatedTransactions[index].receiptunitcost = '';
+                updatedTransactions[index].receipttotalcost = '';
+                updatedTransactions[index].balanceunitcost = '';
+                updatedTransactions[index].balancetotalcost = '';
+            }
+        } else {
+            const qty = parseFloat(updatedTransactions[index].receiptqty) || 0;
+            const unitCost = parseFloat(updatedTransactions[index].receiptunitcost) || 0;
+            updatedTransactions[index].receipttotalcost = (qty * unitCost).toFixed(2);
+            
+            if (index === 0) {
+                const receiptQty = parseFloat(updatedTransactions[index].receiptqty) || 0;
+                const receiptUnitCost = parseFloat(updatedTransactions[index].receiptunitcost) || 0;
+                const receiptTotalCost = receiptQty * receiptUnitCost;
+                
+                updatedTransactions[index].balanceqty = receiptQty.toString();
+                updatedTransactions[index].balanceunitcost = receiptUnitCost.toFixed(2);
+                updatedTransactions[index].balancetotalcost = receiptTotalCost.toFixed(2);
+                updatedTransactions[index].receipttotalcost = receiptTotalCost.toFixed(2);
+            } else {
+                const prevBalanceQty = parseFloat(updatedTransactions[index-1].balanceqty) || 0;
+                const currentReceiptQty = parseFloat(updatedTransactions[index].receiptqty) || 0;
+                const currentReceiptUnitCost = parseFloat(updatedTransactions[index].receiptunitcost) || 0;
+                const currentIssueQty = parseFloat(updatedTransactions[index].issueqty) || 0;
+                
+                const currentReceiptTotalCost = currentReceiptQty * currentReceiptUnitCost;
+                updatedTransactions[index].receipttotalcost = currentReceiptTotalCost.toFixed(2);
+                
+                let balanceQty = prevBalanceQty + currentReceiptQty - currentIssueQty;
+                updatedTransactions[index].balanceqty = Math.max(0, balanceQty).toString();
+                
+                let lastNonRISIndex = index - 1;
+                while (lastNonRISIndex >= 0 && updatedTransactions[lastNonRISIndex].isRISRow) {
+                    lastNonRISIndex--;
+                }
+                
+                let balanceUnitCost = 0;
+                let balanceTotalCost = 0;
+                
+                if (currentReceiptQty > 0) {
+                    if (lastNonRISIndex >= 0) {
+                        const lastUnitCost = parseFloat(updatedTransactions[lastNonRISIndex].balanceunitcost) || 0;
+                        balanceUnitCost = lastUnitCost + currentReceiptUnitCost / 2;
+                        
+                        const lastTotalCost = parseFloat(updatedTransactions[lastNonRISIndex].balancetotalcost) || 0;
+                        balanceTotalCost = lastTotalCost + currentReceiptTotalCost / 2;
+                    } else {
+                        balanceUnitCost = currentReceiptUnitCost;
+                        balanceTotalCost = currentReceiptTotalCost;
+                    }
+                } else {
+                    balanceUnitCost = parseFloat(updatedTransactions[index-1].balanceunitcost) || 0;
+                    balanceTotalCost = parseFloat(updatedTransactions[index-1].balancetotalcost) || 0;
+                }
+                
+                updatedTransactions[index].balanceunitcost = balanceUnitCost.toFixed(2);
+                updatedTransactions[index].balancetotalcost = balanceTotalCost.toFixed(2);
+            }
+        }
+        
+        // Update subsequent rows
+        for (let i = index + 1; i < updatedTransactions.length; i++) {
+            const prevBalanceQty = parseFloat(updatedTransactions[i-1].balanceqty) || 0;
+            const currentIssueQty = parseFloat(updatedTransactions[i].issueqty) || 0;
+            
+            if (updatedTransactions[i].isRISRow) {
+                updatedTransactions[i].balanceqty = Math.max(0, prevBalanceQty - currentIssueQty).toString();
+                updatedTransactions[i].balanceunitcost = updatedTransactions[i-1].balanceunitcost;
+                updatedTransactions[i].balancetotalcost = (parseFloat(updatedTransactions[i].balanceqty) * 
+                    parseFloat(updatedTransactions[i].balanceunitcost)).toFixed(2);
+            } else {
+                const currentReceiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
+                const currentReceiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
+                const currentReceiptTotalCost = currentReceiptQty * currentReceiptUnitCost;
+                
+                updatedTransactions[i].balanceqty = Math.max(0, prevBalanceQty + currentReceiptQty - currentIssueQty).toString();
+                
+                let lastNonRISIndex = i - 1;
+                while (lastNonRISIndex >= 0 && updatedTransactions[lastNonRISIndex].isRISRow) {
+                    lastNonRISIndex--;
+                }
+                
+                if (currentReceiptQty > 0) {
+                    if (lastNonRISIndex >= 0) {
+                        const lastUnitCost = parseFloat(updatedTransactions[lastNonRISIndex].balanceunitcost) || 0;
+                        updatedTransactions[i].balanceunitcost = (lastUnitCost + currentReceiptUnitCost / 2).toFixed(2);
+                        
+                        const lastTotalCost = parseFloat(updatedTransactions[lastNonRISIndex].balancetotalcost) || 0;
+                        updatedTransactions[i].balancetotalcost = (lastTotalCost + currentReceiptTotalCost / 2).toFixed(2);
+                    } else {
+                        updatedTransactions[i].balanceunitcost = currentReceiptUnitCost.toFixed(2);
+                        updatedTransactions[i].balancetotalcost = currentReceiptTotalCost.toFixed(2);
+                    }
+                } else {
+                    updatedTransactions[i].balanceunitcost = updatedTransactions[i-1].balanceunitcost;
+                    updatedTransactions[i].balancetotalcost = updatedTransactions[i-1].balancetotalcost;
+                }
+            }
+        }
+        
+        const updatedData = {
+            ...stockData,
+            transactions: updatedTransactions
+        };
+        
+        setStockData(updatedData);
+        checkForChanges(updatedData);
+    };
+
+    const checkForChanges = (currentData) => {
+        const changed = JSON.stringify(currentData) !== JSON.stringify(originalData);
+        setHasChanges(changed);
+    };
+
+    const toggleAddRowOptions = () => setShowAddRowOptions(!showAddRowOptions);
+
+    const addDRRow = () => {
+        const newRow = createEmptyDRRow();
+        const updatedData = {
+            ...stockData,
+            transactions: [...stockData.transactions, newRow]
+        };
+        setStockData(updatedData);
+        checkForChanges(updatedData);
+        setShowAddRowOptions(false);
+        
+        setTimeout(() => {
+            const rows = tableRef.current?.querySelectorAll('tbody tr');
+            if (rows && rows.length > 0) {
+                const lastRow = rows[rows.length - 1];
+                const firstInput = lastRow.querySelector('input');
+                firstInput?.focus();
+            }
+        }, 50);
+    };
+
+    const addRISRow = () => {
+        const newRow = createEmptyRISRow();
+        const updatedData = {
+            ...stockData,
+            transactions: [...stockData.transactions, newRow]
+        };
+        setStockData(updatedData);
+        checkForChanges(updatedData);
+        setShowAddRowOptions(false);
+        
+        setTimeout(() => {
+            const rows = tableRef.current?.querySelectorAll('tbody tr');
+            if (rows && rows.length > 0) {
+                const lastRow = rows[rows.length - 1];
+                const issueQtyInput = lastRow.querySelectorAll('input')[5];
+                issueQtyInput?.focus();
+            }
+        }, 50);
+    };
+
+    const deleteRow = (index) => {
+        if (stockData.transactions.length <= 1) {
+            setError('At least one transaction must remain');
+            return;
+        }
+
+        if (window.confirm('Are you sure you want to delete this transaction?')) {
+            const updatedTransactions = [...stockData.transactions];
+            updatedTransactions.splice(index, 1);
+            
+            // Recalculate balances
+            for (let i = 0; i < updatedTransactions.length; i++) {
+                if (i === 0) {
+                    const receiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
+                    const receiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
+                    
+                    updatedTransactions[i].balanceqty = receiptQty.toString();
+                    updatedTransactions[i].balanceunitcost = receiptUnitCost.toFixed(2);
+                    updatedTransactions[i].balancetotalcost = (receiptQty * receiptUnitCost).toFixed(2);
+                } else {
+                    const prevBalanceQty = parseFloat(updatedTransactions[i-1].balanceqty) || 0;
+                    const prevUnitCost = parseFloat(updatedTransactions[i-1].balanceunitcost) || 0;
+                    const currentReceiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
+                    const currentReceiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
+                    const currentIssueQty = parseFloat(updatedTransactions[i].issueqty) || 0;
+                    
+                    let balanceQty = prevBalanceQty + currentReceiptQty;
+                    
+                    if (currentIssueQty > 0) {
+                        balanceQty = prevBalanceQty - currentIssueQty;
+                        if (balanceQty < 0) balanceQty = 0;
+                    }
+                    
+                    updatedTransactions[i].balanceqty = balanceQty.toString();
+                    
+                    let balanceUnitCost = prevUnitCost;
+                    if (currentReceiptQty > 0 && currentReceiptUnitCost > 0 && !updatedTransactions[i].isRISRow) {
+                        if (prevUnitCost > 0) {
+                            balanceUnitCost = (prevUnitCost + currentReceiptUnitCost / 2);
+                        } else {
+                            balanceUnitCost = currentReceiptUnitCost;
+                        }
+                    }
+                    updatedTransactions[i].balanceunitcost = balanceUnitCost.toFixed(2);
+                    updatedTransactions[i].balancetotalcost = (balanceQty * balanceUnitCost).toFixed(2);
+                }
+            }
+            
+            const updatedData = {
+                ...stockData,
+                transactions: updatedTransactions
+            };
+            
+            setStockData(updatedData);
+            checkForChanges(updatedData);
+        }
+    };
+
+    const saveData = async () => {
+        try {
+            setLoading(true);
+            
+            const dataToSend = {
+                ...stockData,
+                transactions: stockData.transactions.map(t => ({
+                    ...t,
+                    receiptqty: parseFloat(t.receiptqty) || 0,
+                    receiptunitcost: parseFloat(t.receiptunitcost) || 0,
+                    receipttotalcost: parseFloat(t.receipttotalcost) || 0,
+                    issueqty: parseFloat(t.issueqty) || 0,
+                    balanceqty: parseFloat(t.balanceqty) || 0,
+                    balanceunitcost: parseFloat(t.balanceunitcost) || 0,
+                    balancetotalcost: parseFloat(t.balancetotalcost) || 0,
+                    daystoconsume: parseInt(t.daystoconsume) || 0
+                }))
+            };
     
+            const response = await fetch('http://localhost/project/save_stockcards.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    stockData: dataToSend
+                })
+            });
+    
+            const result = await response.json();
+            
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || `Server error: ${response.status}`);
+            }
+    
+            setOriginalData(JSON.parse(JSON.stringify(stockData)));
+            setHasChanges(false);
+            alert('Data saved successfully!');
+        } catch (error) {
+            console.error('Error saving data:', error);
+            setError(error.message || 'Failed to save data. Check console for details.');
+        } finally {
+            setLoading(false);
+            setShowSaveConfirm(false);
+        }
+    };
+
+    const confirmSave = () => setShowSaveConfirm(true);
+    const cancelSave = () => setShowSaveConfirm(false);
+    const toggleExportOptions = () => setShowExportOptions(!showExportOptions);
+
+    const exportToExcel = async () => {
+        try {
+            setLoading(true);
+            
+            if (!stockData.transactions.length) {
+                setError('No data to export');
+                return;
+            }
+
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('StockCard');
+
+            // Set default font for the worksheet
+            worksheet.properties.defaultRowHeight = 15;
+
+            // Add title
+            const titleRow = worksheet.addRow(['STOCK CARD AS OF JANUARY 2025']);
+            titleRow.font = { bold: true, size: 14 };
+            titleRow.alignment = { horizontal: 'center' };
+            worksheet.mergeCells('A1:I1');
+            worksheet.addRow([]);
+
+            // Add Fund Cluster and item information
+            worksheet.addRow(['Fund Cluster:', stockData.fundcluster]);
+            worksheet.addRow(['Item:', stockData.item, '', '', '', 'Stock No. :', '', stockData.stocknumber]);
+            worksheet.addRow(['', '', '', '', '', 'Re-order Point :', '']);
+            worksheet.addRow([]);
+
+            // Add table headers
+            const headerRow1 = worksheet.addRow([
+                'Date', 'Reference', '', 'Receipt', '', '', 'Issue', '', 'Balance', '', '', 'No. of Days to Consume'
+            ]);
+            headerRow1.font = { bold: true };
+            
+            const headerRow2 = worksheet.addRow([
+                '', '', 'Qty.', 'Unit Cost', 'Total Cost', 'Qty.', 'Office', 'Qty.', 'Unit Cost', 'Total Cost', ''
+            ]);
+            headerRow2.font = { bold: true };
+
+            // Merge header cells
+            worksheet.mergeCells('D4:F4'); // Receipt header
+            worksheet.mergeCells('G4:H4'); // Issue header
+            worksheet.mergeCells('I4:K4'); // Balance header
+            worksheet.mergeCells('L4:L4'); // Days to consume header
+
+            // Add transaction data
+            stockData.transactions.forEach(transaction => {
+                worksheet.addRow([
+                    transaction.date,
+                    transaction.reference,
+                    transaction.receiptqty,
+                    transaction.receiptunitcost,
+                    transaction.receipttotalcost,
+                    transaction.issueqty,
+                    transaction.issueoffice,
+                    transaction.balanceqty,
+                    transaction.balanceunitcost,
+                    transaction.balancetotalcost,
+                    '',
+                    transaction.daystoconsume
+                ]);
+            });
+
+            // Set column widths to match the image
+            worksheet.columns = [
+                { width: 10 }, // Date
+                { width: 20 }, // Reference
+                { width: 8 },  // Qty (Receipt)
+                { width: 10 }, // Unit Cost (Receipt)
+                { width: 12 }, // Total Cost (Receipt)
+                { width: 8 },  // Qty (Issue)
+                { width: 10 }, // Office (Issue)
+                { width: 8 },  // Qty (Balance)
+                { width: 10 }, // Unit Cost (Balance)
+                { width: 12 }, // Total Cost (Balance)
+                { width: 5 },  // Empty
+                { width: 15 }  // Days to consume
+            ];
+
+            // Format all cells with borders
+            const lastRow = worksheet.rowCount;
+            const lastCol = worksheet.columns.length;
+
+            for (let i = 3; i <= lastRow; i++) {
+                for (let j = 1; j <= lastCol; j++) {
+                    const cell = worksheet.getCell(i, j);
+                    cell.border = {
+                        top: { style: 'thin' },
+                        left: { style: 'thin' },
+                        bottom: { style: 'thin' },
+                        right: { style: 'thin' }
+                    };
+                }
+            }
+
+            // Format number cells
+            for (let i = 5; i <= lastRow; i++) {
+                // Receipt Unit Cost and Total Cost
+                worksheet.getCell(`D${i}`).numFmt = '#,##0.00';
+                worksheet.getCell(`E${i}`).numFmt = '#,##0.00';
+                
+                // Balance Unit Cost and Total Cost
+                worksheet.getCell(`I${i}`).numFmt = '#,##0.00';
+                worksheet.getCell(`J${i}`).numFmt = '#,##0.00';
+            }
+
+            // Save file
+            await workbook.xlsx.writeFile(`StockCard_${stockData.stocknumber || 'Inventory'}.xlsx`);
+            setShowExportOptions(false);
+        } catch (err) {
+            console.error('Error exporting to Excel:', err);
+            setError('Failed to export to Excel. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const exportToPDF = () => {
+        setError('PDF export functionality will be implemented soon');
+        setShowExportOptions(false);
+    };
+
+    // JSX Return
     return (
         <div className="stock-cards-container">
+            {/* Loading Modal */}
+            {loading && (
+                <div className="loading-modal">
+                    <div className="loading-content">
+                        <div className="loading-spinner"></div>
+                        <p>Loading stock data...</p>
+                        <p>Please wait while we connect to the server</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Error Modal */}
+            {error && (
+                <div className="error-modal">
+                    <div className="error-content">
+                        <h3>Error Loading Data</h3>
+                        <p>{error}</p>
+                        <div className="error-details">
+                            <p>Possible solutions:</p>
+                            <ul>
+                                <li>Check your internet connection</li>
+                                <li>Verify the server is running</li>
+                                <li>Confirm the stock number is correct</li>
+                                <li>Contact IT support if problem persists</li>
+                            </ul>
+                        </div>
+                        <div className="error-actions">
+                            <button onClick={() => setError(null)}>Dismiss</button>
+                            <button onClick={handleLoadData}>Retry</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Confirmation Modals */}
+            {showSaveConfirm && (
+                <div className="confirmation-modal">
+                    <div className="confirmation-content">
+                        <h3>Confirm Save</h3>
+                        <p>Are you sure you want to save these changes?</p>
+                        <div className="confirmation-buttons">
+                            <button onClick={saveData}>Yes</button>
+                            <button onClick={cancelSave}>No</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showDeleteConfirm && (
+                <div className="confirmation-modal">
+                    <div className="confirmation-content">
+                        <h3>Confirm Delete</h3>
+                        <p>Are you sure you want to delete stock number: {stockData.stocknumber}?</p>
+                        <div className="confirmation-buttons">
+                            <button onClick={deleteStockNumber}>Yes</button>
+                            <button onClick={cancelDelete}>No</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Item Form Modal */}
+            {showItemForm && (
+                <div className="item-form-modal">
+                    <div className="item-form-content">
+                        <h3>Add New Item</h3>
+                        
+                        <div className="form-group">
+                            <label>Fund Cluster:</label>
+                            <input
+                                type="text"
+                                value={newItemData.fundcluster}
+                                onChange={(e) => handleNewItemChange('fundcluster', e.target.value)}
+                                className="custom-stocknumber-input"
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Description:</label>
+                            <input
+                                type="text"
+                                value={newItemData.description}
+                                onChange={(e) => handleNewItemChange('description', e.target.value)}
+                                className="custom-stocknumber-input"
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Item:</label>
+                            <input
+                                type="text"
+                                value={newItemData.item}
+                                onChange={(e) => handleNewItemChange('item', e.target.value)}
+                                className="custom-stocknumber-input"
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Stock No.:</label>
+                            <input
+                                type="text"
+                                value={newItemData.stocknumber}
+                                onChange={(e) => handleNewItemChange('stocknumber', e.target.value)}
+                                className="custom-stocknumber-input"
+                                required
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label>Unit of Measurement:</label>
+                            <input
+                                type="text"
+                                value={newItemData.unitofmeasurement}
+                                onChange={(e) => handleNewItemChange('unitofmeasurement', e.target.value)}
+                                className="custom-stocknumber-input"
+                            />
+                        </div>
+                        
+                        <div className="form-buttons">
+                            <button onClick={saveNewItem}>Save</button>
+                            <button onClick={() => setShowItemForm(false)}>Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Main Header */}
             <div className="header-top">
-                <button className="return-button" onClick={onBack}> &larr; </button>
+                <button className="return-button" onClick={() => navigate(-1)}> &larr; </button>
                 <h1>Stock Card</h1>
             </div>
+
+            {/* Save Notification */}
+            <div className={`save-notification ${hasChanges ? 'visible' : ''}`}>
+                Pending Changes
+            </div>
+
+            {/* Header Text */}
             <div className="stock-cards-header">
                 <div className="header-text">
                     <p>Republic of the Philippines</p>
@@ -77,97 +793,307 @@ const StockCardsPage = () => {
                     <p>Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325</p>
                     <p>E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com</p>
                 </div>
-                
-                <div className="table-container">
-                    {/* Add a new row for Item and Stock No. with input fields */}
-                    <div className="item-stock-row">
-                        <div className="item-cell">
-                            <label>Item:</label>
-                            <input
-                                type="text"
-                                placeholder="Enter Item"
-                                value={item}
-                                onChange={(e) => setItem(e.target.value)}
-                            />
-                        </div>
-                        <div className="stock-no-cell">
-                            <label>Stock No.:</label>
-                            <input
-                                type="text"
-                                placeholder="Enter Stock No."
-                                value={stockNo}
-                                onChange={(e) => setStockNo(e.target.value)}
-                            />
-                        </div>
-                    </div>
 
-                    {/* Add a new row for Description and Re-order point with input fields */}
-                    <div className="description-reorder-row">
-                        <div className="description-cell">
-                            <label>Description:</label>
-                            <input
-                                type="text"
-                                placeholder="Enter Description"
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                            />
-                        </div>
-                        <div className="reorder-point-cell">
-                            <label>Re-order Point:</label>
-                            <input
-                                type="text"
-                                placeholder="Enter Re-order Point"
-                                value={reorderPoint}
-                                onChange={(e) => setReorderPoint(e.target.value)}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="unit-of-measurement">
-                        <div className="unit-of-measurement-cell">
-                            <label>Unit of Measurement:</label>
-                            <input
-                                type="text"
-                                placeholder="Enter Unit of Measurement"
-                                value={unitofmeasurement}
-                                onChange={(e) => setUnitofMeasurement(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                    {/* Existing table */}
-                    <table ref={tableRef}>
+                {/* Main Table */}
+                <div className="table-container" ref={tableRef}>
+                    <table>
                         <thead>
                             <tr>
-                                <th>DATE</th>
-                                <th>REFERENCE</th>
-                                <th colSpan="3">RECEIPT</th>
-                                <th colSpan="3">BALANCE</th>
-                                <th colSpan="2">ISSUE</th>
-                                <th>No. of Days to Consume</th>
+                                <th className="Item-right-align">Fund Cluster:</th>
+                                <td className="input-Fundcluster-cell">
+                                    <div className="stock-number-controls">
+                                        <input
+                                            type="text"
+                                            value={stockData.fundcluster}
+                                            onChange={(e) => handleHeaderChange('fundcluster', e.target.value)}
+                                            className="custom-stocknumber-input"
+                                        />
+                                    </div>
+                                </td>
                             </tr>
                             <tr>
-                                <th></th> {/* Empty for DATE */}
-                                <th></th> {/* Empty for REFERENCE */}
-                                {/* Sub-columns for RECEIPT */}
-                                <th>Qty</th>
-                                <th>Unit Cost</th>
-                                <th>Total Cost</th>
-                                {/* Sub-columns for BALANCE */}
-                                <th>Qty</th>
-                                <th>Unit Cost</th>
-                                <th>Total Cost</th>
-                                {/* Sub-columns for ISSUE */}
-                                <th>Qty</th>
-                                <th>Office</th>
-                                <th></th> {/* Empty for No. of Days to Consume */}
+                                <th className="Item-left-align">Item:</th>
+                                <td className="input-Item-cell">
+                                    <div className="stock-number-controls">
+                                        <input
+                                            type="text"
+                                            value={stockData.item}
+                                            onChange={(e) => handleHeaderChange('item', e.target.value)}
+                                            className="custom-stocknumber-input"
+                                        />
+                                    </div>
+                                </td>
+                                <th className="Item-right-align">Stock No. :</th>
+                                <td className="input-stockno-cell">
+                                    <div className="stock-number-controls">
+                                        <input
+                                            type="text"
+                                            value={stockData.stocknumber}
+                                            onChange={(e) => handleHeaderChange('stocknumber', e.target.value)}
+                                            placeholder="Enter stock number"
+                                            className="custom-stocknumber-input"
+                                        />
+                                        <button 
+                                            className="fetch-button"
+                                            onClick={handleLoadData}
+                                        >
+                                            Load Data
+                                        </button>
+                                        <button 
+                                            className="delete-stocknumber-button"
+                                            onClick={handleDeleteStock}
+                                        >
+                                            Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th className="Item-left-align">Description:</th>
+                                <td>
+                                    <div className="stock-number-controls">
+                                        <input
+                                            type="text"
+                                            value={stockData.description}
+                                            onChange={(e) => handleHeaderChange('description', e.target.value)}
+                                            className="custom-stocknumber-input"
+                                        />
+                                    </div>
+                                </td>
+                                <th className="Item-right-align">Unit of Measurement:</th>
+                                <td>
+                                    <div className="stock-number-controls">
+                                        <input
+                                            type="text"
+                                            value={stockData.unitofmeasurement}
+                                            onChange={(e) => handleHeaderChange('unitofmeasurement', e.target.value)}
+                                            className="custom-stocknumber-input"
+                                        />
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th colSpan="4">
+                                    <table className="inner-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Reference</th>
+                                                <th colSpan="3">RECEIPT</th>
+                                                <th colSpan="2">ISSUE</th>
+                                                <th colSpan="3">BALANCE</th>
+                                                <th>No. of Days to Consume</th>
+                                                <th>Action</th>
+                                            </tr>
+                                            <tr>
+                                                <th></th>
+                                                <th></th>
+                                                <th>Qty</th>
+                                                <th>Unit Cost</th>
+                                                <th>Total Cost</th>
+                                                <th>Qty</th>
+                                                <th>Office</th>
+                                                <th>Qty</th>
+                                                <th>Unit Cost</th>
+                                                <th>Total Cost</th>
+                                                <th></th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {stockData.transactions?.map((transaction, index) => (
+                                                <tr key={transaction.id}>
+                                                    <td>
+                                                        <input
+                                                            type="date"
+                                                            value={transaction.date}
+                                                            onChange={(e) => handleTransactionChange(index, 'date', e.target.value)}
+                                                            disabled={transaction.isRISRow}
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={transaction.reference}
+                                                            onChange={(e) => handleTransactionChange(index, 'reference', e.target.value)}
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            value={transaction.receiptqty}
+                                                            onChange={(e) => handleTransactionChange(index, 'receiptqty', e.target.value)}
+                                                            className="qty-input"
+                                                            disabled={transaction.isRISRow}
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={transaction.receiptunitcost}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value.replace(/[^0-9.]/g, '');
+                                                                const parts = value.split('.');
+                                                                if (parts.length > 1) {
+                                                                    e.target.value = parts[0] + '.' + parts[1].slice(0, 2);
+                                                                }
+                                                                handleTransactionChange(index, 'receiptunitcost', e.target.value);
+                                                            }}
+                                                            onBlur={(e) => {
+                                                                if (e.target.value && !isNaN(e.target.value)) {
+                                                                    const formatted = parseFloat(e.target.value).toFixed(2);
+                                                                    handleTransactionChange(index, 'receiptunitcost', formatted);
+                                                                }
+                                                            }}
+                                                            disabled={transaction.isRISRow}
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={transaction.receipttotalcost}
+                                                            onChange={(e) => handleTransactionChange(index, 'receipttotalcost', e.target.value)}
+                                                            readOnly
+                                                            disabled={transaction.isRISRow}
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            value={transaction.issueqty}
+                                                            onChange={(e) => handleTransactionChange(index, 'issueqty', e.target.value)}
+                                                            className="qty-input"
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <select
+                                                            value={transaction.issueoffice}
+                                                            onChange={(e) => handleTransactionChange(index, 'issueoffice', e.target.value)}
+                                                            className="office-select"
+                                                        >
+                                                            <option value="">Select Office</option>
+                                                            {officeOptions.map(office => (
+                                                                <option key={office} value={office}>{office}</option>
+                                                            ))}
+                                                        </select>
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            value={transaction.balanceqty}
+                                                            onChange={(e) => handleTransactionChange(index, 'balanceqty', e.target.value)}
+                                                            className="qty-input"
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={transaction.balanceunitcost}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value.replace(/[^0-9.]/g, '');
+                                                                const parts = value.split('.');
+                                                                if (parts.length > 1) {
+                                                                    e.target.value = parts[0] + '.' + parts[1].slice(0, 2);
+                                                                }
+                                                                handleTransactionChange(index, 'balanceunitcost', e.target.value);
+                                                            }}
+                                                            onBlur={(e) => {
+                                                                if (e.target.value && !isNaN(e.target.value)) {
+                                                                    const formatted = parseFloat(e.target.value).toFixed(2);
+                                                                    handleTransactionChange(index, 'balanceunitcost', formatted);
+                                                                }
+                                                            }}
+                                                            disabled={transaction.isRISRow}
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={transaction.balancetotalcost}
+                                                            onChange={(e) => handleTransactionChange(index, 'balancetotalcost', e.target.value)}
+                                                            readOnly
+                                                            disabled={transaction.isRISRow}
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={transaction.daystoconsume}
+                                                            onChange={(e) => handleTransactionChange(index, 'daystoconsume', e.target.value)}
+                                                            disabled={transaction.isRISRow}
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <button 
+                                                            className="delete-row-button"
+                                                            onClick={() => deleteRow(index)}
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </th>
                             </tr>
                         </thead>
-                        <tbody>
-                        </tbody>
                     </table>
                 </div>
             </div>
-            <button className="export-button" onClick={onExport}>Export</button>
+
+            {/* Action Buttons */}
+            <div className="action-buttons">
+                <button 
+                    className="add-item-button"
+                    onClick={() => setShowItemForm(true)}
+                >
+                    Add New Item
+                </button>
+                
+                <div className="add-row-dropdown" ref={addRowButtonRef}>
+                    <button 
+                        className="add-row-button"
+                        onClick={toggleAddRowOptions}
+                    >
+                        Add New Row
+                    </button>
+                    {showAddRowOptions && (
+                        <div className="add-row-options">
+                            <button onClick={addDRRow}>Add DR Row</button>
+                            <button onClick={addRISRow}>Add RIS Row</button>
+                        </div>
+                    )}
+                </div>
+                
+                <div className="export-dropdown" ref={exportRef}>
+                    <button 
+                        className="export-button"
+                        onClick={toggleExportOptions}
+                        disabled={!stockData.transactions.length}
+                    >
+                        Export
+                    </button>
+                    {showExportOptions && (
+                        <div className="export-options">
+                            <button onClick={exportToExcel}>Export to Excel</button>
+                            <button onClick={exportToPDF}>Export to PDF</button>
+                        </div>
+                    )}
+                </div>
+                <button 
+                    className="save-button"
+                    onClick={confirmSave}
+                    disabled={!hasChanges}
+                >
+                    Save Changes
+                </button>
+            </div>
+
+            {/* Right Image Section */}
             <div className="right-image-section">
                 <img src={logo} alt="OCD logo" className="vertical-OCD-image" />
             </div>
