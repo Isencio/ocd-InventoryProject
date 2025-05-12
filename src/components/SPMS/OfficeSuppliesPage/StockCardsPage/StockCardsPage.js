@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import './StockCardsPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
 
 const StockCardsPage = () => {
+    // State declarations
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [stockData, setStockData] = useState({
@@ -29,6 +30,7 @@ const StockCardsPage = () => {
         stocknumber: '',
         unitofmeasurement: ''
     });
+
     const navigate = useNavigate();
     const tableRef = useRef(null);
     const exportRef = useRef(null);
@@ -36,104 +38,32 @@ const StockCardsPage = () => {
 
     const officeOptions = ['OS', 'CBTS', 'RRMS', 'PDPS', 'ORD', 'BAC', 'FMU', 'Admin', 'GSU', 'HRMU', 'DRMD'];
 
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (exportRef.current && !exportRef.current.contains(event.target)) {
-                setShowExportOptions(false);
-            }
-            if (addRowButtonRef.current && !addRowButtonRef.current.contains(event.target)) {
-                setShowAddRowOptions(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
-
+    // Helper functions
     const formatNumber = (value, isCurrency = false) => {
-        if (value === '' || value === null || value === undefined) return '';
+        if (value === '' || value === null) return '';
         const num = parseFloat(value);
         if (isNaN(num)) return '';
-        
-        if (isCurrency) {
-            return num.toFixed(2);
-        }
-        return Math.max(0, num).toString();
+        return isCurrency ? num.toFixed(2) : Math.max(0, num).toString();
     };
 
-    const fetchStockData = async (stockNumber) => {
-        try {
-            setLoading(true);
-            setError(null);
-            
-            const response = await fetch(`http://10.16.2.222/project/stockcards.php?stocknumber=${encodeURIComponent(stockNumber)}`);
-            
-            if (!response.ok) {
-                throw new Error(`Server responded with status ${response.status}`);
-            }
-    
-            const text = await response.text();
-            let data;
-            
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                console.error('Failed to parse JSON:', text);
-                throw new Error('Invalid JSON response from server');
-            }
-    
-            if (!Array.isArray(data.data)) {
-                throw new Error(data.error || 'Expected array but received different data structure');
-            }
-    
-            const processedData = {
-                fundcluster: data.data[0]?.fundcluster || '',
-                stocknumber: data.data[0]?.stocknumber || stockNumber,
-                item: data.data[0]?.item || '',
-                description: data.data[0]?.description || '',
-                unitofmeasurement: data.data[0]?.unitofmeasurement || '',
-                transactions: data.data.length > 0 ? data.data.map(processTransaction) : [createEmptyTransaction()]
-            };
-    
-            setStockData(processedData);
-            setOriginalData(JSON.parse(JSON.stringify(processedData)));
-            setHasChanges(false);
-            
-        } catch (error) {
-            console.error('Error in fetchStockData:', error);
-            setError(error.message || 'Failed to load stock data');
-            const emptyData = {
-                fundcluster: '',
-                stocknumber: stockNumber,
-                item: '',
-                description: '',
-                unitofmeasurement: '',
-                transactions: [createEmptyTransaction()]
-            };
-            setStockData(emptyData);
-            setOriginalData(JSON.parse(JSON.stringify(emptyData)));
-        } finally {
-            setLoading(false);
-        }
-    };
-
+    // Transaction processing
     const processTransaction = (item) => ({
         id: item.StockID || Date.now().toString(),
         date: item.date || '',
         reference: item.reference || '',
-        receiptqty: item.receiptqty === '' ? '' : formatNumber(item.receiptqty),
-        receiptunitcost: item.receiptunitcost === '' ? '' : formatNumber(item.receiptunitcost, true),
+        receiptqty: formatNumber(item.receiptqty),
+        receiptunitcost: formatNumber(item.receiptunitcost, true),
         receipttotalcost: item.receipttotalcost || '',
-        issueqty: item.issueqty === '' ? '' : formatNumber(item.issueqty),
+        issueqty: formatNumber(item.issueqty),
         issueoffice: item.issueoffice || '',
-        balanceqty: item.balanceqty === '' ? '' : formatNumber(item.balanceqty),
-        balanceunitcost: item.balanceunitcost === '' ? '' : formatNumber(item.balanceunitcost, true),
+        balanceqty: formatNumber(item.balanceqty),
+        balanceunitcost: formatNumber(item.balanceunitcost, true),
         balancetotalcost: item.balancetotalcost || '',
         daystoconsume: item.daystoconsume || '',
         isRISRow: item.isRISRow || false
     });
 
+    // Empty transaction templates
     const createEmptyTransaction = () => ({
         id: Date.now().toString(),
         date: '',
@@ -150,38 +80,73 @@ const StockCardsPage = () => {
         isRISRow: false
     });
 
-    const createEmptyDRRow = () => ({
-        id: Date.now().toString(),
-        date: '',
-        reference: '',
-        receiptqty: '',
-        receiptunitcost: '',
-        receipttotalcost: '',
-        issueqty: '',
-        issueoffice: '',
-        balanceqty: '',
-        balanceunitcost: '',
-        balancetotalcost: '',
-        daystoconsume: '',
-        isRISRow: false
-    });
+    const createEmptyDRRow = () => createEmptyTransaction();
+    const createEmptyRISRow = () => ({ ...createEmptyTransaction(), isRISRow: true });
 
-    const createEmptyRISRow = () => ({
-        id: Date.now().toString(),
-        date: '',
-        reference: '',
-        receiptqty: '',
-        receiptunitcost: '',
-        receipttotalcost: '',
-        issueqty: '',
-        issueoffice: '',
-        balanceqty: '',
-        balanceunitcost: '',
-        balancetotalcost: '',
-        daystoconsume: '',
-        isRISRow: true
-    });
+    // Data fetching
+    const fetchStockData = async (stockNumber) => {
+        try {
+            setLoading(true);
+            setError(null);
 
+            const apiUrl = `http://10.16.4.183/project/stockcards.php?stocknumber=${stockNumber}`;
+            const response = await fetch(apiUrl, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Server error: ${response.status} ${response.statusText}`);
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                const responseData = await response.text();
+                throw new Error('Invalid response format - expected JSON');
+            }
+
+            const data = await response.json();
+            if (!data) throw new Error('No data received from server');
+            if (data.error) throw new Error(data.error);
+
+            const responseData = Array.isArray(data) ? data : [data];
+            const processedData = {
+                fundcluster: responseData[0]?.fundcluster || '',
+                stocknumber: responseData[0]?.stocknumber || stockNumber,
+                item: responseData[0]?.item || '',
+                description: responseData[0]?.description || '',
+                unitofmeasurement: responseData[0]?.unitofmeasurement || '',
+                transactions: responseData.length > 0 ? responseData.map(processTransaction) : [createEmptyTransaction()]
+            };
+
+            setStockData(processedData);
+            setOriginalData(JSON.parse(JSON.stringify(processedData)));
+            setHasChanges(false);
+            
+        } catch (error) {
+            console.error('Fetch error:', error);
+            setError(`Failed to load data: ${error.message}`);
+            
+            // Fallback to empty data
+            const emptyData = {
+                fundcluster: '',
+                stocknumber: stockNumber,
+                item: '',
+                description: '',
+                unitofmeasurement: '',
+                transactions: [createEmptyTransaction()]
+            };
+            setStockData(emptyData);
+            setOriginalData(JSON.parse(JSON.stringify(emptyData)));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Event handlers
     const handleLoadData = () => {
         if (!stockData.stocknumber) {
             setError('Please enter a stock number');
@@ -202,7 +167,6 @@ const StockCardsPage = () => {
             setError('Please enter a stock number to delete');
             return;
         }
-        
         setShowDeleteConfirm(true);
     };
 
@@ -220,23 +184,15 @@ const StockCardsPage = () => {
         setShowDeleteConfirm(false);
     };
 
-    const cancelDelete = () => {
-        setShowDeleteConfirm(false);
-    };
+    const cancelDelete = () => setShowDeleteConfirm(false);
 
     const handleHeaderChange = (field, value) => {
-        setStockData(prev => ({
-            ...prev,
-            [field]: value
-        }));
+        setStockData(prev => ({ ...prev, [field]: value }));
         checkForChanges({ ...stockData, [field]: value });
     };
 
     const handleNewItemChange = (field, value) => {
-        setNewItemData(prev => ({
-            ...prev,
-            [field]: value
-        }));
+        setNewItemData(prev => ({ ...prev, [field]: value }));
     };
 
     const saveNewItem = () => {
@@ -263,23 +219,7 @@ const StockCardsPage = () => {
         setHasChanges(true);
     };
 
-    const handleNonCalculatingFieldChange = (index, field, value) => {
-        const updatedTransactions = [...stockData.transactions];
-        updatedTransactions[index] = {
-            ...updatedTransactions[index],
-            [field]: value
-        };
-        
-        const updatedData = {
-            ...stockData,
-            transactions: updatedTransactions
-        };
-        
-        setStockData(updatedData);
-        checkForChanges(updatedData);
-    };
-
-    const handleNumericFieldChange = (index, field, value) => {
+    const handleTransactionChange = (index, field, value) => {
         const numericFields = ['receiptqty', 'receiptunitcost', 'issueqty', 'balanceqty', 'balanceunitcost'];
         const currencyFields = ['receiptunitcost', 'balanceunitcost'];
         
@@ -287,7 +227,6 @@ const StockCardsPage = () => {
         
         if (numericFields.includes(field)) {
             validatedValue = value.replace(/[^0-9.]/g, '');
-            
             const decimalCount = validatedValue.split('.').length - 1;
             if (decimalCount > 1) {
                 validatedValue = validatedValue.substring(0, validatedValue.lastIndexOf('.'));
@@ -307,112 +246,110 @@ const StockCardsPage = () => {
             [field]: validatedValue
         };
         
-        // Recalculate all rows starting from the first row
-        for (let i = 0; i < updatedTransactions.length; i++) {
-            if (i === 0) {
-                // First row calculations
-                if (!updatedTransactions[i].isRISRow) {
-                    const receiptQty = updatedTransactions[i].receiptqty === '' ? '' : parseFloat(updatedTransactions[i].receiptqty);
-                    const receiptUnitCost = updatedTransactions[i].receiptunitcost === '' ? '' : parseFloat(updatedTransactions[i].receiptunitcost);
-                    
-                    if (receiptQty !== '' && receiptUnitCost !== '') {
-                        const receiptTotalCost = receiptQty * receiptUnitCost;
-                        updatedTransactions[i].receipttotalcost = receiptTotalCost.toFixed(2);
-                        updatedTransactions[i].balanceqty = receiptQty.toString();
-                        updatedTransactions[i].balanceunitcost = receiptUnitCost.toFixed(2);
-                        updatedTransactions[i].balancetotalcost = receiptTotalCost.toFixed(2);
-                    } else {
-                        updatedTransactions[i].receipttotalcost = '';
-                        updatedTransactions[i].balanceqty = '';
-                        updatedTransactions[i].balanceunitcost = '';
-                        updatedTransactions[i].balancetotalcost = '';
-                    }
-                } else {
-                    // For first row being RIS, clear receipt fields
-                    updatedTransactions[i].receiptqty = '';
-                    updatedTransactions[i].receiptunitcost = '';
-                    updatedTransactions[i].receipttotalcost = '';
-                    updatedTransactions[i].balanceunitcost = '';
-                    updatedTransactions[i].balancetotalcost = '';
-                }
-            } else {
-                const prevRow = updatedTransactions[i-1];
-                const currentRow = updatedTransactions[i];
+        // Transaction calculations
+        if (updatedTransactions[index].isRISRow) {
+            if (field === 'issueqty') {
+                const prevBalanceQty = index > 0 ? parseFloat(updatedTransactions[index-1].balanceqty) || 0 : 0;
+                const currentIssueQty = parseFloat(validatedValue) || 0;
+                updatedTransactions[index].balanceqty = Math.max(0, prevBalanceQty - currentIssueQty).toString();
                 
-                if (currentRow.isRISRow) {
-                    // RIS row calculations
-                    const prevBalanceQty = prevRow.balanceqty === '' ? '' : parseFloat(prevRow.balanceqty);
-                    const currentIssueQty = currentRow.issueqty === '' ? '' : parseFloat(currentRow.issueqty);
-                    
-                    // Clear receipt fields for RIS rows
-                    currentRow.receiptqty = '';
-                    currentRow.receiptunitcost = '';
-                    currentRow.receipttotalcost = '';
-                    currentRow.balanceunitcost = '';
-                    currentRow.balancetotalcost = '';
-                    
-                    // Only calculate balance quantity based on previous balance minus issue quantity
-                    if (prevBalanceQty !== '' && currentIssueQty !== '') {
-                        currentRow.balanceqty = Math.max(0, prevBalanceQty - currentIssueQty).toString();
+                updatedTransactions[index].receiptqty = '';
+                updatedTransactions[index].receiptunitcost = '';
+                updatedTransactions[index].receipttotalcost = '';
+                updatedTransactions[index].balanceunitcost = '';
+                updatedTransactions[index].balancetotalcost = '';
+            }
+        } else {
+            const qty = parseFloat(updatedTransactions[index].receiptqty) || 0;
+            const unitCost = parseFloat(updatedTransactions[index].receiptunitcost) || 0;
+            updatedTransactions[index].receipttotalcost = (qty * unitCost).toFixed(2);
+            
+            if (index === 0) {
+                const receiptQty = parseFloat(updatedTransactions[index].receiptqty) || 0;
+                const receiptUnitCost = parseFloat(updatedTransactions[index].receiptunitcost) || 0;
+                const receiptTotalCost = receiptQty * receiptUnitCost;
+                
+                updatedTransactions[index].balanceqty = receiptQty.toString();
+                updatedTransactions[index].balanceunitcost = receiptUnitCost.toFixed(2);
+                updatedTransactions[index].balancetotalcost = receiptTotalCost.toFixed(2);
+                updatedTransactions[index].receipttotalcost = receiptTotalCost.toFixed(2);
+            } else {
+                const prevBalanceQty = parseFloat(updatedTransactions[index-1].balanceqty) || 0;
+                const currentReceiptQty = parseFloat(updatedTransactions[index].receiptqty) || 0;
+                const currentReceiptUnitCost = parseFloat(updatedTransactions[index].receiptunitcost) || 0;
+                const currentIssueQty = parseFloat(updatedTransactions[index].issueqty) || 0;
+                
+                const currentReceiptTotalCost = currentReceiptQty * currentReceiptUnitCost;
+                updatedTransactions[index].receipttotalcost = currentReceiptTotalCost.toFixed(2);
+                
+                let balanceQty = prevBalanceQty + currentReceiptQty - currentIssueQty;
+                updatedTransactions[index].balanceqty = Math.max(0, balanceQty).toString();
+                
+                let lastNonRISIndex = index - 1;
+                while (lastNonRISIndex >= 0 && updatedTransactions[lastNonRISIndex].isRISRow) {
+                    lastNonRISIndex--;
+                }
+                
+                let balanceUnitCost = 0;
+                let balanceTotalCost = 0;
+                
+                if (currentReceiptQty > 0) {
+                    if (lastNonRISIndex >= 0) {
+                        const lastUnitCost = parseFloat(updatedTransactions[lastNonRISIndex].balanceunitcost) || 0;
+                        balanceUnitCost = lastUnitCost + currentReceiptUnitCost / 2;
+                        
+                        const lastTotalCost = parseFloat(updatedTransactions[lastNonRISIndex].balancetotalcost) || 0;
+                        balanceTotalCost = lastTotalCost + currentReceiptTotalCost / 2;
                     } else {
-                        currentRow.balanceqty = '';
+                        balanceUnitCost = currentReceiptUnitCost;
+                        balanceTotalCost = currentReceiptTotalCost;
                     }
                 } else {
-                    // DR row calculations
-                    const prevBalanceQty = prevRow.balanceqty === '' ? '' : parseFloat(prevRow.balanceqty);
-                    const currentReceiptQty = currentRow.receiptqty === '' ? '' : parseFloat(currentRow.receiptqty);
-                    const currentReceiptUnitCost = currentRow.receiptunitcost === '' ? '' : parseFloat(currentRow.receiptunitcost);
-                    
-                    // Calculate receipt total cost
-                    if (currentReceiptQty !== '' && currentReceiptUnitCost !== '') {
-                        currentRow.receipttotalcost = (currentReceiptQty * currentReceiptUnitCost).toFixed(2);
+                    balanceUnitCost = parseFloat(updatedTransactions[index-1].balanceunitcost) || 0;
+                    balanceTotalCost = parseFloat(updatedTransactions[index-1].balancetotalcost) || 0;
+                }
+                
+                updatedTransactions[index].balanceunitcost = balanceUnitCost.toFixed(2);
+                updatedTransactions[index].balancetotalcost = balanceTotalCost.toFixed(2);
+            }
+        }
+        
+        // Update subsequent rows
+        for (let i = index + 1; i < updatedTransactions.length; i++) {
+            const prevBalanceQty = parseFloat(updatedTransactions[i-1].balanceqty) || 0;
+            const currentIssueQty = parseFloat(updatedTransactions[i].issueqty) || 0;
+            
+            if (updatedTransactions[i].isRISRow) {
+                updatedTransactions[i].balanceqty = Math.max(0, prevBalanceQty - currentIssueQty).toString();
+                updatedTransactions[i].balanceunitcost = updatedTransactions[i-1].balanceunitcost;
+                updatedTransactions[i].balancetotalcost = (parseFloat(updatedTransactions[i].balanceqty) * 
+                    parseFloat(updatedTransactions[i].balanceunitcost)).toFixed(2);
+            } else {
+                const currentReceiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
+                const currentReceiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
+                const currentReceiptTotalCost = currentReceiptQty * currentReceiptUnitCost;
+                
+                updatedTransactions[i].balanceqty = Math.max(0, prevBalanceQty + currentReceiptQty - currentIssueQty).toString();
+                
+                let lastNonRISIndex = i - 1;
+                while (lastNonRISIndex >= 0 && updatedTransactions[lastNonRISIndex].isRISRow) {
+                    lastNonRISIndex--;
+                }
+                
+                if (currentReceiptQty > 0) {
+                    if (lastNonRISIndex >= 0) {
+                        const lastUnitCost = parseFloat(updatedTransactions[lastNonRISIndex].balanceunitcost) || 0;
+                        updatedTransactions[i].balanceunitcost = (lastUnitCost + currentReceiptUnitCost / 2).toFixed(2);
+                        
+                        const lastTotalCost = parseFloat(updatedTransactions[lastNonRISIndex].balancetotalcost) || 0;
+                        updatedTransactions[i].balancetotalcost = (lastTotalCost + currentReceiptTotalCost / 2).toFixed(2);
                     } else {
-                        currentRow.receipttotalcost = '';
+                        updatedTransactions[i].balanceunitcost = currentReceiptUnitCost.toFixed(2);
+                        updatedTransactions[i].balancetotalcost = currentReceiptTotalCost.toFixed(2);
                     }
-                    
-                    // Calculate new balance quantity
-                    let balanceQty = '';
-                    if (prevBalanceQty !== '') {
-                        if (currentReceiptQty !== '') {
-                            balanceQty = prevBalanceQty + currentReceiptQty;
-                        } else {
-                            balanceQty = prevBalanceQty;
-                        }
-                        currentRow.balanceqty = balanceQty.toString();
-                    } else {
-                        currentRow.balanceqty = '';
-                    }
-                    
-                    // Find the last DR row for calculations
-                    let lastDRIndex = i - 1;
-                    while (lastDRIndex >= 0 && updatedTransactions[lastDRIndex].isRISRow) {
-                        lastDRIndex--;
-                    }
-                    
-                    if (currentReceiptQty !== '' && currentReceiptQty > 0 && currentReceiptUnitCost !== '') {
-                        if (lastDRIndex >= 0) {
-                            const lastDRRow = updatedTransactions[lastDRIndex];
-                            const prevBalanceUnitCost = parseFloat(lastDRRow.balanceunitcost) || 0;
-                            const prevBalanceTotalCost = parseFloat(lastDRRow.balancetotalcost) || 0;
-                            const currentReceiptTotalCost = parseFloat(currentRow.receipttotalcost) || 0;
-                            
-                            // Calculate balance unit cost and total cost
-                            currentRow.balanceunitcost = (prevBalanceUnitCost + currentReceiptUnitCost / 2).toFixed(2);
-                            currentRow.balancetotalcost = (prevBalanceTotalCost + currentReceiptTotalCost / 2).toFixed(2);
-                        } else {
-                            // First DR row
-                            currentRow.balanceunitcost = currentReceiptUnitCost.toFixed(2);
-                            currentRow.balancetotalcost = currentRow.receipttotalcost;
-                        }
-                    } else if (lastDRIndex >= 0) {
-                        // Carry forward previous DR row values if no new receipt
-                        const lastDRRow = updatedTransactions[lastDRIndex];
-                        currentRow.balancetotalcost = lastDRRow.balancetotalcost;
-                        currentRow.balanceunitcost = lastDRRow.balanceunitcost;
-                    } else {
-                        currentRow.balancetotalcost = '';
-                        currentRow.balanceunitcost = '';
-                    }
+                } else {
+                    updatedTransactions[i].balanceunitcost = updatedTransactions[i-1].balanceunitcost;
+                    updatedTransactions[i].balancetotalcost = updatedTransactions[i-1].balancetotalcost;
                 }
             }
         }
@@ -426,27 +363,12 @@ const StockCardsPage = () => {
         checkForChanges(updatedData);
     };
 
-    const handleTransactionChange = (index, field, value) => {
-        // Fields that don't require recalculation
-        const nonCalculatingFields = ['date', 'reference', 'issueoffice', 'daystoconsume'];
-        
-        if (nonCalculatingFields.includes(field)) {
-            handleNonCalculatingFieldChange(index, field, value);
-            return;
-        }
-        
-        // Numeric fields that require calculation
-        handleNumericFieldChange(index, field, value);
-    };
-
     const checkForChanges = (currentData) => {
         const changed = JSON.stringify(currentData) !== JSON.stringify(originalData);
         setHasChanges(changed);
     };
 
-    const toggleAddRowOptions = () => {
-        setShowAddRowOptions(!showAddRowOptions);
-    };
+    const toggleAddRowOptions = () => setShowAddRowOptions(!showAddRowOptions);
 
     const addDRRow = () => {
         const newRow = createEmptyDRRow();
@@ -498,6 +420,44 @@ const StockCardsPage = () => {
             const updatedTransactions = [...stockData.transactions];
             updatedTransactions.splice(index, 1);
             
+            // Recalculate balances
+            for (let i = 0; i < updatedTransactions.length; i++) {
+                if (i === 0) {
+                    const receiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
+                    const receiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
+                    
+                    updatedTransactions[i].balanceqty = receiptQty.toString();
+                    updatedTransactions[i].balanceunitcost = receiptUnitCost.toFixed(2);
+                    updatedTransactions[i].balancetotalcost = (receiptQty * receiptUnitCost).toFixed(2);
+                } else {
+                    const prevBalanceQty = parseFloat(updatedTransactions[i-1].balanceqty) || 0;
+                    const prevUnitCost = parseFloat(updatedTransactions[i-1].balanceunitcost) || 0;
+                    const currentReceiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
+                    const currentReceiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
+                    const currentIssueQty = parseFloat(updatedTransactions[i].issueqty) || 0;
+                    
+                    let balanceQty = prevBalanceQty + currentReceiptQty;
+                    
+                    if (currentIssueQty > 0) {
+                        balanceQty = prevBalanceQty - currentIssueQty;
+                        if (balanceQty < 0) balanceQty = 0;
+                    }
+                    
+                    updatedTransactions[i].balanceqty = balanceQty.toString();
+                    
+                    let balanceUnitCost = prevUnitCost;
+                    if (currentReceiptQty > 0 && currentReceiptUnitCost > 0 && !updatedTransactions[i].isRISRow) {
+                        if (prevUnitCost > 0) {
+                            balanceUnitCost = (prevUnitCost + currentReceiptUnitCost / 2);
+                        } else {
+                            balanceUnitCost = currentReceiptUnitCost;
+                        }
+                    }
+                    updatedTransactions[i].balanceunitcost = balanceUnitCost.toFixed(2);
+                    updatedTransactions[i].balancetotalcost = (balanceQty * balanceUnitCost).toFixed(2);
+                }
+            }
+            
             const updatedData = {
                 ...stockData,
                 transactions: updatedTransactions
@@ -516,17 +476,17 @@ const StockCardsPage = () => {
                 ...stockData,
                 transactions: stockData.transactions.map(t => ({
                     ...t,
-                    receiptqty: t.receiptqty === '' ? '' : parseFloat(t.receiptqty),
-                    receiptunitcost: t.receiptunitcost === '' ? '' : parseFloat(t.receiptunitcost),
-                    receipttotalcost: t.receipttotalcost === '' ? '' : parseFloat(t.receipttotalcost),
-                    issueqty: t.issueqty === '' ? '' : parseFloat(t.issueqty),
-                    balanceqty: t.balanceqty === '' ? '' : parseFloat(t.balanceqty),
-                    balanceunitcost: t.balanceunitcost === '' ? '' : parseFloat(t.balanceunitcost),
-                    balancetotalcost: t.balancetotalcost === '' ? '' : parseFloat(t.balancetotalcost),
-                    daystoconsume: t.daystoconsume === '' ? '' : parseInt(t.daystoconsume)
+                    receiptqty: parseFloat(t.receiptqty) || 0,
+                    receiptunitcost: parseFloat(t.receiptunitcost) || 0,
+                    receipttotalcost: parseFloat(t.receipttotalcost) || 0,
+                    issueqty: parseFloat(t.issueqty) || 0,
+                    balanceqty: parseFloat(t.balanceqty) || 0,
+                    balanceunitcost: parseFloat(t.balanceunitcost) || 0,
+                    balancetotalcost: parseFloat(t.balancetotalcost) || 0,
+                    daystoconsume: parseInt(t.daystoconsume) || 0
                 }))
             };
-
+    
             const response = await fetch('http://localhost/project/save_stockcards.php', {
                 method: 'POST',
                 headers: {
@@ -537,13 +497,13 @@ const StockCardsPage = () => {
                     stockData: dataToSend
                 })
             });
-
+    
             const result = await response.json();
             
             if (!response.ok || !result.success) {
                 throw new Error(result.message || `Server error: ${response.status}`);
             }
-
+    
             setOriginalData(JSON.parse(JSON.stringify(stockData)));
             setHasChanges(false);
             alert('Data saved successfully!');
@@ -556,82 +516,125 @@ const StockCardsPage = () => {
         }
     };
 
-    const confirmSave = () => {
-        setShowSaveConfirm(true);
-    };
+    const confirmSave = () => setShowSaveConfirm(true);
+    const cancelSave = () => setShowSaveConfirm(false);
+    const toggleExportOptions = () => setShowExportOptions(!showExportOptions);
 
-    const cancelSave = () => {
-        setShowSaveConfirm(false);
-    };
+    const exportToExcel = async () => {
+        try {
+            setLoading(true);
+            
+            if (!stockData.transactions.length) {
+                setError('No data to export');
+                return;
+            }
 
-    const toggleExportOptions = () => {
-        setShowExportOptions(!showExportOptions);
-    };
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('StockCard');
 
-    const exportToExcel = () => {
-        if (!stockData.transactions.length) {
-            setError('No data to export');
-            return;
+            // Set default font for the worksheet
+            worksheet.properties.defaultRowHeight = 15;
+
+            // Add title
+            const titleRow = worksheet.addRow(['STOCK CARD AS OF JANUARY 2025']);
+            titleRow.font = { bold: true, size: 14 };
+            titleRow.alignment = { horizontal: 'center' };
+            worksheet.mergeCells('A1:I1');
+            worksheet.addRow([]);
+
+            // Add Fund Cluster and item information
+            worksheet.addRow(['Fund Cluster:', stockData.fundcluster]);
+            worksheet.addRow(['Item:', stockData.item, '', '', '', 'Stock No. :', '', stockData.stocknumber]);
+            worksheet.addRow(['', '', '', '', '', 'Re-order Point :', '']);
+            worksheet.addRow([]);
+
+            // Add table headers
+            const headerRow1 = worksheet.addRow([
+                'Date', 'Reference', '', 'Receipt', '', '', 'Issue', '', 'Balance', '', '', 'No. of Days to Consume'
+            ]);
+            headerRow1.font = { bold: true };
+            
+            const headerRow2 = worksheet.addRow([
+                '', '', 'Qty.', 'Unit Cost', 'Total Cost', 'Qty.', 'Office', 'Qty.', 'Unit Cost', 'Total Cost', ''
+            ]);
+            headerRow2.font = { bold: true };
+
+            // Merge header cells
+            worksheet.mergeCells('D4:F4'); // Receipt header
+            worksheet.mergeCells('G4:H4'); // Issue header
+            worksheet.mergeCells('I4:K4'); // Balance header
+            worksheet.mergeCells('L4:L4'); // Days to consume header
+
+            // Add transaction data
+            stockData.transactions.forEach(transaction => {
+                worksheet.addRow([
+                    transaction.date,
+                    transaction.reference,
+                    transaction.receiptqty,
+                    transaction.receiptunitcost,
+                    transaction.receipttotalcost,
+                    transaction.issueqty,
+                    transaction.issueoffice,
+                    transaction.balanceqty,
+                    transaction.balanceunitcost,
+                    transaction.balancetotalcost,
+                    '',
+                    transaction.daystoconsume
+                ]);
+            });
+
+            // Set column widths to match the image
+            worksheet.columns = [
+                { width: 10 }, // Date
+                { width: 20 }, // Reference
+                { width: 8 },  // Qty (Receipt)
+                { width: 10 }, // Unit Cost (Receipt)
+                { width: 12 }, // Total Cost (Receipt)
+                { width: 8 },  // Qty (Issue)
+                { width: 10 }, // Office (Issue)
+                { width: 8 },  // Qty (Balance)
+                { width: 10 }, // Unit Cost (Balance)
+                { width: 12 }, // Total Cost (Balance)
+                { width: 5 },  // Empty
+                { width: 15 }  // Days to consume
+            ];
+
+            // Format all cells with borders
+            const lastRow = worksheet.rowCount;
+            const lastCol = worksheet.columns.length;
+
+            for (let i = 3; i <= lastRow; i++) {
+                for (let j = 1; j <= lastCol; j++) {
+                    const cell = worksheet.getCell(i, j);
+                    cell.border = {
+                        top: { style: 'thin' },
+                        left: { style: 'thin' },
+                        bottom: { style: 'thin' },
+                        right: { style: 'thin' }
+                    };
+                }
+            }
+
+            // Format number cells
+            for (let i = 5; i <= lastRow; i++) {
+                // Receipt Unit Cost and Total Cost
+                worksheet.getCell(`D${i}`).numFmt = '#,##0.00';
+                worksheet.getCell(`E${i}`).numFmt = '#,##0.00';
+                
+                // Balance Unit Cost and Total Cost
+                worksheet.getCell(`I${i}`).numFmt = '#,##0.00';
+                worksheet.getCell(`J${i}`).numFmt = '#,##0.00';
+            }
+
+            // Save file
+            await workbook.xlsx.writeFile(`StockCard_${stockData.stocknumber || 'Inventory'}.xlsx`);
+            setShowExportOptions(false);
+        } catch (err) {
+            console.error('Error exporting to Excel:', err);
+            setError('Failed to export to Excel. Please try again.');
+        } finally {
+            setLoading(false);
         }
-
-        const exportData = [
-            ['Republic of the Philippines'],
-            ['Department of National Defense'],
-            ['OFFICE OF CIVIL DEFENSE'],
-            ['NATIONAL CAPITAL REGION'],
-            ['NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY'],
-            ['Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325'],
-            ['E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com'],
-            [],
-            ['STOCK CARD'],
-            [],
-            ['Fund Cluster:', stockData.fundcluster],
-            ['Item:', stockData.item, 'Stock No.:', stockData.stocknumber],
-            ['Description:', stockData.description],
-            ['Unit of Measurement:', stockData.unitofmeasurement],
-            [],
-            [
-                'Date', 'Reference', 
-                'RECEIPT', '', '', 
-                'ISSUE', '', 
-                'BALANCE', '', '', 
-                'No. of Days to Consume'
-            ],
-            [
-                '', '', 
-                'Qty', 'Unit Cost', 'Total Cost', 
-                'Qty', 'Office', 
-                'Qty', 'Unit Cost', 'Total Cost', 
-                ''
-            ],
-            ...stockData.transactions.map(t => [
-                t.date,
-                t.reference,
-                t.receiptqty,
-                t.receiptunitcost,
-                t.receipttotalcost,
-                t.issueqty,
-                t.issueoffice,
-                t.balanceqty,
-                t.balanceunitcost,
-                t.balancetotalcost,
-                t.daystoconsume
-            ])
-        ];
-
-        const ws = XLSX.utils.aoa_to_sheet(exportData);
-        ws['!cols'] = [
-            { width: 15 }, { width: 15 }, 
-            { width: 10 }, { width: 12 }, { width: 12 },
-            { width: 10 }, { width: 15 },
-            { width: 10 }, { width: 12 }, { width: 12 },
-            { width: 20 }
-        ];
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "StockCard");
-        XLSX.writeFile(wb, `StockCard_${stockData.stocknumber || 'Inventory'}.xlsx`);
-        setShowExportOptions(false);
     };
 
     const exportToPDF = () => {
@@ -639,27 +642,44 @@ const StockCardsPage = () => {
         setShowExportOptions(false);
     };
 
+    // JSX Return
     return (
         <div className="stock-cards-container">
+            {/* Loading Modal */}
             {loading && (
                 <div className="loading-modal">
                     <div className="loading-content">
                         <div className="loading-spinner"></div>
                         <p>Loading stock data...</p>
+                        <p>Please wait while we connect to the server</p>
                     </div>
                 </div>
             )}
 
+            {/* Error Modal */}
             {error && (
                 <div className="error-modal">
                     <div className="error-content">
-                        <h3>Error</h3>
+                        <h3>Error Loading Data</h3>
                         <p>{error}</p>
-                        <button onClick={() => setError(null)}>OK</button>
+                        <div className="error-details">
+                            <p>Possible solutions:</p>
+                            <ul>
+                                <li>Check your internet connection</li>
+                                <li>Verify the server is running</li>
+                                <li>Confirm the stock number is correct</li>
+                                <li>Contact IT support if problem persists</li>
+                            </ul>
+                        </div>
+                        <div className="error-actions">
+                            <button onClick={() => setError(null)}>Dismiss</button>
+                            <button onClick={handleLoadData}>Retry</button>
+                        </div>
                     </div>
                 </div>
             )}
 
+            {/* Confirmation Modals */}
             {showSaveConfirm && (
                 <div className="confirmation-modal">
                     <div className="confirmation-content">
@@ -686,6 +706,7 @@ const StockCardsPage = () => {
                 </div>
             )}
 
+            {/* Item Form Modal */}
             {showItemForm && (
                 <div className="item-form-modal">
                     <div className="item-form-content">
@@ -750,15 +771,18 @@ const StockCardsPage = () => {
                 </div>
             )}
 
+            {/* Main Header */}
             <div className="header-top">
                 <button className="return-button" onClick={() => navigate(-1)}> &larr; </button>
                 <h1>Stock Card</h1>
             </div>
 
+            {/* Save Notification */}
             <div className={`save-notification ${hasChanges ? 'visible' : ''}`}>
                 Pending Changes
             </div>
 
+            {/* Header Text */}
             <div className="stock-cards-header">
                 <div className="header-text">
                     <p>Republic of the Philippines</p>
@@ -770,6 +794,7 @@ const StockCardsPage = () => {
                     <p>E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com</p>
                 </div>
 
+                {/* Main Table */}
                 <div className="table-container" ref={tableRef}>
                     <table>
                         <thead>
@@ -883,6 +908,7 @@ const StockCardsPage = () => {
                                                             type="date"
                                                             value={transaction.date}
                                                             onChange={(e) => handleTransactionChange(index, 'date', e.target.value)}
+                                                            disabled={transaction.isRISRow}
                                                         />
                                                     </td>
                                                     <td>
@@ -960,7 +986,6 @@ const StockCardsPage = () => {
                                                             value={transaction.balanceqty}
                                                             onChange={(e) => handleTransactionChange(index, 'balanceqty', e.target.value)}
                                                             className="qty-input"
-                                                            readOnly={transaction.isRISRow}
                                                         />
                                                     </td>
                                                     <td>
@@ -1020,6 +1045,7 @@ const StockCardsPage = () => {
                 </div>
             </div>
 
+            {/* Action Buttons */}
             <div className="action-buttons">
                 <button 
                     className="add-item-button"
@@ -1067,6 +1093,7 @@ const StockCardsPage = () => {
                 </button>
             </div>
 
+            {/* Right Image Section */}
             <div className="right-image-section">
                 <img src={logo} alt="OCD logo" className="vertical-OCD-image" />
             </div>
