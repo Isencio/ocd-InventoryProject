@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import './OtherRPCIPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
 
@@ -24,34 +24,40 @@ const OtherRPCIPage = () => {
         navigate(-1);
     };
 
-    const onExport = () => {
-        // Prepare the data for export
-        const exportData = [
-            // Header row
-            ['Republic of the Philippines'],
-            ['Department of National Defense'],
-            ['OFFICE OF CIVIL DEFENSE'],
-            ['NATIONAL CAPITAL REGION'],
-            ['NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY'],
-            ['Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325'],
-            ['E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com'],
-            [],
-            ['OTHER SUPPLIES RPCI'],
-            [],
-            // Table headers
-            [
-                'Article', 'Description', 
-                'Stock Number', 
-                'Unit of Measure', 
-                'Unit Value',
-                'Balance Per Card', 
-                'On Hand Per Count', 
-                'Shortage/Overage', 
-                'Total Cost',
-                'Remarks',
-            ],
-            // Data rows
-            ...rows.map(row => [
+    const onExport = async () => {
+        // Create a new workbook
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('OtherSuppliesRPCI');
+
+        // Add header rows
+        worksheet.addRow(['Republic of the Philippines']);
+        worksheet.addRow(['Department of National Defense']);
+        worksheet.addRow(['OFFICE OF CIVIL DEFENSE']);
+        worksheet.addRow(['NATIONAL CAPITAL REGION']);
+        worksheet.addRow(['NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY']);
+        worksheet.addRow(['Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325']);
+        worksheet.addRow(['E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com']);
+        worksheet.addRow([]);
+        worksheet.addRow(['OTHER SUPPLIES RPCI']);
+        worksheet.addRow([]);
+
+        // Add table headers
+        worksheet.addRow([
+            'Article',
+            'Description',
+            'Stock Number',
+            'Unit of Measure',
+            'Unit Value',
+            'Balance Per Card',
+            'On Hand Per Count',
+            'Shortage/Overage',
+            'Total Cost',
+            'Remarks'
+        ]);
+
+        // Add data rows
+        rows.forEach(row => {
+            worksheet.addRow([
                 row.article,
                 row.description,
                 row.stockNumber,
@@ -62,24 +68,32 @@ const OtherRPCIPage = () => {
                 row.shortageOverage,
                 row.totalCost,
                 row.remarks
-            ])
-        ];
+            ]);
+        });
 
-        // Create a worksheet with column widths
-        const ws = XLSX.utils.aoa_to_sheet(exportData);
-        ws['!cols'] = [
-            { width: 15 }, { width: 15 }, 
-            { width: 10 }, { width: 12 }, { width: 12 },
-            { width: 10 }, { width: 12 }, { width: 12 },
-            { width: 10 }, { width: 15 }
+        // Set column widths
+        worksheet.columns = [
+            { width: 15 }, // Article
+            { width: 40 }, // Description
+            { width: 15 }, // Stock Number
+            { width: 15 }, // Unit of Measure
+            { width: 15 }, // Unit Value
+            { width: 15 }, // Balance Per Card
+            { width: 15 }, // On Hand Per Count
+            { width: 15 }, // Shortage/Overage
+            { width: 15 }, // Total Cost
+            { width: 20 }  // Remarks
         ];
-
-        // Create a workbook
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "OtherSuppliesRPCI");
 
         // Generate Excel file and trigger download
-        XLSX.writeFile(wb, `OtherSupplies_RPCI_Inventory.xlsx`);
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'OtherSupplies_RPCI_Inventory.xlsx';
+        a.click();
+        window.URL.revokeObjectURL(url);
     };
 
     const handleAddRow = () => {

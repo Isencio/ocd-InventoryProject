@@ -1,6 +1,6 @@
 import React,{ useState }  from 'react';
 import { useNavigate } from 'react-router-dom';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import './OtherRISPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
 
@@ -26,33 +26,38 @@ const OtherRISPage = () => {
     navigate(-1);
   };
 
-    const onExport = () => {
-        // Prepare the data for export
-        const exportData = [
-            // Header row
-            ['Republic of the Philippines'],
-            ['Department of National Defense'],
-            ['OFFICE OF CIVIL DEFENSE'],
-            ['NATIONAL CAPITAL REGION'],
-            ['NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY'],
-            ['Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325'],
-            ['E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com'],
-            [],
-            ['RIS'],
-            [],
-            // Table headers
-            [
-                'Stock No.',
-                'Unit',
-                'Description',
-                'Quantity',
-                'Yes',
-                'No',
-                'Quantity',
-                'Remarks',
-            ],
-            // Data rows
-            ...rows.map(row => [
+    const onExport = async () => {
+        // Create a new workbook
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('RIS');
+
+        // Add header rows
+        worksheet.addRow(['Republic of the Philippines']);
+        worksheet.addRow(['Department of National Defense']);
+        worksheet.addRow(['OFFICE OF CIVIL DEFENSE']);
+        worksheet.addRow(['NATIONAL CAPITAL REGION']);
+        worksheet.addRow(['NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY']);
+        worksheet.addRow(['Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325']);
+        worksheet.addRow(['E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com']);
+        worksheet.addRow([]);
+        worksheet.addRow(['RIS']);
+        worksheet.addRow([]);
+
+        // Add table headers
+        worksheet.addRow([
+            'Stock No.',
+            'Unit',
+            'Description',
+            'Quantity',
+            'Yes',
+            'No',
+            'Quantity',
+            'Remarks'
+        ]);
+
+        // Add data rows
+        rows.forEach(row => {
+            worksheet.addRow([
                 row.stockNo,
                 row.unit,
                 row.description,
@@ -60,25 +65,31 @@ const OtherRISPage = () => {
                 row.yes,
                 row.no,
                 row.quantity2,
-                row.remarks,
-            ])
-        ];
+                row.remarks
+            ]);
+        });
 
-        // Create a worksheet with column widths
-        const ws = XLSX.utils.aoa_to_sheet(exportData);
-        ws['!cols'] = [
-            { width: 15 }, { width: 15 }, 
-            { width: 10 }, { width: 12 }, { width: 12 },
-            { width: 10 }, { width: 12 }, { width: 12 },
-            { width: 10 }, { width: 15 }
+        // Set column widths
+        worksheet.columns = [
+            { width: 15 }, // Stock No.
+            { width: 15 }, // Unit
+            { width: 40 }, // Description
+            { width: 12 }, // Quantity
+            { width: 10 }, // Yes
+            { width: 10 }, // No
+            { width: 12 }, // Quantity
+            { width: 20 }  // Remarks
         ];
-
-        // Create a workbook
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "RSMI");
 
         // Generate Excel file and trigger download
-        XLSX.writeFile(wb, `RIS_Inventory.xlsx`);
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'RIS_Inventory.xlsx';
+        a.click();
+        window.URL.revokeObjectURL(url);
     };
 
     const handleAddRow = () => {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import './OtherRSMIPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
 
@@ -45,32 +45,43 @@ const OtherRSMIPage = () => {
         setShowExportOptions(!showExportOptions);
     };
 
-    const onExportExcel = () => {
-        const exportData = [
-            ['Republic of the Philippines'],
-            ['Department of National Defense'],
-            ['OFFICE OF CIVIL DEFENSE'],
-            ['NATIONAL CAPITAL REGION'],
-            ['NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY'],
-            ['Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325'],
-            ['E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com'],
-            [],
-            ['RSMI'],
-            [],
-            ['Entity Name:', entityName, 'Fund Cluster:', fundCluster],
-            ['Serial No:', serialNo, 'Date:', date],
-            [],
-            [
-                'RIS No.',
-                'Responsibility Center Code',
-                'Stock No.',
-                'Item',
-                'Unit',
-                'QuantityIssued',
-                'Unit Cost',
-                'Amount',
-            ],
-            ...rows.map(row => [
+    const onExportExcel = async () => {
+        // Create a new workbook
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('RSMI');
+
+        // Add header rows
+        worksheet.addRow(['Republic of the Philippines']);
+        worksheet.addRow(['Department of National Defense']);
+        worksheet.addRow(['OFFICE OF CIVIL DEFENSE']);
+        worksheet.addRow(['NATIONAL CAPITAL REGION']);
+        worksheet.addRow(['NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY']);
+        worksheet.addRow(['Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325']);
+        worksheet.addRow(['E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com']);
+        worksheet.addRow([]);
+        worksheet.addRow(['RSMI']);
+        worksheet.addRow([]);
+
+        // Add entity information
+        worksheet.addRow(['Entity Name:', entityName, 'Fund Cluster:', fundCluster]);
+        worksheet.addRow(['Serial No:', serialNo, 'Date:', date]);
+        worksheet.addRow([]);
+
+        // Add table headers
+        worksheet.addRow([
+            'RIS No.',
+            'Responsibility Center Code',
+            'Stock No.',
+            'Item',
+            'Unit',
+            'Quantity Issued',
+            'Unit Cost',
+            'Amount'
+        ]);
+
+        // Add data rows
+        rows.forEach(row => {
+            worksheet.addRow([
                 row.risNo,
                 row.responsibilityCenterCode,
                 row.stockNo,
@@ -78,20 +89,31 @@ const OtherRSMIPage = () => {
                 row.unit,
                 row.quantityIssued,
                 row.unitCost,
-                row.amount,
-            ])
+                row.amount
+            ]);
+        });
+
+        // Set column widths
+        worksheet.columns = [
+            { width: 15 }, // RIS No.
+            { width: 25 }, // Responsibility Center Code
+            { width: 15 }, // Stock No.
+            { width: 40 }, // Item
+            { width: 10 }, // Unit
+            { width: 15 }, // Quantity Issued
+            { width: 15 }, // Unit Cost
+            { width: 15 }  // Amount
         ];
 
-        const ws = XLSX.utils.aoa_to_sheet(exportData);
-        ws['!cols'] = [
-            { width: 15 }, { width: 15 }, 
-            { width: 10 }, { width: 12 }, { width: 12 },
-            { width: 10 }, { width: 12 }, { width: 12 },
-        ];
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "RSMI");
-        XLSX.writeFile(wb, `RSMI_Inventory.xlsx`);
+        // Generate Excel file and trigger download
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'RSMI_Inventory.xlsx';
+        a.click();
+        window.URL.revokeObjectURL(url);
         setShowExportOptions(false);
     };
 
