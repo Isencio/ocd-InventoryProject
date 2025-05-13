@@ -48,18 +48,18 @@ const StockCardsPage = () => {
 
     // Transaction processing
     const processTransaction = (item) => ({
-        id: item.StockID || Date.now().toString(),
+        id: item.StockID?.toString() || Date.now().toString(),
         date: item.date || '',
         reference: item.reference || '',
-        receiptqty: formatNumber(item.receiptqty),
-        receiptunitcost: formatNumber(item.receiptunitcost, true),
-        receipttotalcost: item.receipttotalcost || '',
-        issueqty: formatNumber(item.issueqty),
-        issueoffice: item.issueoffice || '',
-        balanceqty: formatNumber(item.balanceqty),
-        balanceunitcost: formatNumber(item.balanceunitcost, true),
-        balancetotalcost: item.balancetotalcost || '',
-        daystoconsume: item.daystoconsume || '',
+        receiptqty: item.receiptqty !== undefined && item.receiptqty !== null ? item.receiptqty.toString() : '',
+        receiptunitcost: item.receiptunitcost !== undefined && item.receiptunitcost !== null ? item.receiptunitcost.toString() : '',
+        receipttotalcost: item.receipttotalcost !== undefined && item.receipttotalcost !== null ? item.receipttotalcost.toString() : '',
+        issueqty: item.issueqty !== undefined && item.issueqty !== null ? item.issueqty.toString() : '',
+        issueoffice: item.issueoffice !== undefined && item.issueoffice !== null ? item.issueoffice.toString() : '',
+        balanceqty: item.balanceqty !== undefined && item.balanceqty !== null ? item.balanceqty.toString() : '',
+        balanceunitcost: item.balanceunitcost !== undefined && item.balanceunitcost !== null ? item.balanceunitcost.toString() : '',
+        balancetotalcost: item.balancetotalcost !== undefined && item.balancetotalcost !== null ? item.balancetotalcost.toString() : '',
+        daystoconsume: item.daystoconsume !== undefined && item.daystoconsume !== null ? item.daystoconsume.toString() : '',
         isRISRow: item.isRISRow || false
     });
 
@@ -89,7 +89,7 @@ const StockCardsPage = () => {
             setLoading(true);
             setError(null);
 
-            const apiUrl = `http://10.16.4.183/project/stockcards.php?stocknumber=${stockNumber}`;
+            const apiUrl = `http://10.16.2.219/project/stockcards.php?stocknumber=${stockNumber}`;
             const response = await fetch(apiUrl, {
                 headers: {
                     'Content-Type': 'application/json',
@@ -109,10 +109,7 @@ const StockCardsPage = () => {
             }
 
             const data = await response.json();
-            if (!data) throw new Error('No data received from server');
-            if (data.error) throw new Error(data.error);
-
-            const responseData = Array.isArray(data) ? data : [data];
+            const responseData = Array.isArray(data.data) ? data.data : [data.data];
             const processedData = {
                 fundcluster: responseData[0]?.fundcluster || '',
                 stocknumber: responseData[0]?.stocknumber || stockNumber,
@@ -385,7 +382,7 @@ const StockCardsPage = () => {
             if (rows && rows.length > 0) {
                 const lastRow = rows[rows.length - 1];
                 const firstInput = lastRow.querySelector('input');
-                firstInput?.focus();
+                void firstInput?.focus();
             }
         }, 50);
     };
@@ -405,7 +402,7 @@ const StockCardsPage = () => {
             if (rows && rows.length > 0) {
                 const lastRow = rows[rows.length - 1];
                 const issueQtyInput = lastRow.querySelectorAll('input')[5];
-                issueQtyInput?.focus();
+                void issueQtyInput?.focus();
             }
         }, 50);
     };
