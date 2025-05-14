@@ -1,30 +1,98 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ExcelJS from 'exceljs';
+import { jsPDF } from 'jspdf';
 import './RSMIPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
 
 const RSMIPage = () => {
-    const [entityName, setEntityName] = useState('OFFICE OF CIVIL DEFENSE - NCR');
-    const [fundCluster, setFundCluster] = useState('01');
+    const [entityName, setEntityName] = useState('');
+    const [fundCluster, setFundCluster] = useState('');
     const [serialNo, setSerialNo] = useState('');
     const [date, setDate] = useState('');
-    const [selectedMonth, setSelectedMonth] = useState('');
-    const [selectedYear, setSelectedYear] = useState('');
     const [showMonthYearPicker, setShowMonthYearPicker] = useState(false);
-    const [showExportOptions, setShowExportOptions] = useState(false);
-    const [rows, setRows] = useState(Array(5).fill({
-        risNo: '',
-        responsibilityCenterCode: '',
-        stockNo: '',
-        item: '',
-        unit: '',
-        quantityIssued: '',
-        unitCost: '',
-        amount: '',
-    }));
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const [rows, setRows] = useState([
+        {
+            risNo: 'RIS 2024-10-088',
+            responsibilityCenterCode: 'ORD',
+            stockNo: 'J2',
+            item: 'PAPER, MULTICOPY, A4, 80 gsm',
+            unit: 'REAM',
+            quantityIssued: '7',
+            unitCost: '17.68',
+            amount: '123.76'
+        },
+        {
+            risNo: 'RIS 2024-10-089',
+            responsibilityCenterCode: '',
+            stockNo: 'J2',
+            item: 'PAPER, MULTICOPY, A4, 80 gsm',
+            unit: 'REAM',
+            quantityIssued: '',
+            unitCost: '',
+            amount: ''
+        },
+        {
+            risNo: 'RIS 2024-10-090',
+            responsibilityCenterCode: '',
+            stockNo: 'J2',
+            item: 'PAPER, MULTICOPY, A4, 80 gsm',
+            unit: 'REAM',
+            quantityIssued: '',
+            unitCost: '',
+            amount: ''
+        },
+        {
+            risNo: 'RIS 2024-10-091',
+            responsibilityCenterCode: '',
+            stockNo: 'J2',
+            item: 'PAPER, MULTICOPY, A4, 80 gsm',
+            unit: 'REAM',
+            quantityIssued: '',
+            unitCost: '',
+            amount: ''
+        },
+        {
+            risNo: 'RIS 2024-10-092',
+            responsibilityCenterCode: '',
+            stockNo: 'J2',
+            item: 'PAPER, MULTICOPY, A4, 80 gsm',
+            unit: 'REAM',
+            quantityIssued: '',
+            unitCost: '',
+            amount: ''
+        },
+        {
+            risNo: 'RIS 2024-10-093',
+            responsibilityCenterCode: '',
+            stockNo: 'J2',
+            item: 'PAPER, MULTICOPY, A4, 80 gsm',
+            unit: 'REAM',
+            quantityIssued: '',
+            unitCost: '',
+            amount: ''
+        },
+        {
+            risNo: '',
+            responsibilityCenterCode: '',
+            stockNo: 'J2',
+            item: 'PAPER, MULTICOPY, A4, 80 gsm',
+            unit: 'REAM',
+            quantityIssued: '',
+            unitCost: '',
+            amount: ''
+        },
+        {
+            risNo: '',
+            responsibilityCenterCode: '',
+            stockNo: 'J2',
+            item: 'PAPER, MULTICOPY, A4, 80 gsm',
+            unit: 'REAM',
+            quantityIssued: '',
+            unitCost: '',
+            amount: ''
+        }
+    ]);
 
     const navigate = useNavigate();
 
@@ -34,151 +102,156 @@ const RSMIPage = () => {
         'September', 'October', 'November', 'December'
     ];
     
-    const currentYear = new Date().getFullYear();
-    const years = Array.from({length: 5}, (_, i) => currentYear - i);
-
-    const fetchRSMIData = async (month, year) => {
-        if (!month || !year) {
-            setError('Please select both month and year');
-            return;
-        }
-        
-        setIsLoading(true);
-        setError(null);
-        
-        try {
-            const monthIndex = months.indexOf(month) + 1;
-            const response = await fetch(`http://10.16.2.219/project/rsmi_api.php?month=${monthIndex}&year=${year}`);
-            
-            if (!response.ok) throw new Error(`Server error: ${response.status}`);
-    
-            const result = await response.json();
-            
-            if (!result.success) {
-                throw new Error(result.error || 'Failed to fetch RSMI data');
-            }
-    
-            if (!result.data || result.data.length === 0) {
-                throw new Error(`No RSMI data found for ${month} ${year}`);
-            }
-
-            // Process the data to match RSMI format
-            const processedData = result.data.map(item => ({
-                risNo: item.reference || 'N/A',
-                responsibilityCenterCode: item.issueoffice || 'N/A',
-                stockNo: item.stocknumber || 'N/A',
-                item: item.item || item.description || 'N/A',
-                unit: item.unitofmeasurement || 'N/A',
-                quantityIssued: item.issueqty || '0',
-                unitCost: item.balanceunitcost || '0.00',
-                amount: item.balancetotalcost || '0.00',
-                date: item.formatted_date || ''
-            }));
-
-            // Ensure minimum 5 rows
-            const emptyRowsCount = Math.max(0, 5 - processedData.length);
-            const emptyRows = Array(emptyRowsCount).fill({
-                risNo: '',
-                responsibilityCenterCode: '',
-                stockNo: '',
-                item: '',
-                unit: '',
-                quantityIssued: '',
-                unitCost: '',
-                amount: '',
-                date: ''
-            });
-            
-            setRows([...processedData, ...emptyRows]);
-            
-        } catch (error) {
-            console.error('Fetch error:', error);
-            setError(error.message);
-            setRows(Array(5).fill({
-                risNo: '',
-                responsibilityCenterCode: '',
-                stockNo: '',
-                item: '',
-                unit: '',
-                quantityIssued: '',
-                unitCost: '',
-                amount: '',
-                date: ''
-            }));
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const years = Array.from({length: 10}, (_, i) => new Date().getFullYear() - i);
 
     const onBack = () => {
         navigate(-1);
     };
 
-    const handleMonthSelect = (month) => {
-        setSelectedMonth(month);
-        if (selectedYear) {
-            const selectedDate = `${month} ${selectedYear}`;
-            setDate(selectedDate);
-            fetchRSMIData(month, selectedYear);
-        }
-    };
-
-    const handleYearSelect = (year) => {
-        setSelectedYear(year);
-        if (selectedMonth) {
-            const selectedDate = `${selectedMonth} ${year}`;
-            setDate(selectedDate);
-            fetchRSMIData(selectedMonth, year);
-        }
-    };
-
-    const toggleExportMenu = () => {
-        setShowExportOptions(!showExportOptions);
+    const handleDateSelect = (month, year) => {
+        setDate(`${month} ${year}`);
+        setShowMonthYearPicker(false);
     };
 
     const onExportExcel = async () => {
-        if (!date) {
-            alert('Please select a date first');
-            return;
+        try {
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('RSMI');
+
+            // Set default font
+            worksheet.properties.defaultRowHeight = 15;
+
+            // Add report title
+            const titleRow = worksheet.addRow(['REPORT OF SUPPLIES AND MATERIALS ISSUED']);
+            titleRow.font = { bold: true, size: 14 };
+            titleRow.alignment = { horizontal: 'center' };
+            worksheet.mergeCells('A1:H1');
+
+            // Add date
+            const dateRow = worksheet.addRow([date || 'December 2024']);
+            dateRow.font = { bold: true };
+            dateRow.alignment = { horizontal: 'center' };
+            worksheet.mergeCells('A2:H2');
+            worksheet.addRow([]);
+
+            // Add entity name and fund cluster
+            worksheet.addRow(['Entity Name:', entityName, 'Fund Cluster:', fundCluster]);
+            worksheet.mergeCells('B4:C4');
+            worksheet.mergeCells('D4:E4');
+            worksheet.addRow([]);
+
+            // Add table headers
+            const headerRow1 = worksheet.addRow([
+                '', '', '', 'To be filled up by the Supply and/or Property Division/Unit',
+                '', 'To be filled up by the Accounting Division/Unit', '', ''
+            ]);
+            headerRow1.font = { bold: true };
+            worksheet.mergeCells('D5:F5');
+
+            const headerRow2 = worksheet.addRow([
+                'RIS No.', 'Responsibility Center Code', 'Stock No.', 'Item', 
+                'Unit', 'Quantity Issued', 'Unit Cost', 'Amount'
+            ]);
+            headerRow2.font = { bold: true };
+
+            // Add data rows
+            rows.forEach(row => {
+                worksheet.addRow([
+                    row.risNo,
+                    row.responsibilityCenterCode,
+                    row.stockNo,
+                    row.item,
+                    row.unit,
+                    row.quantityIssued,
+                    row.unitCost,
+                    row.amount
+                ]);
+            });
+
+            // Set column widths
+            worksheet.columns = [
+                { width: 15 },  // RIS No.
+                { width: 20 },  // Responsibility Center Code
+                { width: 10 },  // Stock No.
+                { width: 30 },  // Item
+                { width: 10 },   // Unit
+                { width: 15 },  // Quantity Issued
+                { width: 12 },   // Unit Cost
+                { width: 12 }    // Amount
+            ];
+
+            // Add borders to all cells
+            const lastRow = worksheet.rowCount;
+            for (let i = 4; i <= lastRow; i++) {
+                for (let j = 1; j <= 8; j++) {
+                    const cell = worksheet.getCell(i, j);
+                    cell.border = {
+                        top: { style: 'thin' },
+                        left: { style: 'thin' },
+                        bottom: { style: 'thin' },
+                        right: { style: 'thin' }
+                    };
+                }
+            }
+
+            // Format number cells
+            for (let i = 6; i <= lastRow; i++) {
+                // Unit Cost and Amount
+                worksheet.getCell(`G${i}`).numFmt = '#,##0.00';
+                worksheet.getCell(`H${i}`).numFmt = '#,##0.00';
+            }
+
+            // Save the workbook
+            await workbook.xlsx.writeFile(`RSMI_Report_${date.replace(/\s+/g, '_') || 'December_2024'}.xlsx`);
+        } catch (error) {
+            console.error('Error exporting to Excel:', error);
         }
+    };
 
-        // Create a new workbook
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('RSMI');
-
-        // Add header rows
-        worksheet.addRow(['Republic of the Philippines']);
-        worksheet.addRow(['Department of National Defense']);
-        worksheet.addRow(['OFFICE OF CIVIL DEFENSE']);
-        worksheet.addRow(['NATIONAL CAPITAL REGION']);
-        worksheet.addRow(['NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY']);
-        worksheet.addRow(['Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325']);
-        worksheet.addRow(['E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com']);
-        worksheet.addRow([]);
-        worksheet.addRow(['REPORT OF SUPPLIES AND MATERIALS ISSUED (RSMI)']);
-        worksheet.addRow([]);
-
-        // Add entity information
-        worksheet.addRow(['Entity Name:', entityName, 'Fund Cluster:', fundCluster]);
-        worksheet.addRow(['Serial No:', serialNo, 'Date:', date]);
-        worksheet.addRow([]);
-
-        // Add table headers
-        worksheet.addRow([
-            'RIS No.',
-            'Responsibility Center Code',
-            'Stock No.',
-            'Item',
-            'Unit',
-            'Quantity Issued',
-            'Unit Cost',
-            'Amount',
-            'Date'
-        ]);
-
-        // Add data rows
-        rows.forEach(row => {
-            worksheet.addRow([
+    const onExportPDF = () => {
+        const doc = new jsPDF({
+            orientation: 'landscape'
+        });
+        
+        // Report title
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('REPORT OF SUPPLIES AND MATERIALS ISSUED', 140, 15, { align: 'center' });
+        
+        // Date
+        doc.text(date || 'December 2024', 140, 22, { align: 'center' });
+        
+        // Entity name and fund cluster
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Entity Name: ${entityName}`, 20, 32);
+        doc.text(`Fund Cluster: ${fundCluster}`, 100, 32);
+        
+        // Table headers
+        const startY = 40;
+        const cellWidth = 25;
+        const cellHeight = 10;
+        
+        // Header note
+        doc.setFont('helvetica', 'bold');
+        doc.text('To be filled up by the Supply and/or Property Division/Unit', 20, startY + 6);
+        doc.text('To be filled up by the Accounting Division/Unit', 150, startY + 6);
+        
+        // Main headers
+        const mainHeaders = [
+            'RIS No.', 'Responsibility Center Code', 'Stock No.', 
+            'Item', 'Unit', 'Quantity Issued', 'Unit Cost', 'Amount'
+        ];
+        
+        mainHeaders.forEach((header, i) => {
+            doc.text(header, 20 + (i * cellWidth), startY + 16);
+        });
+        
+        // Table data
+        doc.setFont('helvetica', 'normal');
+        rows.forEach((row, rowIndex) => {
+            const y = startY + 26 + (rowIndex * cellHeight);
+            const rowData = [
                 row.risNo,
                 row.responsibilityCenterCode,
                 row.stockNo,
@@ -186,85 +259,41 @@ const RSMIPage = () => {
                 row.unit,
                 row.quantityIssued,
                 row.unitCost,
-                row.amount,
-                row.date
-            ]);
+                row.amount
+            ];
+            
+            rowData.forEach((cell, i) => {
+                doc.text(cell, 20 + (i * cellWidth), y);
+            });
         });
-
-        // Set column widths
-        worksheet.columns = [
-            { width: 15 }, // RIS No.
-            { width: 25 }, // Responsibility Center Code
-            { width: 15 }, // Stock No.
-            { width: 40 }, // Item
-            { width: 10 }, // Unit
-            { width: 15 }, // Quantity Issued
-            { width: 15 }, // Unit Cost
-            { width: 15 }, // Amount
-            { width: 15 }  // Date
-        ];
-
-        // Generate Excel file and trigger download
-        const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `RSMI_${selectedMonth}_${selectedYear}.xlsx`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-        setShowExportOptions(false);
-    };
-
-    const handleInputChange = (index, field, value) => {
-        const updatedRows = [...rows];
-        updatedRows[index] = { ...updatedRows[index], [field]: value };
         
-        // Recalculate amount if unit cost or quantity changes
-        if (field === 'unitCost' || field === 'quantityIssued') {
-            const quantity = parseFloat(updatedRows[index].quantityIssued) || 0;
-            const unitCost = parseFloat(updatedRows[index].unitCost) || 0;
-            updatedRows[index].amount = (quantity * unitCost).toFixed(2);
+        // Add borders
+        for (let i = 0; i < rows.length; i++) {
+            for (let j = 0; j < mainHeaders.length; j++) {
+                doc.rect(20 + (j * cellWidth), startY + 20 + (i * cellHeight), cellWidth, cellHeight);
+            }
         }
         
+        doc.save(`RSMI_Report_${date.replace(/\s+/g, '_') || 'December_2024'}.pdf`);
+    };
+    
+    const handleInputChange = (index, field, value) => {
+        const updatedRows = rows.map((row, i) => {
+            if (i === index) {
+                return { ...row, [field]: value };
+            }
+            return row;
+        });
         setRows(updatedRows);
     };
 
-    // Load current month/year data on initial render
-    useEffect(() => {
-        const currentMonth = months[new Date().getMonth()];
-        const currentYear = new Date().getFullYear();
-        setSelectedMonth(currentMonth);
-        setSelectedYear(currentYear);
-        setDate(`${currentMonth} ${currentYear}`);
-        fetchRSMIData(currentMonth, currentYear);
-    }, []);
-
     return (
         <div className="rsmi-container">
-            {isLoading && (
-                <div className="loading-popup">
-                    <div className="loading-content">
-                        <div className="loading-spinner"></div>
-                        <p>Fetching RSMI data for {selectedMonth} {selectedYear}...</p>
-                    </div>
-                </div>
-            )}
-
-            {error && (
-                <div className="error-popup">
-                    <div className="error-content">
-                        <p>Error: {error}</p>
-                        <button onClick={() => setError(null)}>Close</button>
-                    </div>
-                </div>
-            )}
-
             <div className="header-top">
                 <button className="return-button" onClick={onBack}> &larr; </button>
                 <h1>RSMI</h1>
             </div>
-            
+
             <div className="rsmi-header">
                 <div className="header-text">
                     <p>Republic of the Philippines</p>
@@ -275,7 +304,6 @@ const RSMIPage = () => {
                     <p>Telephone no. (02) 421-1918; OPCEN Mobile Number: 0917-827-6325</p>
                     <p>E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com</p>
                 </div>
-                
                 <div className="table-container">
                     <table>
                         <thead>
@@ -322,10 +350,14 @@ const RSMIPage = () => {
                                                 <div className="picker-header">
                                                     <select 
                                                         className="year-select"
-                                                        value={selectedYear}
-                                                        onChange={(e) => handleYearSelect(e.target.value)}
+                                                        onChange={(e) => {
+                                                            const selectedYear = e.target.value;
+                                                            const currentMonth = document.querySelector('.month-grid button.active')?.textContent;
+                                                            if (currentMonth) {
+                                                                handleDateSelect(currentMonth, selectedYear);
+                                                            }
+                                                        }}
                                                     >
-                                                        <option value="">Select Year</option>
                                                         {years.map(year => (
                                                             <option key={year} value={year}>{year}</option>
                                                         ))}
@@ -335,8 +367,11 @@ const RSMIPage = () => {
                                                     {months.map(month => (
                                                         <button
                                                             key={month}
-                                                            onClick={() => handleMonthSelect(month)}
-                                                            className={selectedMonth === month ? 'active' : ''}
+                                                            onClick={() => {
+                                                                const selectedYear = document.querySelector('.year-select')?.value || new Date().getFullYear();
+                                                                handleDateSelect(month, selectedYear);
+                                                            }}
+                                                            className={date.includes(month) ? 'active' : ''}
                                                         >
                                                             {month.substring(0, 3)}
                                                         </button>
@@ -360,7 +395,6 @@ const RSMIPage = () => {
                                                 <th>Quantity Issued</th>
                                                 <th>Unit Cost</th>
                                                 <th>Amount</th>
-                                                <th>Date</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -403,25 +437,24 @@ const RSMIPage = () => {
                                                     </td>
                                                     <td>
                                                         <input
-                                                            type="number"
-                                                            step="0.01"
+                                                            type="text"
                                                             value={row.quantityIssued}
                                                             onChange={(e) => handleInputChange(index, 'quantityIssued', e.target.value)}
                                                         />
                                                     </td>
                                                     <td>
                                                         <input
-                                                            type="number"
-                                                            step="0.01"
+                                                            type="text"
                                                             value={row.unitCost}
                                                             onChange={(e) => handleInputChange(index, 'unitCost', e.target.value)}
                                                         />
                                                     </td>
                                                     <td>
-                                                        {row.amount}
-                                                    </td>
-                                                    <td>
-                                                        {row.date}
+                                                        <input
+                                                            type="text"
+                                                            value={row.amount}
+                                                            onChange={(e) => handleInputChange(index, 'amount', e.target.value)}
+                                                        />
                                                     </td>
                                                 </tr>
                                             ))}
@@ -433,20 +466,21 @@ const RSMIPage = () => {
                     </table>
                 </div>
             </div>
-            
+
             <div className="right-image-section">
                 <img src={logo} alt="OCD logo" className="vertical-OCD-image" />
             </div>
 
-            <div className={`export-container ${showExportOptions ? 'active' : ''}`}>
-                <button className="export-button" onClick={toggleExportMenu}>
-                    Export
-                </button>
-                {showExportOptions && (
-                    <div className="export-options">
-                        <button onClick={onExportExcel}>Export as Excel</button>
+            <div className="action-buttons-container">
+                <div className="action-buttons">
+                    <div className="export-dropdown">
+                        <button className="export-main-button">Export ▼</button>
+                        <div className="export-dropdown-content">
+                            <button onClick={onExportExcel}>Export to Excel</button>
+                            <button onClick={onExportPDF}>Export to PDF</button>
+                        </div>
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );
