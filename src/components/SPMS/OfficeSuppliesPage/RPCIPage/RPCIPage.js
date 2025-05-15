@@ -68,7 +68,9 @@ const RPCIPage = () => {
             // Add header information
             const addHeaderRow = (text) => {
                 const row = worksheet.addRow([text]);
+                row.font = { name: 'Arial', size: 12 };
                 worksheet.mergeCells(`A${row.number}:N${row.number}`);
+                row.alignment = { horizontal: 'center' };
                 return row;
             };
 
@@ -83,18 +85,19 @@ const RPCIPage = () => {
 
             // Add report title
             const reportTitleRow = worksheet.addRow(['REPORT ON THE PHYSICAL COUNT OF INVENTORIES']);
-            reportTitleRow.font = { bold: true };
+            reportTitleRow.font = { name: 'Arial', bold: true, size: 14 };
             reportTitleRow.alignment = { horizontal: 'center' };
             worksheet.mergeCells(`A${reportTitleRow.number}:N${reportTitleRow.number}`);
 
             // Add inventory type (only if user provided it)
             if (inventoryType) {
                 const inventoryTypeRow = worksheet.addRow([inventoryType]);
-                inventoryTypeRow.font = { bold: true };
+                inventoryTypeRow.font = { name: 'Arial', bold: true, size: 12 };
                 inventoryTypeRow.alignment = { horizontal: 'center' };
                 worksheet.mergeCells(`A${inventoryTypeRow.number}:N${inventoryTypeRow.number}`);
                 
                 const typeRow = worksheet.addRow(['(Type of Inventory Item)']);
+                typeRow.font = { name: 'Arial', size: 12 };
                 typeRow.alignment = { horizontal: 'center' };
                 worksheet.mergeCells(`A${typeRow.number}:N${typeRow.number}`);
             }
@@ -102,6 +105,7 @@ const RPCIPage = () => {
             // Add report date (only if user provided it)
             if (reportDate) {
                 const dateRow = worksheet.addRow([`As of  ${reportDate}`]);
+                dateRow.font = { name: 'Arial', size: 12 };
                 dateRow.alignment = { horizontal: 'center' };
                 worksheet.mergeCells(`A${dateRow.number}:N${dateRow.number}`);
             }
@@ -110,6 +114,7 @@ const RPCIPage = () => {
             // Add fund cluster (only if user provided it)
             if (fundCluster) {
                 const fundRow = worksheet.addRow([`Fund Cluster : ${fundCluster}`]);
+                fundRow.font = { name: 'Arial', size: 12 };
                 worksheet.mergeCells(`A${fundRow.number}:N${fundRow.number}`);
             }
             
@@ -117,6 +122,7 @@ const RPCIPage = () => {
             if (accountableOfficer || assumptionDate) {
                 const officerText = `For which ${accountableOfficer || '[Accountable Officer]'}, Supply Accountable Officer, OCD-NCR is accountable, having assumed such accountability on _${assumptionDate || '[Date]'}_.`;
                 const officerRow = worksheet.addRow([officerText]);
+                officerRow.font = { name: 'Arial', size: 12 };
                 worksheet.mergeCells(`A${officerRow.number}:N${officerRow.number}`);
             }
             worksheet.addRow([]);
@@ -127,13 +133,13 @@ const RPCIPage = () => {
                 'Balance Per Card', 'On Hand Per Count\n(Pallada)', 'On Hand Per Count\n(Medina)', 'On Hand Per Count', 
                 'Shortage/Overage', '', 'TOTAL COST', 'Remarks'
             ]);
-            headerRow1.font = { bold: true };
+            headerRow1.font = { name: 'Arial', bold: true, size: 12 };
             headerRow1.alignment = { wrapText: true, vertical: 'top' };
 
             const headerRow2 = worksheet.addRow([
                 '', '', '', '', '', '', '(Quantity)', '(Quantity)', '(Quantity)', '(Quantity)', 'Quantity', 'Quantity', '', ''
             ]);
-            headerRow2.font = { bold: true };
+            headerRow2.font = { name: 'Arial', bold: true, size: 12 };
 
             // Add data rows (only if there's data)
             let currentSection = '';
@@ -144,7 +150,7 @@ const RPCIPage = () => {
                 if (row.category && row.category !== currentSection) {
                     currentSection = row.category;
                     const sectionRow = worksheet.addRow([`${String.fromCharCode(65 + worksheet.rowCount - headerRow2.number - 2)}. ${currentSection}`]);
-                    sectionRow.font = { bold: true };
+                    sectionRow.font = { name: 'Arial', bold: true, size: 12 };
                     worksheet.mergeCells(`A${sectionRow.number}:N${sectionRow.number}`);
                 }
                 
@@ -164,6 +170,11 @@ const RPCIPage = () => {
                     row.totalCost,
                     row.remarks
                 ]);
+                
+                // Set font for all cells in the row
+                dataRow.eachCell((cell) => {
+                    cell.font = { name: 'Arial', size: 12 };
+                });
             });
 
             // Add total row if there are data rows
@@ -171,8 +182,8 @@ const RPCIPage = () => {
                 const totalRow = worksheet.addRow([
                     '', '', '', '', '', '', '', '', '', '', 'TOTAL', `=SUM(M${headerRow1.number + 2}:M${worksheet.rowCount})`, ''
                 ]);
-                totalRow.getCell('L').font = { bold: true };
-                totalRow.getCell('M').font = { bold: true };
+                totalRow.getCell('L').font = { name: 'Arial', bold: true, size: 12 };
+                totalRow.getCell('M').font = { name: 'Arial', bold: true, size: 12 };
                 worksheet.mergeCells(`L${totalRow.number}:K${totalRow.number}`);
             }
 
@@ -181,6 +192,7 @@ const RPCIPage = () => {
             const signatureHeaderRow = worksheet.addRow([
                 'Prepared by:', '', '', 'Certified Correct by:', '', '', 'Approved by:', '', '', '', '', 'Verified by:', ''
             ]);
+            signatureHeaderRow.font = { name: 'Arial', size: 12 };
             worksheet.mergeCells(`A${signatureHeaderRow.number}:B${signatureHeaderRow.number}`);
             worksheet.mergeCells(`D${signatureHeaderRow.number}:F${signatureHeaderRow.number}`);
             worksheet.mergeCells(`G${signatureHeaderRow.number}:J${signatureHeaderRow.number}`);
@@ -188,8 +200,9 @@ const RPCIPage = () => {
 
             worksheet.addRow([]);
             const signatureNameRow = worksheet.addRow([
-                '', '', '', '', '', '', '', '', '', '', '', '', ''
+                'KRIZELLE JANE MATIAS', '', '', 'ROSEMARIE BARGAN', '', '', 'DIR. ROMULO M. CABANTAC JR.', '', '', '', '', 'ROBY JANE L. BERNABE', ''
             ]);
+            signatureNameRow.font = { name: 'Arial', size: 12 };
             worksheet.mergeCells(`A${signatureNameRow.number}:B${signatureNameRow.number}`);
             worksheet.mergeCells(`D${signatureNameRow.number}:F${signatureNameRow.number}`);
             worksheet.mergeCells(`G${signatureNameRow.number}:J${signatureNameRow.number}`);
@@ -199,6 +212,7 @@ const RPCIPage = () => {
             const signatureTitleRow = worksheet.addRow([
                 'Member of Inventory Committee', '', '', 'Chairman, Inventory Committee', '', '', 'OCD NCR, Regional Director', '', '', '', '', 'State Auditor III/OIC, Audit Team Leader', ''
             ]);
+            signatureTitleRow.font = { name: 'Arial', size: 10 };
             worksheet.mergeCells(`A${signatureTitleRow.number}:B${signatureTitleRow.number}`);
             worksheet.mergeCells(`D${signatureTitleRow.number}:F${signatureTitleRow.number}`);
             worksheet.mergeCells(`G${signatureTitleRow.number}:J${signatureTitleRow.number}`);
@@ -206,15 +220,17 @@ const RPCIPage = () => {
 
             worksheet.addRow([]);
             const saoRow = worksheet.addRow([
-                '', '', '', '', '', '', '', '', '', '', '', '', ''
+                '', '', 'NIEL PATRICK PALLADA', '', '', '', '', '', '', '', '', '', ''
             ]);
+            saoRow.font = { name: 'Arial', size: 12 };
             worksheet.mergeCells(`C${saoRow.number}:F${saoRow.number}`);
             const saoTitleRow = worksheet.addRow([
                 '', '', 'SAO, Member of Inventory Committee', '', '', '', '', '', '', '', '', '', ''
             ]);
+            saoTitleRow.font = { name: 'Arial', size: 10 };
             worksheet.mergeCells(`C${saoTitleRow.number}:F${saoTitleRow.number}`);
 
-            // Set column widths
+            // Set column widths to match the original file
             worksheet.columns = [
                 { width: 8 },   // Article
                 { width: 30 },  // Description
@@ -233,7 +249,7 @@ const RPCIPage = () => {
             ];
 
             // Add borders to all cells with data
-            const firstDataRow = headerRow1.number + 1;
+            const firstDataRow = headerRow1.number;
             const lastRow = worksheet.rowCount;
             
             for (let i = firstDataRow; i <= lastRow; i++) {
@@ -410,10 +426,10 @@ const RPCIPage = () => {
         
         currentY += 6;
         doc.setFontSize(12);
-        doc.text('', 15, currentY);
-        doc.text('', 15 + 3 * cellWidths[3], currentY);
-        doc.text('', 15 + 6 * cellWidths[6], currentY);
-        doc.text('', 15 + 11 * cellWidths[11], currentY);
+        doc.text('KRIZELLE JANE MATIAS', 15, currentY);
+        doc.text('ROSEMARIE BARGAN', 15 + 3 * cellWidths[3], currentY);
+        doc.text('DIR. ROMULO M. CABANTAC JR.', 15 + 6 * cellWidths[6], currentY);
+        doc.text('ROBY JANE L. BERNABE', 15 + 11 * cellWidths[11], currentY);
         
         currentY += 6;
         doc.setFontSize(10);
@@ -423,7 +439,7 @@ const RPCIPage = () => {
         doc.text('State Auditor III/OIC, Audit Team Leader', 15 + 11 * cellWidths[11], currentY);
         
         currentY += 12;
-        doc.text('', 15 + 2 * cellWidths[2], currentY);
+        doc.text('NIEL PATRICK PALLADA', 15 + 2 * cellWidths[2], currentY);
         currentY += 6;
         doc.text('SAO, Member of Inventory Committee', 15 + 2 * cellWidths[2], currentY);
         
