@@ -378,6 +378,12 @@ const RISPage = () => {
     const handleInputChange = (index, field, value) => {
         const updatedRows = rows.map((row, i) => {
             if (i === index) {
+                // If checking "Yes", uncheck "No" and vice versa
+                if (field === 'yes' && value === '/') {
+                    return { ...row, yes: '/', no: '' };
+                } else if (field === 'no' && value === '/') {
+                    return { ...row, yes: '', no: '/' };
+                }
                 return { ...row, [field]: value };
             }
             return row;

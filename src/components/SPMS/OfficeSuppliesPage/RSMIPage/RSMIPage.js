@@ -102,7 +102,81 @@ const RSMIPage = () => {
         'September', 'October', 'November', 'December'
     ];
     
-    const years = Array.from({length: 10}, (_, i) => new Date().getFullYear() - i);
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({length: 5}, (_, i) => currentYear - i);
+
+    const fetchRSMIData = async (month, year) => {
+        if (!month || !year) {
+            setError('Please select both month and year');
+            return;
+        }
+        
+        setIsLoading(true);
+        setError(null);
+        
+        try {
+            const monthIndex = months.indexOf(month) + 1;
+            const response = await fetch(`http://10.16.2.219/project/rsmi_api.php?month=${monthIndex}&year=${year}`);
+            
+            if (!response.ok) throw new Error(`Server error: ${response.status}`);
+    
+            const result = await response.json();
+            
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to fetch RSMI data');
+            }
+    
+            if (!result.data || result.data.length === 0) {
+                throw new Error(`No RSMI data found for ${month} ${year}`);
+            }
+
+            // Process the data to match RSMI format
+            const processedData = result.data.map(item => ({
+                risNo: item.reference || 'N/A',
+                responsibilityCenterCode: '2016',
+                stockNo: item.stocknumber || 'N/A',
+                item: item.item || item.description || 'N/A',
+                unit: item.unitofmeasurement || 'N/A',
+                quantityIssued: item.issueqty || '0',
+                unitCost: item.balanceunitcost || '0.00',
+                amount: item.balancetotalcost || '0.00',
+                date: item.formatted_date || ''
+            }));
+
+            // Ensure minimum 5 rows
+            const emptyRowsCount = Math.max(0, 5 - processedData.length);
+            const emptyRows = Array(emptyRowsCount).fill({
+                risNo: '',
+                responsibilityCenterCode: '',
+                stockNo: '',
+                item: '',
+                unit: '',
+                quantityIssued: '',
+                unitCost: '',
+                amount: '',
+                date: ''
+            });
+            
+            setRows([...processedData, ...emptyRows]);
+            
+        } catch (error) {
+            console.error('Fetch error:', error);
+            setError(error.message);
+            setRows(Array(5).fill({
+                risNo: '',
+                responsibilityCenterCode: '',
+                stockNo: '',
+                item: '',
+                unit: '',
+                quantityIssued: '',
+                unitCost: '',
+                amount: '',
+                date: ''
+            }));
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const onBack = () => {
         navigate(-1);
@@ -154,19 +228,20 @@ const RSMIPage = () => {
             ]);
             headerRow2.font = { bold: true };
 
-            // Add data rows
-            rows.forEach(row => {
-                worksheet.addRow([
-                    row.risNo,
-                    row.responsibilityCenterCode,
-                    row.stockNo,
-                    row.item,
-                    row.unit,
-                    row.quantityIssued,
-                    row.unitCost,
-                    row.amount
-                ]);
-            });
+        // Add data rows
+        rows.forEach(row => {
+            worksheet.addRow([
+                row.risNo,
+                row.responsibilityCenterCode,
+                row.stockNo,
+                row.item,
+                row.unit,
+                row.quantityIssued ? parseInt(row.quantityIssued, 10) : '',
+                row.unitCost,
+                row.amount,
+                row.date
+            ]);
+        });
 
             // Set column widths
             worksheet.columns = [
@@ -401,60 +476,31 @@ const RSMIPage = () => {
                                             {rows.map((row, index) => (
                                                 <tr key={index}>
                                                     <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.risNo}
-                                                            onChange={(e) => handleInputChange(index, 'risNo', e.target.value)}
-                                                        />
+                                                        <input type="text" value={row.risNo} readOnly style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center' }} />
                                                     </td>
                                                     <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.responsibilityCenterCode}
-                                                            onChange={(e) => handleInputChange(index, 'responsibilityCenterCode', e.target.value)}
-                                                        />
+                                                        <input type="text" value={(row.risNo || row.stockNo || row.item || row.unit || row.quantityIssued || row.unitCost || row.amount || row.date) ? '2016' : ''} readOnly style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center' }} />
                                                     </td>
                                                     <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.stockNo}
-                                                            onChange={(e) => handleInputChange(index, 'stockNo', e.target.value)}
-                                                        />
+                                                        <input type="text" value={row.stockNo} readOnly style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center' }} />
                                                     </td>
                                                     <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.item}
-                                                            onChange={(e) => handleInputChange(index, 'item', e.target.value)}
-                                                        />
+                                                        <input type="text" value={row.item} readOnly style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center' }} />
                                                     </td>
                                                     <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.unit}
-                                                            onChange={(e) => handleInputChange(index, 'unit', e.target.value)}
-                                                        />
+                                                        <input type="text" value={row.unit} readOnly style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center' }} />
                                                     </td>
                                                     <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.quantityIssued}
-                                                            onChange={(e) => handleInputChange(index, 'quantityIssued', e.target.value)}
-                                                        />
+                                                        <input type="text" value={row.quantityIssued ? parseInt(row.quantityIssued, 10) : ''} readOnly style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center' }} />
                                                     </td>
                                                     <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.unitCost}
-                                                            onChange={(e) => handleInputChange(index, 'unitCost', e.target.value)}
-                                                        />
+                                                        <input type="text" value={row.unitCost} readOnly style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center' }} />
                                                     </td>
                                                     <td>
-                                                        <input
-                                                            type="text"
-                                                            value={row.amount}
-                                                            onChange={(e) => handleInputChange(index, 'amount', e.target.value)}
-                                                        />
+                                                        <input type="text" value={row.amount} readOnly style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center' }} />
+                                                    </td>
+                                                    <td>
+                                                        <input type="text" value={row.date} readOnly style={{ width: '100%', border: 'none', background: 'transparent', textAlign: 'center' }} />
                                                     </td>
                                                 </tr>
                                             ))}
