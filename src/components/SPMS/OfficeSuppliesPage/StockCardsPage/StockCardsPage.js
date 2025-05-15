@@ -89,28 +89,66 @@ const StockCardsPage = () => {
             setLoading(true);
             setError(null);
 
-            const apiUrl = `http://10.16.4.183/project/stockcards.php?stocknumber=${stockNumber}`;
+            // Changed to use relative URL
+            const apiUrl = `https://10.16.4.241/project/stockcards.php?stocknumber=${stockNumber}`;
+            console.log('Fetching data from:', apiUrl);
+            
             const response = await fetch(apiUrl, {
+                method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
                 },
+                credentials: 'include' // Include cookies if needed
             });
+
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
 
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(`Server error: ${response.status} ${response.statusText}`);
+                console.error('Server error response:', errorText);
+                throw new Error(`Server error: ${response.status} ${response.statusText}\n${errorText}`);
             }
 
             const contentType = response.headers.get('content-type');
+            console.log('Content-Type:', contentType);
+            
             if (!contentType || !contentType.includes('application/json')) {
                 const responseData = await response.text();
+                console.error('Invalid response format:', responseData);
                 throw new Error('Invalid response format - expected JSON');
             }
 
             const data = await response.json();
-            if (!data) throw new Error('No data received from server');
-            if (data.error) throw new Error(data.error);
+            console.log('Received data:', data);
+            
+            if (!data) {
+                console.error('No data received from server');
+                throw new Error('No data received from server');
+            }
+            
+            if (data.error) {
+                console.error('Server returned error:', data.error);
+                throw new Error(data.error);
+            }
+
+            if (data.length === 0) {
+                console.log('No records found for stock number:', stockNumber);
+                // Initialize with empty data but keep the stock number
+                const emptyData = {
+                    fundcluster: '',
+                    stocknumber: stockNumber,
+                    item: '',
+                    description: '',
+                    unitofmeasurement: '',
+                    transactions: [createEmptyTransaction()]
+                };
+                setStockData(emptyData);
+                setOriginalData(JSON.parse(JSON.stringify(emptyData)));
+                setHasChanges(false);
+                return;
+            }
 
             const responseData = Array.isArray(data) ? data : [data];
             const processedData = {
@@ -122,6 +160,7 @@ const StockCardsPage = () => {
                 transactions: responseData.length > 0 ? responseData.map(processTransaction) : [createEmptyTransaction()]
             };
 
+            console.log('Processed data:', processedData);
             setStockData(processedData);
             setOriginalData(JSON.parse(JSON.stringify(processedData)));
             setHasChanges(false);
