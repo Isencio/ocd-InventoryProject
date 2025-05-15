@@ -38,6 +38,23 @@ const StockCardsPage = () => {
 
     const officeOptions = ['OS', 'CBTS', 'RRMS', 'PDPS', 'ORD', 'BAC', 'FMU', 'Admin', 'GSU', 'HRMU', 'DRMD'];
 
+    // Add useEffect for handling clicks outside dropdowns
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (addRowButtonRef.current && !addRowButtonRef.current.contains(event.target)) {
+                setShowAddRowOptions(false);
+            }
+            if (exportRef.current && !exportRef.current.contains(event.target)) {
+                setShowExportOptions(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     // Helper functions
     const formatNumber = (value, isCurrency = false) => {
         if (value === '' || value === null) return '';
