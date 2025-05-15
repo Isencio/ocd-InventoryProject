@@ -48,18 +48,18 @@ const StockCardsPage = () => {
 
     // Transaction processing
     const processTransaction = (item) => ({
-        id: item.StockID?.toString() || Date.now().toString(),
+        id: item.StockID || Date.now().toString(),
         date: item.date || '',
         reference: item.reference || '',
-        receiptqty: item.receiptqty !== undefined && item.receiptqty !== null ? item.receiptqty.toString() : '',
-        receiptunitcost: item.receiptunitcost !== undefined && item.receiptunitcost !== null ? item.receiptunitcost.toString() : '',
-        receipttotalcost: item.receipttotalcost !== undefined && item.receipttotalcost !== null ? item.receipttotalcost.toString() : '',
-        issueqty: item.issueqty !== undefined && item.issueqty !== null ? item.issueqty.toString() : '',
-        issueoffice: item.issueoffice !== undefined && item.issueoffice !== null ? item.issueoffice.toString() : '',
-        balanceqty: item.balanceqty !== undefined && item.balanceqty !== null ? item.balanceqty.toString() : '',
-        balanceunitcost: item.balanceunitcost !== undefined && item.balanceunitcost !== null ? item.balanceunitcost.toString() : '',
-        balancetotalcost: item.balancetotalcost !== undefined && item.balancetotalcost !== null ? item.balancetotalcost.toString() : '',
-        daystoconsume: item.daystoconsume !== undefined && item.daystoconsume !== null ? item.daystoconsume.toString() : '',
+        receiptqty: formatNumber(item.receiptqty),
+        receiptunitcost: formatNumber(item.receiptunitcost, true),
+        receipttotalcost: item.receipttotalcost || '',
+        issueqty: formatNumber(item.issueqty),
+        issueoffice: item.issueoffice || '',
+        balanceqty: formatNumber(item.balanceqty),
+        balanceunitcost: formatNumber(item.balanceunitcost, true),
+        balancetotalcost: item.balancetotalcost || '',
+        daystoconsume: item.daystoconsume || '',
         isRISRow: item.isRISRow || false
     });
 
@@ -89,7 +89,7 @@ const StockCardsPage = () => {
             setLoading(true);
             setError(null);
 
-            const apiUrl = `http://10.16.2.219/project/stockcards.php?stocknumber=${stockNumber}`;
+            const apiUrl = `http://10.16.4.183/project/stockcards.php?stocknumber=${stockNumber}`;
             const response = await fetch(apiUrl, {
                 headers: {
                     'Content-Type': 'application/json',
@@ -109,7 +109,10 @@ const StockCardsPage = () => {
             }
 
             const data = await response.json();
-            const responseData = Array.isArray(data.data) ? data.data : [data.data];
+            if (!data) throw new Error('No data received from server');
+            if (data.error) throw new Error(data.error);
+
+            const responseData = Array.isArray(data) ? data : [data];
             const processedData = {
                 fundcluster: responseData[0]?.fundcluster || '',
                 stocknumber: responseData[0]?.stocknumber || stockNumber,
@@ -397,7 +400,7 @@ const StockCardsPage = () => {
             if (rows && rows.length > 0) {
                 const lastRow = rows[rows.length - 1];
                 const firstInput = lastRow.querySelector('input');
-                void firstInput?.focus();
+                firstInput?.focus();
             }
         }, 50);
     };
@@ -417,7 +420,7 @@ const StockCardsPage = () => {
             if (rows && rows.length > 0) {
                 const lastRow = rows[rows.length - 1];
                 const issueQtyInput = lastRow.querySelectorAll('input')[5];
-                void issueQtyInput?.focus();
+                issueQtyInput?.focus();
             }
         }, 50);
     };
@@ -542,44 +545,97 @@ const StockCardsPage = () => {
             }
 
             const workbook = new ExcelJS.Workbook();
-            const worksheet = workbook.addWorksheet('StockCard');
+            const worksheet = workbook.addWorksheet('STOCK CARD');
 
-            // Set default font for the worksheet
-            worksheet.properties.defaultRowHeight = 15;
+            // Set default font for the entire worksheet
+            worksheet.properties.defaultColWidth = 15;
+            
+            // Add header information
+            const addHeaderRow = (text) => {
+                const row = worksheet.addRow([text]);
+                row.font = { name: 'Arial', size: 12, bold: true };
+                row.alignment = { horizontal: 'center' };
+                worksheet.mergeCells(`A${row.number}:H${row.number}`);
+            };
 
+            addHeaderRow('Republic of the Philippines');
+            addHeaderRow('Department of National Defense');
+            addHeaderRow('OFFICE OF CIVIL DEFENSE');
+            addHeaderRow('NATIONAL CAPITAL REGION');
+            
+            const addressRow = worksheet.addRow(['NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY']);
+            addressRow.font = { name: 'Arial', size: 10 };
+            worksheet.mergeCells(`A${addressRow.number}:H${addressRow.number}`);
+            
+            const contactRow = worksheet.addRow(['Telephone Number: (02) 421-1918; OPCEN Mobile Number: 0917-8276325']);
+            contactRow.font = { name: 'Arial', size: 10 };
+            worksheet.mergeCells(`A${contactRow.number}:H${contactRow.number}`);
+            
+            const emailRow = worksheet.addRow(['E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com']);
+            emailRow.font = { name: 'Arial', size: 10 };
+            worksheet.mergeCells(`A${emailRow.number}:H${emailRow.number}`);
+            
+            // Add empty row
+            worksheet.addRow([]);
+            
             // Add title
             const titleRow = worksheet.addRow(['STOCK CARD AS OF JANUARY 2025']);
-            titleRow.font = { bold: true, size: 14 };
+            titleRow.font = { name: 'Arial', size: 12, bold: true };
             titleRow.alignment = { horizontal: 'center' };
-            worksheet.mergeCells('A1:I1');
-            worksheet.addRow([]);
-
-            // Add Fund Cluster and item information
-            worksheet.addRow(['Fund Cluster:', stockData.fundcluster]);
-            worksheet.addRow(['Item:', stockData.item, '', '', '', 'Stock No. :', '', stockData.stocknumber]);
-            worksheet.addRow(['', '', '', '', '', 'Re-order Point :', '']);
-            worksheet.addRow([]);
-
-            // Add table headers
-            const headerRow1 = worksheet.addRow([
-                'Date', 'Reference', '', 'Receipt', '', '', 'Issue', '', 'Balance', '', '', 'No. of Days to Consume'
-            ]);
-            headerRow1.font = { bold: true };
+            worksheet.mergeCells(`A${titleRow.number}:H${titleRow.number}`);
             
-            const headerRow2 = worksheet.addRow([
+            // Add empty row
+            worksheet.addRow([]);
+            
+            // Add fund cluster
+            const fundClusterRow = worksheet.addRow(['Fund Cluster:', stockData.fundcluster]);
+            fundClusterRow.getCell(1).font = { name: 'Arial', size: 10, bold: true };
+            fundClusterRow.getCell(2).font = { name: 'Arial', size: 10 };
+            
+            // Add empty row
+            worksheet.addRow([]);
+            
+            // Add item information
+            const itemRow = worksheet.addRow(['Item:', stockData.item, '', '', 'Stock No. :', '', stockData.stocknumber]);
+            itemRow.getCell(1).font = { name: 'Arial', size: 10, bold: true };
+            itemRow.getCell(2).font = { name: 'Arial', size: 10 };
+            itemRow.getCell(5).font = { name: 'Arial', size: 10, bold: true };
+            itemRow.getCell(7).font = { name: 'Arial', size: 10 };
+            
+            const descRow = worksheet.addRow(['Description:', stockData.description]);
+            descRow.getCell(1).font = { name: 'Arial', size: 10, bold: true };
+            descRow.getCell(2).font = { name: 'Arial', size: 10 };
+            
+            const unitRow = worksheet.addRow(['Unit of Measurement:', stockData.unitofmeasurement, '', '', 'Re-order Point :', '']);
+            unitRow.getCell(1).font = { name: 'Arial', size: 10, bold: true };
+            unitRow.getCell(2).font = { name: 'Arial', size: 10 };
+            unitRow.getCell(5).font = { name: 'Arial', size: 10, bold: true };
+            
+            // Add empty row
+            worksheet.addRow([]);
+            
+            // Add table headers
+            const mainHeaderRow = worksheet.addRow([
+                'Date', 'Reference', '', 'RECEIPT', '', '', 'ISSUE', '', 'BALANCE', '', '', 'No. of Days to Consume'
+            ]);
+            mainHeaderRow.font = { name: 'Arial', size: 10, bold: true };
+            mainHeaderRow.alignment = { horizontal: 'center' };
+            
+            // Merge header cells
+            worksheet.mergeCells(`D${mainHeaderRow.number}:F${mainHeaderRow.number}`);
+            worksheet.mergeCells(`G${mainHeaderRow.number}:H${mainHeaderRow.number}`);
+            worksheet.mergeCells(`I${mainHeaderRow.number}:K${mainHeaderRow.number}`);
+            worksheet.mergeCells(`L${mainHeaderRow.number}:M${mainHeaderRow.number}`);
+            
+            const subHeaderRow = worksheet.addRow([
                 '', '', 'Qty.', 'Unit Cost', 'Total Cost', 'Qty.', 'Office', 'Qty.', 'Unit Cost', 'Total Cost', ''
             ]);
-            headerRow2.font = { bold: true };
-
-            // Merge header cells
-            worksheet.mergeCells('D4:F4'); // Receipt header
-            worksheet.mergeCells('G4:H4'); // Issue header
-            worksheet.mergeCells('I4:K4'); // Balance header
-            worksheet.mergeCells('L4:L4'); // Days to consume header
-
+            subHeaderRow.font = { name: 'Arial', size: 10, bold: true };
+            subHeaderRow.alignment = { horizontal: 'center' };
+            
             // Add transaction data
             stockData.transactions.forEach(transaction => {
-                worksheet.addRow([
+                const row = worksheet.addRow([
                     transaction.date,
                     transaction.reference,
                     transaction.receiptqty,
@@ -593,53 +649,38 @@ const StockCardsPage = () => {
                     '',
                     transaction.daystoconsume
                 ]);
-            });
-
-            // Set column widths to match the image
-            worksheet.columns = [
-                { width: 10 }, // Date
-                { width: 20 }, // Reference
-                { width: 8 },  // Qty (Receipt)
-                { width: 10 }, // Unit Cost (Receipt)
-                { width: 12 }, // Total Cost (Receipt)
-                { width: 8 },  // Qty (Issue)
-                { width: 10 }, // Office (Issue)
-                { width: 8 },  // Qty (Balance)
-                { width: 10 }, // Unit Cost (Balance)
-                { width: 12 }, // Total Cost (Balance)
-                { width: 5 },  // Empty
-                { width: 15 }  // Days to consume
-            ];
-
-            // Format all cells with borders
-            const lastRow = worksheet.rowCount;
-            const lastCol = worksheet.columns.length;
-
-            for (let i = 3; i <= lastRow; i++) {
-                for (let j = 1; j <= lastCol; j++) {
-                    const cell = worksheet.getCell(i, j);
-                    cell.border = {
-                        top: { style: 'thin' },
-                        left: { style: 'thin' },
-                        bottom: { style: 'thin' },
-                        right: { style: 'thin' }
-                    };
-                }
-            }
-
-            // Format number cells
-            for (let i = 5; i <= lastRow; i++) {
-                // Receipt Unit Cost and Total Cost
-                worksheet.getCell(`D${i}`).numFmt = '#,##0.00';
-                worksheet.getCell(`E${i}`).numFmt = '#,##0.00';
                 
-                // Balance Unit Cost and Total Cost
-                worksheet.getCell(`I${i}`).numFmt = '#,##0.00';
-                worksheet.getCell(`J${i}`).numFmt = '#,##0.00';
-            }
-
+                // Format numbers
+                [3, 4, 5, 6, 8, 9].forEach(col => {
+                    if (row.getCell(col).value) {
+                        row.getCell(col).numFmt = '#,##0.00';
+                    }
+                });
+                
+                // Set font for all cells
+                row.eachCell(cell => {
+                    cell.font = { name: 'Arial', size: 10 };
+                });
+            });
+            
+            // Set column widths
+            worksheet.columns = [
+                { width: 12 }, // Date
+                { width: 20 }, // Reference
+                { width: 8 },  // Qty
+                { width: 12 }, // Unit Cost
+                { width: 12 }, // Total Cost
+                { width: 8 },  // Issue Qty
+                { width: 12 }, // Office
+                { width: 8 },  // Balance Qty
+                { width: 12 }, // Balance Unit Cost
+                { width: 12 }, // Balance Total Cost
+                { width: 8 },  // Empty
+                { width: 20 }  // Days to Consume
+            ];
+            
             // Save file
-            await workbook.xlsx.writeFile(`StockCard_${stockData.stocknumber || 'Inventory'}.xlsx`);
+            await workbook.xlsx.writeFile(`STOCK_CARD_${stockData.stocknumber || 'NEW'}.xlsx`);
             setShowExportOptions(false);
         } catch (err) {
             console.error('Error exporting to Excel:', err);
