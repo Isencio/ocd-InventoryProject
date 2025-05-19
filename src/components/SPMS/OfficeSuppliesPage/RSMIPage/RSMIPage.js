@@ -11,86 +11,63 @@ const RSMIPage = () => {
     const [serialNo, setSerialNo] = useState('');
     const [date, setDate] = useState('');
     const [showMonthYearPicker, setShowMonthYearPicker] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
     const [rows, setRows] = useState([
         {
-            risNo: 'RIS 2024-10-088',
-            responsibilityCenterCode: 'ORD',
-            stockNo: 'J2',
-            item: 'PAPER, MULTICOPY, A4, 80 gsm',
-            unit: 'REAM',
-            quantityIssued: '7',
-            unitCost: '17.68',
-            amount: '123.76'
-        },
-        {
-            risNo: 'RIS 2024-10-089',
+            risNo: '',
             responsibilityCenterCode: '',
-            stockNo: 'J2',
-            item: 'PAPER, MULTICOPY, A4, 80 gsm',
-            unit: 'REAM',
+            stockNo: '',
+            item: '',
+            unit: '',
             quantityIssued: '',
             unitCost: '',
-            amount: ''
-        },
-        {
-            risNo: 'RIS 2024-10-090',
-            responsibilityCenterCode: '',
-            stockNo: 'J2',
-            item: 'PAPER, MULTICOPY, A4, 80 gsm',
-            unit: 'REAM',
-            quantityIssued: '',
-            unitCost: '',
-            amount: ''
-        },
-        {
-            risNo: 'RIS 2024-10-091',
-            responsibilityCenterCode: '',
-            stockNo: 'J2',
-            item: 'PAPER, MULTICOPY, A4, 80 gsm',
-            unit: 'REAM',
-            quantityIssued: '',
-            unitCost: '',
-            amount: ''
-        },
-        {
-            risNo: 'RIS 2024-10-092',
-            responsibilityCenterCode: '',
-            stockNo: 'J2',
-            item: 'PAPER, MULTICOPY, A4, 80 gsm',
-            unit: 'REAM',
-            quantityIssued: '',
-            unitCost: '',
-            amount: ''
-        },
-        {
-            risNo: 'RIS 2024-10-093',
-            responsibilityCenterCode: '',
-            stockNo: 'J2',
-            item: 'PAPER, MULTICOPY, A4, 80 gsm',
-            unit: 'REAM',
-            quantityIssued: '',
-            unitCost: '',
-            amount: ''
+            amount: '',
+            date: ''
         },
         {
             risNo: '',
             responsibilityCenterCode: '',
-            stockNo: 'J2',
-            item: 'PAPER, MULTICOPY, A4, 80 gsm',
-            unit: 'REAM',
+            stockNo: '',
+            item: '',
+            unit: '',
             quantityIssued: '',
             unitCost: '',
-            amount: ''
+            amount: '',
+            date: ''
         },
         {
             risNo: '',
             responsibilityCenterCode: '',
-            stockNo: 'J2',
-            item: 'PAPER, MULTICOPY, A4, 80 gsm',
-            unit: 'REAM',
+            stockNo: '',
+            item: '',
+            unit: '',
             quantityIssued: '',
             unitCost: '',
-            amount: ''
+            amount: '',
+            date: ''
+        },
+        {
+            risNo: '',
+            responsibilityCenterCode: '',
+            stockNo: '',
+            item: '',
+            unit: '',
+            quantityIssued: '',
+            unitCost: '',
+            amount: '',
+            date: ''
+        },
+        {
+            risNo: '',
+            responsibilityCenterCode: '',
+            stockNo: '',
+            item: '',
+            unit: '',
+            quantityIssued: '',
+            unitCost: '',
+            amount: '',
+            date: ''
         }
     ]);
 
@@ -103,7 +80,7 @@ const RSMIPage = () => {
     ];
     
     const currentYear = new Date().getFullYear();
-    const years = Array.from({length: 5}, (_, i) => currentYear - i);
+    const years = Array.from({length: 5}, (_, i) => currentYear + i);
 
     const fetchRSMIData = async (month, year) => {
         if (!month || !year) {
@@ -116,7 +93,7 @@ const RSMIPage = () => {
         
         try {
             const monthIndex = months.indexOf(month) + 1;
-            const response = await fetch(`http://10.16.2.219/project/rsmi_api.php?month=${monthIndex}&year=${year}`);
+            const response = await fetch(`http://10.16.2.76/project/rsmi_api.php?month=${monthIndex}&year=${year}`);
             
             if (!response.ok) throw new Error(`Server error: ${response.status}`);
     
@@ -185,6 +162,7 @@ const RSMIPage = () => {
     const handleDateSelect = (month, year) => {
         setDate(`${month} ${year}`);
         setShowMonthYearPicker(false);
+        fetchRSMIData(month, year);
     };
 
     const onExportExcel = async () => {
@@ -224,24 +202,24 @@ const RSMIPage = () => {
 
             const headerRow2 = worksheet.addRow([
                 'RIS No.', 'Responsibility Center Code', 'Stock No.', 'Item', 
-                'Unit', 'Quantity Issued', 'Unit Cost', 'Amount'
+                'Unit', 'Quantity Issued', 'Unit Cost', 'Amount', 'Date'
             ]);
             headerRow2.font = { bold: true };
 
-        // Add data rows
-        rows.forEach(row => {
-            worksheet.addRow([
-                row.risNo,
-                row.responsibilityCenterCode,
-                row.stockNo,
-                row.item,
-                row.unit,
-                row.quantityIssued ? parseInt(row.quantityIssued, 10) : '',
-                row.unitCost,
-                row.amount,
-                row.date
-            ]);
-        });
+            // Add data rows
+            rows.forEach(row => {
+                worksheet.addRow([
+                    row.risNo,
+                    row.responsibilityCenterCode,
+                    row.stockNo,
+                    row.item,
+                    row.unit,
+                    row.quantityIssued ? parseInt(row.quantityIssued, 10) : '',
+                    row.unitCost,
+                    row.amount,
+                    row.date
+                ]);
+            });
 
             // Set column widths
             worksheet.columns = [
@@ -252,7 +230,8 @@ const RSMIPage = () => {
                 { width: 10 },   // Unit
                 { width: 15 },  // Quantity Issued
                 { width: 12 },   // Unit Cost
-                { width: 12 }    // Amount
+                { width: 12 },    // Amount
+                { width: 15 }    // Date
             ];
 
             // Add borders to all cells
@@ -315,7 +294,7 @@ const RSMIPage = () => {
         // Main headers
         const mainHeaders = [
             'RIS No.', 'Responsibility Center Code', 'Stock No.', 
-            'Item', 'Unit', 'Quantity Issued', 'Unit Cost', 'Amount'
+            'Item', 'Unit', 'Quantity Issued', 'Unit Cost', 'Amount', 'Date'
         ];
         
         mainHeaders.forEach((header, i) => {
@@ -334,7 +313,8 @@ const RSMIPage = () => {
                 row.unit,
                 row.quantityIssued,
                 row.unitCost,
-                row.amount
+                row.amount,
+                row.date
             ];
             
             rowData.forEach((cell, i) => {
@@ -470,6 +450,7 @@ const RSMIPage = () => {
                                                 <th>Quantity Issued</th>
                                                 <th>Unit Cost</th>
                                                 <th>Amount</th>
+                                                <th>Date</th>
                                             </tr>
                                         </thead>
                                         <tbody>
