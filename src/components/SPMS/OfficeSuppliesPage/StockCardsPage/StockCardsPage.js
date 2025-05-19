@@ -38,23 +38,6 @@ const StockCardsPage = () => {
 
     const officeOptions = ['OS', 'CBTS', 'RRMS', 'PDPS', 'ORD', 'BAC', 'FMU', 'Admin', 'GSU', 'HRMU', 'DRMD'];
 
-    // Add useEffect for handling clicks outside dropdowns
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (addRowButtonRef.current && !addRowButtonRef.current.contains(event.target)) {
-                setShowAddRowOptions(false);
-            }
-            if (exportRef.current && !exportRef.current.contains(event.target)) {
-                setShowExportOptions(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
-
     // Helper functions
     const formatNumber = (value, isCurrency = false) => {
         if (value === '' || value === null) return '';
@@ -106,8 +89,7 @@ const StockCardsPage = () => {
             setLoading(true);
             setError(null);
 
-            // Changed to use relative URL
-            const apiUrl = `https://10.16.4.241/project/stockcards.php?stocknumber=${stockNumber}`;
+            const apiUrl = `http://10.16.2.76/project/stockcards.php?stocknumber=${encodeURIComponent(stockNumber)}`;
             console.log('Fetching data from:', apiUrl);
             
             const response = await fetch(apiUrl, {
@@ -115,44 +97,26 @@ const StockCardsPage = () => {
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
-                },
-                credentials: 'include' // Include cookies if needed
+                }
             });
 
             console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
-
+            
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('Server error response:', errorText);
-                throw new Error(`Server error: ${response.status} ${response.statusText}\n${errorText}`);
+                throw new Error(`Server error: ${response.status} ${response.statusText}`);
             }
 
-            const contentType = response.headers.get('content-type');
-            console.log('Content-Type:', contentType);
+            const result = await response.json();
+            console.log('API Response:', result);
             
-            if (!contentType || !contentType.includes('application/json')) {
-                const responseData = await response.text();
-                console.error('Invalid response format:', responseData);
-                throw new Error('Invalid response format - expected JSON');
-            }
-
-            const data = await response.json();
-            console.log('Received data:', data);
-            
-            if (!data) {
-                console.error('No data received from server');
-                throw new Error('No data received from server');
+            if (!result.success) {
+                throw new Error(result.error || 'Failed to fetch data');
             }
             
-            if (data.error) {
-                console.error('Server returned error:', data.error);
-                throw new Error(data.error);
-            }
-
-            if (data.length === 0) {
+            if (!result.data || result.data.length === 0) {
                 console.log('No records found for stock number:', stockNumber);
-                // Initialize with empty data but keep the stock number
                 const emptyData = {
                     fundcluster: '',
                     stocknumber: stockNumber,
@@ -167,15 +131,37 @@ const StockCardsPage = () => {
                 return;
             }
 
-            const responseData = Array.isArray(data) ? data : [data];
+            // Process the first item's header information
+            const firstItem = result.data[0];
             const processedData = {
-                fundcluster: responseData[0]?.fundcluster || '',
-                stocknumber: responseData[0]?.stocknumber || stockNumber,
-                item: responseData[0]?.item || '',
-                description: responseData[0]?.description || '',
-                unitofmeasurement: responseData[0]?.unitofmeasurement || '',
-                transactions: responseData.length > 0 ? responseData.map(processTransaction) : [createEmptyTransaction()]
+                fundcluster: firstItem.fundcluster || '',
+                stocknumber: firstItem.stocknumber || stockNumber,
+                item: firstItem.item || '',
+                description: firstItem.description || '',
+                unitofmeasurement: firstItem.unitofmeasurement || '',
+                transactions: result.data.map(item => ({
+                    id: item.StockID || Date.now().toString(),
+                    date: item.date || '',
+                    reference: item.reference || '',
+                    receiptqty: formatNumber(item.receiptqty),
+                    receiptunitcost: formatNumber(item.receiptunitcost, true),
+                    receipttotalcost: formatNumber(item.receipttotalcost, true),
+                    issueqty: formatNumber(item.issueqty),
+                    issueoffice: item.issueoffice === "0.00" ? '' : item.issueoffice || '',
+                    balanceqty: formatNumber(item.balanceqty),
+                    balanceunitcost: formatNumber(item.balanceunitcost, true),
+                    balancetotalcost: formatNumber(item.balancetotalcost, true),
+                    daystoconsume: item.daystoconsume || '',
+                    isRISRow: item.receiptqty <= 0 && item.issueqty > 0 // Determine if this is an RIS row
+                }))
             };
+
+            // Ensure transactions are in the original order
+            processedData.transactions.sort((a, b) => {
+                const idA = parseInt(a.id) || 0;
+                const idB = parseInt(b.id) || 0;
+                return idA - idB;
+            });
 
             console.log('Processed data:', processedData);
             setStockData(processedData);
@@ -186,7 +172,6 @@ const StockCardsPage = () => {
             console.error('Fetch error:', error);
             setError(`Failed to load data: ${error.message}`);
             
-            // Fallback to empty data
             const emptyData = {
                 fundcluster: '',
                 stocknumber: stockNumber,
@@ -855,10 +840,10 @@ const StockCardsPage = () => {
                             <label>Stock No.:</label>
                             <input
                                 type="text"
-                                value={newItemData.stocknumber}
-                                onChange={(e) => handleNewItemChange('stocknumber', e.target.value)}
+                                value={stockData.stocknumber}
+                                onChange={(e) => handleHeaderChange('stocknumber', e.target.value)}
+                                placeholder="Enter stock number"
                                 className="custom-stocknumber-input"
-                                required
                             />
                         </div>
                         
