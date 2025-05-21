@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ExcelJS from 'exceljs';
 import './StockCardsPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
+import { supabase } from '../../../../supabase';
 
 const StockCardsPage = () => {
     // State declarations
@@ -65,7 +66,7 @@ const StockCardsPage = () => {
 
     // Empty transaction templates
     const createEmptyTransaction = () => ({
-        id: Date.now().toString(),
+        id: null,
         date: '',
         reference: '',
         receiptqty: '',
@@ -89,40 +90,32 @@ const StockCardsPage = () => {
             setLoading(true);
             setError(null);
 
-            const apiUrl = `http://10.16.2.76/project/stockcards.php?stocknumber=${encodeURIComponent(stockNumber)}`;
-            console.log('Fetching data from:', apiUrl);
-            
-            const response = await fetch(apiUrl, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            });
+            // Fetch header data first
+            const { data: headerData, error: headerError } = await supabase
+                .from('stock_cards_header')
+                .select('*')
+                .eq('stocknumber', stockNumber)
+                .single();
 
-            console.log('Response status:', response.status);
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Server error response:', errorText);
-                throw new Error(`Server error: ${response.status} ${response.statusText}`);
-            }
+            if (headerError) throw headerError;
 
-            const result = await response.json();
-            console.log('API Response:', result);
-            
-            if (!result.success) {
-                throw new Error(result.error || 'Failed to fetch data');
-            }
-            
-            if (!result.data || result.data.length === 0) {
+            // Fetch transaction data
+            const { data: transactionData, error: transactionError } = await supabase
+                .from('stock_cards')
+                .select('*')
+                .eq('stocknumber', stockNumber)
+                .order('date', { ascending: true });
+
+            if (transactionError) throw transactionError;
+
+            if (!transactionData || transactionData.length === 0) {
                 console.log('No records found for stock number:', stockNumber);
                 const emptyData = {
-                    fundcluster: '',
+                    fundcluster: headerData?.fundcluster || '',
                     stocknumber: stockNumber,
-                    item: '',
-                    description: '',
-                    unitofmeasurement: '',
+                    item: headerData?.item || '',
+                    description: headerData?.description || '',
+                    unitofmeasurement: headerData?.unitofmeasurement || '',
                     transactions: [createEmptyTransaction()]
                 };
                 setStockData(emptyData);
@@ -131,16 +124,15 @@ const StockCardsPage = () => {
                 return;
             }
 
-            // Process the first item's header information
-            const firstItem = result.data[0];
+            // Process the data with header information
             const processedData = {
-                fundcluster: firstItem.fundcluster || '',
-                stocknumber: firstItem.stocknumber || stockNumber,
-                item: firstItem.item || '',
-                description: firstItem.description || '',
-                unitofmeasurement: firstItem.unitofmeasurement || '',
-                transactions: result.data.map(item => ({
-                    id: item.StockID || Date.now().toString(),
+                fundcluster: headerData?.fundcluster || '',
+                stocknumber: stockNumber,
+                item: headerData?.item || '',
+                description: headerData?.description || '',
+                unitofmeasurement: headerData?.unitofmeasurement || '',
+                transactions: transactionData.map(item => ({
+                    id: item.id,
                     date: item.date || '',
                     reference: item.reference || '',
                     receiptqty: formatNumber(item.receiptqty),
@@ -152,36 +144,17 @@ const StockCardsPage = () => {
                     balanceunitcost: formatNumber(item.balanceunitcost, true),
                     balancetotalcost: formatNumber(item.balancetotalcost, true),
                     daystoconsume: item.daystoconsume || '',
-                    isRISRow: item.receiptqty <= 0 && item.issueqty > 0 // Determine if this is an RIS row
+                    isRISRow: item.receiptqty <= 0 && item.issueqty > 0
                 }))
             };
-
-            // Ensure transactions are in the original order
-            processedData.transactions.sort((a, b) => {
-                const idA = parseInt(a.id) || 0;
-                const idB = parseInt(b.id) || 0;
-                return idA - idB;
-            });
 
             console.log('Processed data:', processedData);
             setStockData(processedData);
             setOriginalData(JSON.parse(JSON.stringify(processedData)));
             setHasChanges(false);
-            
         } catch (error) {
-            console.error('Fetch error:', error);
-            setError(`Failed to load data: ${error.message}`);
-            
-            const emptyData = {
-                fundcluster: '',
-                stocknumber: stockNumber,
-                item: '',
-                description: '',
-                unitofmeasurement: '',
-                transactions: [createEmptyTransaction()]
-            };
-            setStockData(emptyData);
-            setOriginalData(JSON.parse(JSON.stringify(emptyData)));
+            console.error('Error fetching data:', error);
+            setError(error.message);
         } finally {
             setLoading(false);
         }
@@ -243,7 +216,11 @@ const StockCardsPage = () => {
         }
 
         const updatedData = {
-            ...newItemData,
+            fundcluster: newItemData.fundcluster,
+            stocknumber: newItemData.stocknumber,
+            item: newItemData.item,
+            description: newItemData.description,
+            unitofmeasurement: newItemData.unitofmeasurement,
             transactions: [createEmptyTransaction()]
         };
         
@@ -263,19 +240,20 @@ const StockCardsPage = () => {
     const handleTransactionChange = (index, field, value) => {
         // If only changing the date, just update the date and return
         if (field === 'date') {
-            const transactionsForDate = [...stockData.transactions];
-            transactionsForDate[index] = {
-                ...transactionsForDate[index],
+            const updatedTransactions = [...stockData.transactions];
+            updatedTransactions[index] = {
+                ...updatedTransactions[index],
                 date: value
             };
-            const dataForDate = {
+            const updatedData = {
                 ...stockData,
-                transactions: transactionsForDate
+                transactions: updatedTransactions
             };
-            setStockData(dataForDate);
-            checkForChanges(dataForDate);
+            setStockData(updatedData);
+            checkForChanges(updatedData);
             return;
         }
+
         const numericFields = ['receiptqty', 'receiptunitcost', 'issueqty', 'balanceqty', 'balanceunitcost'];
         const currencyFields = ['receiptunitcost', 'balanceunitcost'];
         
@@ -296,53 +274,56 @@ const StockCardsPage = () => {
             }
         }
         
-        const transactionsForChange = [...stockData.transactions];
-        transactionsForChange[index] = {
-            ...transactionsForChange[index],
+        // Create a new copy of the transactions array
+        const updatedTransactions = [...stockData.transactions];
+        
+        // Update the specific transaction
+        updatedTransactions[index] = {
+            ...updatedTransactions[index],
             [field]: validatedValue
         };
         
         // Transaction calculations
-        if (transactionsForChange[index].isRISRow) {
+        if (updatedTransactions[index].isRISRow) {
             if (field === 'issueqty') {
-                const prevBalanceQty = index > 0 ? parseFloat(transactionsForChange[index-1].balanceqty) || 0 : 0;
+                const prevBalanceQty = index > 0 ? parseFloat(updatedTransactions[index-1].balanceqty) || 0 : 0;
                 const currentIssueQty = parseFloat(validatedValue) || 0;
-                transactionsForChange[index].balanceqty = Math.max(0, prevBalanceQty - currentIssueQty).toString();
+                updatedTransactions[index].balanceqty = Math.max(0, prevBalanceQty - currentIssueQty).toString();
                 
-                transactionsForChange[index].receiptqty = '';
-                transactionsForChange[index].receiptunitcost = '';
-                transactionsForChange[index].receipttotalcost = '';
-                transactionsForChange[index].balanceunitcost = '';
-                transactionsForChange[index].balancetotalcost = '';
+                updatedTransactions[index].receiptqty = '';
+                updatedTransactions[index].receiptunitcost = '';
+                updatedTransactions[index].receipttotalcost = '';
+                updatedTransactions[index].balanceunitcost = '';
+                updatedTransactions[index].balancetotalcost = '';
             }
         } else {
-            const qty = parseFloat(transactionsForChange[index].receiptqty) || 0;
-            const unitCost = parseFloat(transactionsForChange[index].receiptunitcost) || 0;
-            transactionsForChange[index].receipttotalcost = (qty * unitCost).toFixed(2);
+            const qty = parseFloat(updatedTransactions[index].receiptqty) || 0;
+            const unitCost = parseFloat(updatedTransactions[index].receiptunitcost) || 0;
+            updatedTransactions[index].receipttotalcost = (qty * unitCost).toFixed(2);
             
             if (index === 0) {
-                const receiptQty = parseFloat(transactionsForChange[index].receiptqty) || 0;
-                const receiptUnitCost = parseFloat(transactionsForChange[index].receiptunitcost) || 0;
+                const receiptQty = parseFloat(updatedTransactions[index].receiptqty) || 0;
+                const receiptUnitCost = parseFloat(updatedTransactions[index].receiptunitcost) || 0;
                 const receiptTotalCost = receiptQty * receiptUnitCost;
                 
-                transactionsForChange[index].balanceqty = receiptQty.toString();
-                transactionsForChange[index].balanceunitcost = receiptUnitCost.toFixed(2);
-                transactionsForChange[index].balancetotalcost = receiptTotalCost.toFixed(2);
-                transactionsForChange[index].receipttotalcost = receiptTotalCost.toFixed(2);
+                updatedTransactions[index].balanceqty = receiptQty.toString();
+                updatedTransactions[index].balanceunitcost = receiptUnitCost.toFixed(2);
+                updatedTransactions[index].balancetotalcost = receiptTotalCost.toFixed(2);
+                updatedTransactions[index].receipttotalcost = receiptTotalCost.toFixed(2);
             } else {
-                const prevBalanceQty = parseFloat(transactionsForChange[index-1].balanceqty) || 0;
-                const currentReceiptQty = parseFloat(transactionsForChange[index].receiptqty) || 0;
-                const currentReceiptUnitCost = parseFloat(transactionsForChange[index].receiptunitcost) || 0;
-                const currentIssueQty = parseFloat(transactionsForChange[index].issueqty) || 0;
+                const prevBalanceQty = parseFloat(updatedTransactions[index-1].balanceqty) || 0;
+                const currentReceiptQty = parseFloat(updatedTransactions[index].receiptqty) || 0;
+                const currentReceiptUnitCost = parseFloat(updatedTransactions[index].receiptunitcost) || 0;
+                const currentIssueQty = parseFloat(updatedTransactions[index].issueqty) || 0;
                 
                 const currentReceiptTotalCost = currentReceiptQty * currentReceiptUnitCost;
-                transactionsForChange[index].receipttotalcost = currentReceiptTotalCost.toFixed(2);
+                updatedTransactions[index].receipttotalcost = currentReceiptTotalCost.toFixed(2);
                 
                 let balanceQty = prevBalanceQty + currentReceiptQty - currentIssueQty;
-                transactionsForChange[index].balanceqty = Math.max(0, balanceQty).toString();
+                updatedTransactions[index].balanceqty = Math.max(0, balanceQty).toString();
                 
                 let lastNonRISIndex = index - 1;
-                while (lastNonRISIndex >= 0 && transactionsForChange[lastNonRISIndex].isRISRow) {
+                while (lastNonRISIndex >= 0 && updatedTransactions[lastNonRISIndex].isRISRow) {
                     lastNonRISIndex--;
                 }
                 
@@ -351,72 +332,72 @@ const StockCardsPage = () => {
                 
                 if (currentReceiptQty > 0) {
                     if (lastNonRISIndex >= 0) {
-                        const lastUnitCost = parseFloat(transactionsForChange[lastNonRISIndex].balanceunitcost) || 0;
+                        const lastUnitCost = parseFloat(updatedTransactions[lastNonRISIndex].balanceunitcost) || 0;
                         balanceUnitCost = lastUnitCost + currentReceiptUnitCost / 2;
                         
-                        const lastTotalCost = parseFloat(transactionsForChange[lastNonRISIndex].balancetotalcost) || 0;
+                        const lastTotalCost = parseFloat(updatedTransactions[lastNonRISIndex].balancetotalcost) || 0;
                         balanceTotalCost = lastTotalCost + currentReceiptTotalCost / 2;
                     } else {
                         balanceUnitCost = currentReceiptUnitCost;
                         balanceTotalCost = currentReceiptTotalCost;
                     }
                 } else {
-                    balanceUnitCost = parseFloat(transactionsForChange[index-1].balanceunitcost) || 0;
-                    balanceTotalCost = parseFloat(transactionsForChange[index-1].balancetotalcost) || 0;
+                    balanceUnitCost = parseFloat(updatedTransactions[index-1].balanceunitcost) || 0;
+                    balanceTotalCost = parseFloat(updatedTransactions[index-1].balancetotalcost) || 0;
                 }
                 
-                transactionsForChange[index].balanceunitcost = balanceUnitCost.toFixed(2);
-                transactionsForChange[index].balancetotalcost = balanceTotalCost.toFixed(2);
+                updatedTransactions[index].balanceunitcost = balanceUnitCost.toFixed(2);
+                updatedTransactions[index].balancetotalcost = balanceTotalCost.toFixed(2);
             }
         }
         
         // Update subsequent rows
-        for (let i = index + 1; i < transactionsForChange.length; i++) {
-            const prevBalanceQty = parseFloat(transactionsForChange[i-1].balanceqty) || 0;
-            const currentIssueQty = parseFloat(transactionsForChange[i].issueqty) || 0;
+        for (let i = index + 1; i < updatedTransactions.length; i++) {
+            const prevBalanceQty = parseFloat(updatedTransactions[i-1].balanceqty) || 0;
+            const currentIssueQty = parseFloat(updatedTransactions[i].issueqty) || 0;
             
-            if (transactionsForChange[i].isRISRow) {
-                transactionsForChange[i].balanceqty = Math.max(0, prevBalanceQty - currentIssueQty).toString();
-                transactionsForChange[i].balanceunitcost = transactionsForChange[i-1].balanceunitcost;
-                transactionsForChange[i].balancetotalcost = (parseFloat(transactionsForChange[i].balanceqty) * 
-                    parseFloat(transactionsForChange[i].balanceunitcost)).toFixed(2);
+            if (updatedTransactions[i].isRISRow) {
+                updatedTransactions[i].balanceqty = Math.max(0, prevBalanceQty - currentIssueQty).toString();
+                updatedTransactions[i].balanceunitcost = updatedTransactions[i-1].balanceunitcost;
+                updatedTransactions[i].balancetotalcost = (parseFloat(updatedTransactions[i].balanceqty) * 
+                    parseFloat(updatedTransactions[i].balanceunitcost)).toFixed(2);
             } else {
-                const currentReceiptQty = parseFloat(transactionsForChange[i].receiptqty) || 0;
-                const currentReceiptUnitCost = parseFloat(transactionsForChange[i].receiptunitcost) || 0;
+                const currentReceiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
+                const currentReceiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
                 const currentReceiptTotalCost = currentReceiptQty * currentReceiptUnitCost;
                 
-                transactionsForChange[i].balanceqty = Math.max(0, prevBalanceQty + currentReceiptQty - currentIssueQty).toString();
+                updatedTransactions[i].balanceqty = Math.max(0, prevBalanceQty + currentReceiptQty - currentIssueQty).toString();
                 
                 let lastNonRISIndex = i - 1;
-                while (lastNonRISIndex >= 0 && transactionsForChange[lastNonRISIndex].isRISRow) {
+                while (lastNonRISIndex >= 0 && updatedTransactions[lastNonRISIndex].isRISRow) {
                     lastNonRISIndex--;
                 }
                 
                 if (currentReceiptQty > 0) {
                     if (lastNonRISIndex >= 0) {
-                        const lastUnitCost = parseFloat(transactionsForChange[lastNonRISIndex].balanceunitcost) || 0;
-                        transactionsForChange[i].balanceunitcost = (lastUnitCost + currentReceiptUnitCost / 2).toFixed(2);
+                        const lastUnitCost = parseFloat(updatedTransactions[lastNonRISIndex].balanceunitcost) || 0;
+                        updatedTransactions[i].balanceunitcost = (lastUnitCost + currentReceiptUnitCost / 2).toFixed(2);
                         
-                        const lastTotalCost = parseFloat(transactionsForChange[lastNonRISIndex].balancetotalcost) || 0;
-                        transactionsForChange[i].balancetotalcost = (lastTotalCost + currentReceiptTotalCost / 2).toFixed(2);
+                        const lastTotalCost = parseFloat(updatedTransactions[lastNonRISIndex].balancetotalcost) || 0;
+                        updatedTransactions[i].balancetotalcost = (lastTotalCost + currentReceiptTotalCost / 2).toFixed(2);
                     } else {
-                        transactionsForChange[i].balanceunitcost = currentReceiptUnitCost.toFixed(2);
-                        transactionsForChange[i].balancetotalcost = currentReceiptTotalCost.toFixed(2);
+                        updatedTransactions[i].balanceunitcost = currentReceiptUnitCost.toFixed(2);
+                        updatedTransactions[i].balancetotalcost = currentReceiptTotalCost.toFixed(2);
                     }
                 } else {
-                    transactionsForChange[i].balanceunitcost = transactionsForChange[i-1].balanceunitcost;
-                    transactionsForChange[i].balancetotalcost = transactionsForChange[i-1].balancetotalcost;
+                    updatedTransactions[i].balanceunitcost = updatedTransactions[i-1].balanceunitcost;
+                    updatedTransactions[i].balancetotalcost = updatedTransactions[i-1].balancetotalcost;
                 }
             }
         }
         
-        const dataAfterChange = {
+        const updatedData = {
             ...stockData,
-            transactions: transactionsForChange
+            transactions: updatedTransactions
         };
         
-        setStockData(dataAfterChange);
-        checkForChanges(dataAfterChange);
+        setStockData(updatedData);
+        checkForChanges(updatedData);
     };
 
     const checkForChanges = (currentData) => {
@@ -466,61 +447,82 @@ const StockCardsPage = () => {
         }, 50);
     };
 
-    const deleteRow = (index) => {
+    const deleteRow = async (index) => {
         if (stockData.transactions.length <= 1) {
             setError('At least one transaction must remain');
             return;
         }
 
         if (window.confirm('Are you sure you want to delete this transaction?')) {
-            const transactionsAfterDelete = [...stockData.transactions];
-            transactionsAfterDelete.splice(index, 1);
+            try {
+                setLoading(true);
+                const transactionToDelete = stockData.transactions[index];
 
-            // Only recalculate balances if the deleted row is not the last row
-            if (index < transactionsAfterDelete.length) {
-                const startIdx = index;
-                for (let i = startIdx; i < transactionsAfterDelete.length; i++) {
-                    if (i === 0) {
-                        const receiptQty = parseFloat(transactionsAfterDelete[i].receiptqty) || 0;
-                        const receiptUnitCost = parseFloat(transactionsAfterDelete[i].receiptunitcost) || 0;
-                        transactionsAfterDelete[i].balanceqty = receiptQty.toString();
-                        transactionsAfterDelete[i].balanceunitcost = receiptUnitCost.toFixed(2);
-                        transactionsAfterDelete[i].balancetotalcost = (receiptQty * receiptUnitCost).toFixed(2);
-                    } else {
-                        const prevBalanceQty = parseFloat(transactionsAfterDelete[i-1].balanceqty) || 0;
-                        const prevUnitCost = parseFloat(transactionsAfterDelete[i-1].balanceunitcost) || 0;
-                        const currentReceiptQty = parseFloat(transactionsAfterDelete[i].receiptqty) || 0;
-                        const currentReceiptUnitCost = parseFloat(transactionsAfterDelete[i].receiptunitcost) || 0;
-                        const currentIssueQty = parseFloat(transactionsAfterDelete[i].issueqty) || 0;
+                // If the transaction has an ID (i.e., it exists in the database), delete it
+                if (transactionToDelete.id && transactionToDelete.id !== Date.now().toString()) {
+                    const { error } = await supabase
+                        .from('stock_cards')
+                        .delete()
+                        .eq('id', transactionToDelete.id);
 
-                        let balanceQty = prevBalanceQty + currentReceiptQty;
-                        if (currentIssueQty > 0) {
-                            balanceQty = prevBalanceQty - currentIssueQty;
-                            if (balanceQty < 0) balanceQty = 0;
-                        }
-                        transactionsAfterDelete[i].balanceqty = balanceQty.toString();
+                    if (error) throw error;
+                }
 
-                        let balanceUnitCost = prevUnitCost;
-                        if (currentReceiptQty > 0 && currentReceiptUnitCost > 0 && !transactionsAfterDelete[i].isRISRow) {
-                            if (prevUnitCost > 0) {
-                                balanceUnitCost = (prevUnitCost + currentReceiptUnitCost / 2);
-                            } else {
-                                balanceUnitCost = currentReceiptUnitCost;
+                // Remove the transaction from the UI
+                const transactionsAfterDelete = [...stockData.transactions];
+                transactionsAfterDelete.splice(index, 1);
+
+                // Recalculate balances if the deleted row is not the last row
+                if (index < transactionsAfterDelete.length) {
+                    const startIdx = index;
+                    for (let i = startIdx; i < transactionsAfterDelete.length; i++) {
+                        if (i === 0) {
+                            const receiptQty = parseFloat(transactionsAfterDelete[i].receiptqty) || 0;
+                            const receiptUnitCost = parseFloat(transactionsAfterDelete[i].receiptunitcost) || 0;
+                            transactionsAfterDelete[i].balanceqty = receiptQty.toString();
+                            transactionsAfterDelete[i].balanceunitcost = receiptUnitCost.toFixed(2);
+                            transactionsAfterDelete[i].balancetotalcost = (receiptQty * receiptUnitCost).toFixed(2);
+                        } else {
+                            const prevBalanceQty = parseFloat(transactionsAfterDelete[i-1].balanceqty) || 0;
+                            const prevUnitCost = parseFloat(transactionsAfterDelete[i-1].balanceunitcost) || 0;
+                            const currentReceiptQty = parseFloat(transactionsAfterDelete[i].receiptqty) || 0;
+                            const currentReceiptUnitCost = parseFloat(transactionsAfterDelete[i].receiptunitcost) || 0;
+                            const currentIssueQty = parseFloat(transactionsAfterDelete[i].issueqty) || 0;
+
+                            let balanceQty = prevBalanceQty + currentReceiptQty;
+                            if (currentIssueQty > 0) {
+                                balanceQty = prevBalanceQty - currentIssueQty;
+                                if (balanceQty < 0) balanceQty = 0;
                             }
+                            transactionsAfterDelete[i].balanceqty = balanceQty.toString();
+
+                            let balanceUnitCost = prevUnitCost;
+                            if (currentReceiptQty > 0 && currentReceiptUnitCost > 0 && !transactionsAfterDelete[i].isRISRow) {
+                                if (prevUnitCost > 0) {
+                                    balanceUnitCost = (prevUnitCost + currentReceiptUnitCost / 2);
+                                } else {
+                                    balanceUnitCost = currentReceiptUnitCost;
+                                }
+                            }
+                            transactionsAfterDelete[i].balanceunitcost = balanceUnitCost.toFixed(2);
+                            transactionsAfterDelete[i].balancetotalcost = (balanceQty * balanceUnitCost).toFixed(2);
                         }
-                        transactionsAfterDelete[i].balanceunitcost = balanceUnitCost.toFixed(2);
-                        transactionsAfterDelete[i].balancetotalcost = (balanceQty * balanceUnitCost).toFixed(2);
                     }
                 }
+
+                const dataAfterDelete = {
+                    ...stockData,
+                    transactions: transactionsAfterDelete
+                };
+
+                setStockData(dataAfterDelete);
+                checkForChanges(dataAfterDelete);
+            } catch (error) {
+                console.error('Error deleting transaction:', error);
+                setError('Failed to delete transaction. Please try again.');
+            } finally {
+                setLoading(false);
             }
-
-            const dataAfterDelete = {
-                ...stockData,
-                transactions: transactionsAfterDelete
-            };
-
-            setStockData(dataAfterDelete);
-            checkForChanges(dataAfterDelete);
         }
     };
 
@@ -542,25 +544,91 @@ const StockCardsPage = () => {
                     daystoconsume: parseInt(t.daystoconsume) || 0
                 }))
             };
-    
-            const response = await fetch('http://localhost/project/save_stockcards.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    stockData: dataToSend
-                })
-            });
-    
-            const result = await response.json();
-            
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || `Server error: ${response.status}`);
+
+            // Update header information
+            const { error: headerError } = await supabase
+                .from('stock_cards_header')
+                .upsert({
+                    stocknumber: dataToSend.stocknumber,
+                    fundcluster: dataToSend.fundcluster,
+                    item: dataToSend.item,
+                    description: dataToSend.description,
+                    unitofmeasurement: dataToSend.unitofmeasurement
+                });
+
+            if (headerError) throw headerError;
+
+            // Separate new and existing transactions
+            const existingTransactions = dataToSend.transactions.filter(t => t.id !== null);
+            const newTransactions = dataToSend.transactions.filter(t => t.id === null);
+
+            // Update existing transactions
+            if (existingTransactions.length > 0) {
+                const { error: updateError } = await supabase
+                    .from('stock_cards')
+                    .upsert(
+                        existingTransactions.map(t => ({
+                            id: t.id, // Ensure the ID is included for updates
+                            stocknumber: dataToSend.stocknumber,
+                            date: t.date,
+                            reference: t.reference,
+                            receiptqty: t.receiptqty,
+                            receiptunitcost: t.receiptunitcost,
+                            receipttotalcost: t.receipttotalcost,
+                            issueqty: t.issueqty,
+                            issueoffice: t.issueoffice,
+                            balanceqty: t.balanceqty,
+                            balanceunitcost: t.balanceunitcost,
+                            balancetotalcost: t.balancetotalcost,
+                            daystoconsume: t.daystoconsume
+                        })),
+                        { onConflict: 'id' } // Explicitly specify the conflict resolution key
+                    );
+
+                if (updateError) throw updateError;
             }
-    
-            setOriginalData(JSON.parse(JSON.stringify(stockData)));
+
+            // Insert new transactions
+            if (newTransactions.length > 0) {
+                const { data: insertedTransactions, error: insertError } = await supabase
+                    .from('stock_cards')
+                    .insert(
+                        newTransactions.map(t => ({
+                            stocknumber: dataToSend.stocknumber,
+                            date: t.date,
+                            reference: t.reference,
+                            receiptqty: t.receiptqty,
+                            receiptunitcost: t.receiptunitcost,
+                            receipttotalcost: t.receipttotalcost,
+                            issueqty: t.issueqty,
+                            issueoffice: t.issueoffice,
+                            balanceqty: t.balanceqty,
+                            balanceunitcost: t.balanceunitcost,
+                            balancetotalcost: t.balancetotalcost,
+                            daystoconsume: t.daystoconsume
+                        }))
+                    )
+                    .select(); // Return the inserted rows to get their IDs
+
+                if (insertError) throw insertError;
+
+                // Update the state with the new IDs
+                if (insertedTransactions) {
+                    const updatedTransactions = [
+                        ...existingTransactions,
+                        ...insertedTransactions
+                    ];
+                    const updatedData = {
+                        ...stockData,
+                        transactions: updatedTransactions
+                    };
+                    setStockData(updatedData);
+                    setOriginalData(JSON.parse(JSON.stringify(updatedData)));
+                }
+            } else {
+                setOriginalData(JSON.parse(JSON.stringify(stockData)));
+            }
+
             setHasChanges(false);
             alert('Data saved successfully!');
         } catch (error) {
@@ -840,8 +908,8 @@ const StockCardsPage = () => {
                             <label>Stock No.:</label>
                             <input
                                 type="text"
-                                value={stockData.stocknumber}
-                                onChange={(e) => handleHeaderChange('stocknumber', e.target.value)}
+                                value={newItemData.stocknumber}
+                                onChange={(e) => handleNewItemChange('stocknumber', e.target.value)}
                                 placeholder="Enter stock number"
                                 className="custom-stocknumber-input"
                             />
