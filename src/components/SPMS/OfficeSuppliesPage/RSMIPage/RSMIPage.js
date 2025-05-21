@@ -4,6 +4,7 @@ import ExcelJS from 'exceljs';
 import { jsPDF } from 'jspdf';
 import './RSMIPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
+import { supabase } from '../../../../supabase';
 
 const RSMIPage = () => {
     const [entityName, setEntityName] = useState('');
@@ -93,22 +94,25 @@ const RSMIPage = () => {
         
         try {
             const monthIndex = months.indexOf(month) + 1;
-            const response = await fetch(`http://10.16.2.76/project/rsmi_api.php?month=${monthIndex}&year=${year}`);
-            
-            if (!response.ok) throw new Error(`Server error: ${response.status}`);
-    
-            const result = await response.json();
-            
-            if (!result.success) {
-                throw new Error(result.error || 'Failed to fetch RSMI data');
-            }
-    
-            if (!result.data || result.data.length === 0) {
+            const startDate = `${year}-${monthIndex.toString().padStart(2, '0')}-01`;
+            const endDate = `${year}-${monthIndex.toString().padStart(2, '0')}-31`;
+
+            const { data, error } = await supabase
+                .from('stock_cards')
+                .select('*')
+                .gte('date', startDate)
+                .lte('date', endDate)
+                .gt('issueqty', 0)
+                .order('date', { ascending: true });
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
                 throw new Error(`No RSMI data found for ${month} ${year}`);
             }
 
             // Process the data to match RSMI format
-            const processedData = result.data.map(item => ({
+            const processedData = data.map(item => ({
                 risNo: item.reference || 'N/A',
                 responsibilityCenterCode: '2016',
                 stockNo: item.stocknumber || 'N/A',
@@ -117,7 +121,7 @@ const RSMIPage = () => {
                 quantityIssued: item.issueqty || '0',
                 unitCost: item.balanceunitcost || '0.00',
                 amount: item.balancetotalcost || '0.00',
-                date: item.formatted_date || ''
+                date: item.date || ''
             }));
 
             // Ensure minimum 5 rows
