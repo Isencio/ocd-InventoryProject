@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ExcelJS from 'exceljs';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import './StockCardsPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
 import { supabase } from '../../../../supabase';
@@ -647,6 +649,7 @@ const StockCardsPage = () => {
     const exportToExcel = async () => {
         try {
             setLoading(true);
+            setError(null);
             
             if (!stockData.transactions.length) {
                 setError('No data to export');
@@ -682,13 +685,14 @@ const StockCardsPage = () => {
             
             const emailRow = worksheet.addRow(['E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com']);
             emailRow.font = { name: 'Arial', size: 10 };
+            emailRow.alignment = { horizontal: 'center' };
             worksheet.mergeCells(`A${emailRow.number}:H${emailRow.number}`);
             
             // Add empty row
             worksheet.addRow([]);
             
             // Add title
-            const titleRow = worksheet.addRow(['STOCK CARD AS OF JANUARY 2025']);
+            const titleRow = worksheet.addRow(['STOCK CARD']);
             titleRow.font = { name: 'Arial', size: 12, bold: true };
             titleRow.alignment = { horizontal: 'center' };
             worksheet.mergeCells(`A${titleRow.number}:H${titleRow.number}`);
@@ -715,10 +719,9 @@ const StockCardsPage = () => {
             descRow.getCell(1).font = { name: 'Arial', size: 10, bold: true };
             descRow.getCell(2).font = { name: 'Arial', size: 10 };
             
-            const unitRow = worksheet.addRow(['Unit of Measurement:', stockData.unitofmeasurement, '', '', 'Re-order Point :', '']);
+            const unitRow = worksheet.addRow(['Unit of Measurement:', stockData.unitofmeasurement]);
             unitRow.getCell(1).font = { name: 'Arial', size: 10, bold: true };
             unitRow.getCell(2).font = { name: 'Arial', size: 10 };
-            unitRow.getCell(5).font = { name: 'Arial', size: 10, bold: true };
             
             // Add empty row
             worksheet.addRow([]);
@@ -789,7 +792,17 @@ const StockCardsPage = () => {
             ];
             
             // Save file
-            await workbook.xlsx.writeFile(`STOCK_CARD_${stockData.stocknumber || 'NEW'}.xlsx`);
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `STOCK_CARD_${stockData.stocknumber || 'NEW'}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
             setShowExportOptions(false);
         } catch (err) {
             console.error('Error exporting to Excel:', err);
@@ -799,9 +812,280 @@ const StockCardsPage = () => {
         }
     };
 
-    const exportToPDF = () => {
-        setError('PDF export functionality will be implemented soon');
+    const exportToPDF = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            if (!stockData.transactions.length) {
+                setError('No data to export');
+                return;
+            }
+
+            // Create new PDF document in portrait
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            // Get current month and year for title
+            const currentDate = new Date();
+            const month = currentDate.toLocaleString('default', { month: 'long' }).toUpperCase();
+            const year = currentDate.getFullYear();
+            
+            // Add the logo
+            const logoWidth = 25;
+            const logoHeight = 25;
+            const logoX = 20;
+            const logoY = 15;
+            doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
+            
+            // Header text positioning (adjusted to align with logo)
+            const centerX = 105;
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "normal");
+            doc.text("Republic of the Philippines", centerX, 20, { align: "center" });
+            doc.text("Department of National Defense", centerX, 25, { align: "center" });
+            doc.setFont("helvetica", "bold");
+            doc.text("OFFICE OF CIVIL DEFENSE", centerX, 30, { align: "center" });
+            doc.text("NATIONAL CAPITAL REGION", centerX, 35, { align: "center" });
+            
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.text("NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY", centerX, 42, { align: "center" });
+            doc.text("Telephone Number: (02) 421-1918; OPCEN Mobile Number: 0917-8276325", centerX, 47, { align: "center" });
+            doc.text("E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com", centerX, 52, { align: "center" });
+
+            // Add title with current month and year
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text(`STOCK CARD AS OF ${month} ${year}`, centerX, 62, { align: "center" });
+            
+            // Create a table for the item information
+            autoTable(doc, {
+                startY: 70,
+                head: [[
+                    { content: 'Fund Cluster:', colSpan: 2 },
+                    { content: 'Stock No.:', colSpan: 1 },
+                    { content: '', colSpan: 1 }
+                ]],
+                body: [
+                    [
+                        { content: stockData.fundcluster, colSpan: 2 },
+                        { content: stockData.stocknumber, colSpan: 2 }
+                    ],
+                    [
+                        { content: 'Item:', colSpan: 1 },
+                        { content: stockData.item, colSpan: 3 }
+                    ],
+                    [
+                        { content: 'Description:', colSpan: 1 },
+                        { content: stockData.description, colSpan: 3 }
+                    ],
+                    [
+                        { content: 'Unit of Measurement:', colSpan: 1 },
+                        { content: stockData.unitofmeasurement, colSpan: 3 }
+                    ]
+                ],
+                theme: 'plain',
+                styles: {
+                    fontSize: 10,
+                    cellPadding: 2
+                },
+                columnStyles: {
+                    0: { cellWidth: 40 },
+                    1: { cellWidth: 60 },
+                    2: { cellWidth: 40 },
+                    3: { cellWidth: 50 }
+                }
+            });
+            
+            // Prepare table data
+            const tableData = [];
+            const transactions = stockData.transactions || [];
+
+            // Robust date parser for multiple formats
+            function parseDate(d) {
+                if (!d) return null;
+                // Try ISO first
+                let date = new Date(d);
+                if (!isNaN(date)) return date;
+                // Try MM/DD/YYYY or MM-DD-YYYY
+                const parts = d.split(/[\/-]/);
+                if (parts.length === 3) {
+                    // If year is first
+                    if (parts[0].length === 4) {
+                        return new Date(parts[0], parts[1] - 1, parts[2]);
+                    }
+                    // If month is first
+                    return new Date(parts[2], parts[0] - 1, parts[1]);
+                }
+                return null;
+            }
+
+            // Find all months between first and last transaction
+            const validDates = transactions.map(t => parseDate(t.date)).filter(d => d);
+            let minDate = validDates.length ? new Date(Math.min(...validDates.map(d => d.getTime()))) : null;
+            let maxDate = validDates.length ? new Date(Math.max(...validDates.map(d => d.getTime()))) : null;
+            if (minDate) minDate = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+            if (maxDate) maxDate = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+
+            if (minDate && maxDate) {
+                let current = new Date(minDate);
+                while (current <= maxDate) {
+                    const month = current.getMonth();
+                    const year = current.getFullYear();
+                    // All transactions for this month
+                    const monthTx = transactions.filter(t => {
+                        const td = parseDate(t.date);
+                        return td && td.getMonth() === month && td.getFullYear() === year;
+                    });
+                    if (monthTx.length === 0) {
+                        // No issued supplies for this month
+                        const monthName = current.toLocaleString('default', { month: 'long' });
+                        tableData.push([
+                            { content: `No issued supplies for the month of ${monthName} ${year}`, colSpan: 11, styles: { halign: 'left' } }
+                        ]);
+                    } else {
+                        // Add all transactions for this month
+                        monthTx.forEach(t => {
+                            tableData.push([
+                                t.date || '',
+                                t.reference || '',
+                                t.receiptqty || '',
+                                t.receiptunitcost || '',
+                                t.receipttotalcost || '',
+                                t.issueqty || '',
+                                t.issueoffice || '',
+                                t.balanceqty || '',
+                                t.balanceunitcost || '',
+                                t.balancetotalcost || '',
+                                t.daystoconsume || ''
+                            ]);
+                        });
+                    }
+                    current.setMonth(current.getMonth() + 1);
+                }
+            } else {
+                // No valid dates, just add all transactions
+                transactions.forEach(t => {
+                    tableData.push([
+                        t.date || '',
+                        t.reference || '',
+                        t.receiptqty || '',
+                        t.receiptunitcost || '',
+                        t.receipttotalcost || '',
+                        t.issueqty || '',
+                        t.issueoffice || '',
+                        t.balanceqty || '',
+                        t.balanceunitcost || '',
+                        t.balancetotalcost || '',
+                        t.daystoconsume || ''
+                    ]);
+                });
+            }
+
+            // Add empty rows
+            for (let i = 0; i < 15; i++) {
+                tableData.push(['', '', '', '', '', '', '', '', '', '', '']);
+            }
+
+            // Main table
+            autoTable(doc, {
+                startY: doc.lastAutoTable.finalY + 10,
+                head: [
+                    [
+                        { content: 'Date', rowSpan: 2 },
+                        { content: 'Reference', rowSpan: 2 },
+                        { content: 'Receipt', colSpan: 3 },
+                        { content: 'Issue', colSpan: 2 },
+                        { content: 'Balance', colSpan: 3 },
+                        { content: 'No. of Days to Consume', rowSpan: 2 }
+                    ],
+                    [
+                        'Qty', 'Unit Cost', 'Total Cost',
+                        'Qty', 'Office',
+                        'Qty', 'Unit Cost', 'Total Cost',
+                        ''
+                    ]
+                ],
+                body: tableData,
+                theme: 'grid',
+                styles: {
+                    fontSize: 8,
+                    cellPadding: 1,
+                    lineWidth: 0.1,
+                    lineColor: [0, 0, 0],
+                    halign: 'center'
+                },
+                headStyles: {
+                    fillColor: [255, 255, 255],
+                    textColor: [0, 0, 0],
+                    fontStyle: 'bold',
+                    lineWidth: 0.1,
+                    halign: 'center'
+                },
+                columnStyles: {
+                    0: { cellWidth: 18 },  // Date
+                    1: { cellWidth: 25 },  // Reference
+                    2: { cellWidth: 12 },  // Receipt Qty
+                    3: { cellWidth: 15 },  // Receipt Unit Cost
+                    4: { cellWidth: 18 },  // Receipt Total Cost
+                    5: { cellWidth: 12 },  // Issue Qty
+                    6: { cellWidth: 18 },  // Issue Office
+                    7: { cellWidth: 12 },  // Balance Qty
+                    8: { cellWidth: 15 },  // Balance Unit Cost
+                    9: { cellWidth: 18 },  // Balance Total Cost
+                    10: { cellWidth: 25 }  // Days to Consume
+                },
+                didParseCell: function(data) {
+                    // Center align all header cells
+                    if (data.section === 'head') {
+                        data.cell.styles.halign = 'center';
+                    }
+                    // Right align numeric columns in the body
+                    if (data.section === 'body') {
+                        const numericColumns = [2,3,4,5,7,8,9,10]; // columns with numbers
+                        if (numericColumns.includes(data.column.index)) {
+                            data.cell.styles.halign = 'right';
+                        }
+                    }
+                }
+            });
+            
+            // Get the PDF as a data URL
+            const pdfDataUrl = doc.output('dataurlstring');
+            
+            // Open the PDF in a new tab
+            const newWindow = window.open();
+            if (newWindow) {
+                newWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>Stock Card - ${stockData.stocknumber || 'NEW'}</title>
+                        <style>
+                            body { margin: 0; padding: 20px; }
+                            iframe { width: 100%; height: 100vh; border: none; }
+                        </style>
+                    </head>
+                    <body>
+                        <iframe src="${pdfDataUrl}"></iframe>
+                    </body>
+                    </html>
+                `);
+                newWindow.document.close();
+            } else {
+                doc.save(`STOCK_CARD_${stockData.stocknumber || 'NEW'}.pdf`);
+            }
+            
         setShowExportOptions(false);
+        } catch (err) {
+            console.error('Error in PDF export:', err);
+            setError(`Failed to export to PDF: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
     };
 
     // JSX Return
