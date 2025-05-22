@@ -1,0 +1,76 @@
+.ris-container {
+    display: flex;
+    height: 100vh;
+    background-color: #231e54;
+    position: relative;
+  }
+  .ris-header {
+    width: 85%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 80px;
+    margin-left: 40px;
+    border: #ddd;
+  }
+  
+  .header-top {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 2;
+  }
+  
+  .header-top h1 {
+    color: white;
+    font-size: 30px;
+    font-weight: bold;
+    margin: #ddd;
+  }
+  
+  .right-image-section {
+      width: 20%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #f0f0f0;
+    }
+    
+    .vertical-OCD-image {
+      max-width: 100%;
+      height: 100%;
+    }
+  
+    .ris-container .return-button {
+    background-color: #1c1841;
+    color: rgb(255, 255, 255);
+    border: none;
+    padding: 10px 20px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    }
+  
+    .ris-container .export-button {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: #1c1841;
+      color: rgb(255, 255, 255);
+      border: none;
+      padding: 10px 20px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 1;
+    }
+    .ris-container .return-button:hover {
+      background-color: #f28920;
+    }

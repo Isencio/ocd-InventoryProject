@@ -1,8 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ExcelJS from 'exceljs';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import './StockCardsPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
+import { supabase } from '../../../../supabase';
 
 const StockCardsPage = () => {
     // State declarations
@@ -65,7 +68,7 @@ const StockCardsPage = () => {
 
     // Empty transaction templates
     const createEmptyTransaction = () => ({
-        id: Date.now().toString(),
+        id: null,
         date: '',
         reference: '',
         receiptqty: '',
@@ -89,37 +92,53 @@ const StockCardsPage = () => {
             setLoading(true);
             setError(null);
 
-            const apiUrl = `http://10.16.4.183/project/stockcards.php?stocknumber=${stockNumber}`;
-            const response = await fetch(apiUrl, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-            });
+            // Fetch header data first
+            const { data: headerData, error: headerError } = await supabase
+                .from('stock_cards_header')
+                .select('*')
+                .eq('stocknumber', stockNumber)
+                .single();
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Server error: ${response.status} ${response.statusText}`);
+            if (headerError) {
+                if (headerError.code === 'PGRST116') {
+                    throw new Error('Stockcard not found');
+                }
+                throw headerError;
             }
 
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                const responseData = await response.text();
-                throw new Error('Invalid response format - expected JSON');
+            // Fetch transaction data
+            const { data: transactionData, error: transactionError } = await supabase
+                .from('stock_cards')
+                .select('*')
+                .eq('stocknumber', stockNumber)
+                .order('date', { ascending: true });
+
+            if (transactionError) throw transactionError;
+
+            if (!transactionData || transactionData.length === 0) {
+                console.log('No records found for stock number:', stockNumber);
+                const emptyData = {
+                    fundcluster: headerData?.fundcluster || '',
+                    stocknumber: stockNumber,
+                    item: headerData?.item || '',
+                    description: headerData?.description || '',
+                    unitofmeasurement: headerData?.unitofmeasurement || '',
+                    transactions: [createEmptyTransaction()]
+                };
+                setStockData(emptyData);
+                setOriginalData(JSON.parse(JSON.stringify(emptyData)));
+                setHasChanges(false);
+                return;
             }
 
-            const data = await response.json();
-            if (!data) throw new Error('No data received from server');
-            if (data.error) throw new Error(data.error);
-
-            const responseData = Array.isArray(data) ? data : [data];
+            // Process the data with header information
             const processedData = {
-                fundcluster: responseData[0]?.fundcluster || '',
-                stocknumber: responseData[0]?.stocknumber || stockNumber,
-                item: responseData[0]?.item || '',
-                description: responseData[0]?.description || '',
-                unitofmeasurement: responseData[0]?.unitofmeasurement || '',
-                transactions: responseData.length > 0 ? responseData.map(processTransaction) : [createEmptyTransaction()]
+                fundcluster: headerData?.fundcluster || '',
+                stocknumber: stockNumber,
+                item: headerData?.item || '',
+                description: headerData?.description || '',
+                unitofmeasurement: headerData?.unitofmeasurement || '',
+                transactions: transactionData.map(processTransaction)
             };
 
             setStockData(processedData);
@@ -202,7 +221,11 @@ const StockCardsPage = () => {
         }
 
         const updatedData = {
-            ...newItemData,
+            fundcluster: newItemData.fundcluster,
+            stocknumber: newItemData.stocknumber,
+            item: newItemData.item,
+            description: newItemData.description,
+            unitofmeasurement: newItemData.unitofmeasurement,
             transactions: [createEmptyTransaction()]
         };
         
@@ -410,61 +433,82 @@ const StockCardsPage = () => {
         }, 50);
     };
 
-    const deleteRow = (index) => {
+    const deleteRow = async (index) => {
         if (stockData.transactions.length <= 1) {
             setError('At least one transaction must remain');
             return;
         }
 
         if (window.confirm('Are you sure you want to delete this transaction?')) {
-            const updatedTransactions = [...stockData.transactions];
-            updatedTransactions.splice(index, 1);
-            
-            // Recalculate balances
-            for (let i = 0; i < updatedTransactions.length; i++) {
-                if (i === 0) {
-                    const receiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
-                    const receiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
-                    
-                    updatedTransactions[i].balanceqty = receiptQty.toString();
-                    updatedTransactions[i].balanceunitcost = receiptUnitCost.toFixed(2);
-                    updatedTransactions[i].balancetotalcost = (receiptQty * receiptUnitCost).toFixed(2);
-                } else {
-                    const prevBalanceQty = parseFloat(updatedTransactions[i-1].balanceqty) || 0;
-                    const prevUnitCost = parseFloat(updatedTransactions[i-1].balanceunitcost) || 0;
-                    const currentReceiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
-                    const currentReceiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
-                    const currentIssueQty = parseFloat(updatedTransactions[i].issueqty) || 0;
-                    
-                    let balanceQty = prevBalanceQty + currentReceiptQty;
-                    
-                    if (currentIssueQty > 0) {
-                        balanceQty = prevBalanceQty - currentIssueQty;
-                        if (balanceQty < 0) balanceQty = 0;
-                    }
-                    
-                    updatedTransactions[i].balanceqty = balanceQty.toString();
-                    
-                    let balanceUnitCost = prevUnitCost;
-                    if (currentReceiptQty > 0 && currentReceiptUnitCost > 0 && !updatedTransactions[i].isRISRow) {
-                        if (prevUnitCost > 0) {
-                            balanceUnitCost = (prevUnitCost + currentReceiptUnitCost / 2);
+            try {
+                setLoading(true);
+                const transactionToDelete = stockData.transactions[index];
+
+                // If the transaction has an ID (i.e., it exists in the database), delete it
+                if (transactionToDelete.id && transactionToDelete.id !== Date.now().toString()) {
+                    const { error } = await supabase
+                        .from('stock_cards')
+                        .delete()
+                        .eq('id', transactionToDelete.id);
+
+                    if (error) throw error;
+                }
+
+                // Remove the transaction from the UI
+                const transactionsAfterDelete = [...stockData.transactions];
+                transactionsAfterDelete.splice(index, 1);
+
+                // Recalculate balances if the deleted row is not the last row
+                if (index < transactionsAfterDelete.length) {
+                    const startIdx = index;
+                    for (let i = startIdx; i < transactionsAfterDelete.length; i++) {
+                        if (i === 0) {
+                            const receiptQty = parseFloat(transactionsAfterDelete[i].receiptqty) || 0;
+                            const receiptUnitCost = parseFloat(transactionsAfterDelete[i].receiptunitcost) || 0;
+                            transactionsAfterDelete[i].balanceqty = receiptQty.toString();
+                            transactionsAfterDelete[i].balanceunitcost = receiptUnitCost.toFixed(2);
+                            transactionsAfterDelete[i].balancetotalcost = (receiptQty * receiptUnitCost).toFixed(2);
                         } else {
-                            balanceUnitCost = currentReceiptUnitCost;
+                            const prevBalanceQty = parseFloat(transactionsAfterDelete[i-1].balanceqty) || 0;
+                            const prevUnitCost = parseFloat(transactionsAfterDelete[i-1].balanceunitcost) || 0;
+                            const currentReceiptQty = parseFloat(transactionsAfterDelete[i].receiptqty) || 0;
+                            const currentReceiptUnitCost = parseFloat(transactionsAfterDelete[i].receiptunitcost) || 0;
+                            const currentIssueQty = parseFloat(transactionsAfterDelete[i].issueqty) || 0;
+
+                            let balanceQty = prevBalanceQty + currentReceiptQty;
+                            if (currentIssueQty > 0) {
+                                balanceQty = prevBalanceQty - currentIssueQty;
+                                if (balanceQty < 0) balanceQty = 0;
+                            }
+                            transactionsAfterDelete[i].balanceqty = balanceQty.toString();
+
+                            let balanceUnitCost = prevUnitCost;
+                            if (currentReceiptQty > 0 && currentReceiptUnitCost > 0 && !transactionsAfterDelete[i].isRISRow) {
+                                if (prevUnitCost > 0) {
+                                    balanceUnitCost = (prevUnitCost + currentReceiptUnitCost / 2);
+                                } else {
+                                    balanceUnitCost = currentReceiptUnitCost;
+                                }
+                            }
+                            transactionsAfterDelete[i].balanceunitcost = balanceUnitCost.toFixed(2);
+                            transactionsAfterDelete[i].balancetotalcost = (balanceQty * balanceUnitCost).toFixed(2);
                         }
                     }
-                    updatedTransactions[i].balanceunitcost = balanceUnitCost.toFixed(2);
-                    updatedTransactions[i].balancetotalcost = (balanceQty * balanceUnitCost).toFixed(2);
                 }
+
+                const dataAfterDelete = {
+                    ...stockData,
+                    transactions: transactionsAfterDelete
+                };
+
+                setStockData(dataAfterDelete);
+                checkForChanges(dataAfterDelete);
+            } catch (error) {
+                console.error('Error deleting transaction:', error);
+                setError('Failed to delete transaction. Please try again.');
+            } finally {
+                setLoading(false);
             }
-            
-            const updatedData = {
-                ...stockData,
-                transactions: updatedTransactions
-            };
-            
-            setStockData(updatedData);
-            checkForChanges(updatedData);
         }
     };
 
@@ -486,25 +530,91 @@ const StockCardsPage = () => {
                     daystoconsume: parseInt(t.daystoconsume) || 0
                 }))
             };
-    
-            const response = await fetch('http://localhost/project/save_stockcards.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    stockData: dataToSend
-                })
-            });
-    
-            const result = await response.json();
-            
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || `Server error: ${response.status}`);
+
+            // Update header information
+            const { error: headerError } = await supabase
+                .from('stock_cards_header')
+                .upsert({
+                    stocknumber: dataToSend.stocknumber,
+                    fundcluster: dataToSend.fundcluster,
+                    item: dataToSend.item,
+                    description: dataToSend.description,
+                    unitofmeasurement: dataToSend.unitofmeasurement
+                });
+
+            if (headerError) throw headerError;
+
+            // Separate new and existing transactions
+            const existingTransactions = dataToSend.transactions.filter(t => t.id !== null);
+            const newTransactions = dataToSend.transactions.filter(t => t.id === null);
+
+            // Update existing transactions
+            if (existingTransactions.length > 0) {
+                const { error: updateError } = await supabase
+                    .from('stock_cards')
+                    .upsert(
+                        existingTransactions.map(t => ({
+                            id: t.id, // Ensure the ID is included for updates
+                            stocknumber: dataToSend.stocknumber,
+                            date: t.date,
+                            reference: t.reference,
+                            receiptqty: t.receiptqty,
+                            receiptunitcost: t.receiptunitcost,
+                            receipttotalcost: t.receipttotalcost,
+                            issueqty: t.issueqty,
+                            issueoffice: t.issueoffice,
+                            balanceqty: t.balanceqty,
+                            balanceunitcost: t.balanceunitcost,
+                            balancetotalcost: t.balancetotalcost,
+                            daystoconsume: t.daystoconsume
+                        })),
+                        { onConflict: 'id' } // Explicitly specify the conflict resolution key
+                    );
+
+                if (updateError) throw updateError;
             }
-    
-            setOriginalData(JSON.parse(JSON.stringify(stockData)));
+
+            // Insert new transactions
+            if (newTransactions.length > 0) {
+                const { data: insertedTransactions, error: insertError } = await supabase
+                    .from('stock_cards')
+                    .insert(
+                        newTransactions.map(t => ({
+                            stocknumber: dataToSend.stocknumber,
+                            date: t.date,
+                            reference: t.reference,
+                            receiptqty: t.receiptqty,
+                            receiptunitcost: t.receiptunitcost,
+                            receipttotalcost: t.receipttotalcost,
+                            issueqty: t.issueqty,
+                            issueoffice: t.issueoffice,
+                            balanceqty: t.balanceqty,
+                            balanceunitcost: t.balanceunitcost,
+                            balancetotalcost: t.balancetotalcost,
+                            daystoconsume: t.daystoconsume
+                        }))
+                    )
+                    .select(); // Return the inserted rows to get their IDs
+
+                if (insertError) throw insertError;
+
+                // Update the state with the new IDs
+                if (insertedTransactions) {
+                    const updatedTransactions = [
+                        ...existingTransactions,
+                        ...insertedTransactions
+                    ];
+                    const updatedData = {
+                        ...stockData,
+                        transactions: updatedTransactions
+                    };
+                    setStockData(updatedData);
+                    setOriginalData(JSON.parse(JSON.stringify(updatedData)));
+                }
+            } else {
+                setOriginalData(JSON.parse(JSON.stringify(stockData)));
+            }
+
             setHasChanges(false);
             alert('Data saved successfully!');
         } catch (error) {
@@ -523,6 +633,7 @@ const StockCardsPage = () => {
     const exportToExcel = async () => {
         try {
             setLoading(true);
+            setError(null);
             
             if (!stockData.transactions.length) {
                 setError('No data to export');
@@ -530,44 +641,97 @@ const StockCardsPage = () => {
             }
 
             const workbook = new ExcelJS.Workbook();
-            const worksheet = workbook.addWorksheet('StockCard');
+            const worksheet = workbook.addWorksheet('STOCK CARD');
 
-            // Set default font for the worksheet
-            worksheet.properties.defaultRowHeight = 15;
-
-            // Add title
-            const titleRow = worksheet.addRow(['STOCK CARD AS OF JANUARY 2025']);
-            titleRow.font = { bold: true, size: 14 };
-            titleRow.alignment = { horizontal: 'center' };
-            worksheet.mergeCells('A1:I1');
-            worksheet.addRow([]);
-
-            // Add Fund Cluster and item information
-            worksheet.addRow(['Fund Cluster:', stockData.fundcluster]);
-            worksheet.addRow(['Item:', stockData.item, '', '', '', 'Stock No. :', '', stockData.stocknumber]);
-            worksheet.addRow(['', '', '', '', '', 'Re-order Point :', '']);
-            worksheet.addRow([]);
-
-            // Add table headers
-            const headerRow1 = worksheet.addRow([
-                'Date', 'Reference', '', 'Receipt', '', '', 'Issue', '', 'Balance', '', '', 'No. of Days to Consume'
-            ]);
-            headerRow1.font = { bold: true };
+            // Set default font for the entire worksheet
+            worksheet.properties.defaultColWidth = 15;
             
-            const headerRow2 = worksheet.addRow([
+            // Add header information
+            const addHeaderRow = (text) => {
+                const row = worksheet.addRow([text]);
+                row.font = { name: 'Arial', size: 12, bold: true };
+                row.alignment = { horizontal: 'center' };
+                worksheet.mergeCells(`A${row.number}:H${row.number}`);
+            };
+
+            addHeaderRow('Republic of the Philippines');
+            addHeaderRow('Department of National Defense');
+            addHeaderRow('OFFICE OF CIVIL DEFENSE');
+            addHeaderRow('NATIONAL CAPITAL REGION');
+            
+            const addressRow = worksheet.addRow(['NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY']);
+            addressRow.font = { name: 'Arial', size: 10 };
+            worksheet.mergeCells(`A${addressRow.number}:H${addressRow.number}`);
+            
+            const contactRow = worksheet.addRow(['Telephone Number: (02) 421-1918; OPCEN Mobile Number: 0917-8276325']);
+            contactRow.font = { name: 'Arial', size: 10 };
+            worksheet.mergeCells(`A${contactRow.number}:H${contactRow.number}`);
+            
+            const emailRow = worksheet.addRow(['E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com']);
+            emailRow.font = { name: 'Arial', size: 10 };
+            emailRow.alignment = { horizontal: 'center' };
+            worksheet.mergeCells(`A${emailRow.number}:H${emailRow.number}`);
+            
+            // Add empty row
+            worksheet.addRow([]);
+            
+            // Add title
+            const titleRow = worksheet.addRow(['STOCK CARD']);
+            titleRow.font = { name: 'Arial', size: 12, bold: true };
+            titleRow.alignment = { horizontal: 'center' };
+            worksheet.mergeCells(`A${titleRow.number}:H${titleRow.number}`);
+            
+            // Add empty row
+            worksheet.addRow([]);
+            
+            // Add fund cluster
+            const fundClusterRow = worksheet.addRow(['Fund Cluster:', stockData.fundcluster]);
+            fundClusterRow.getCell(1).font = { name: 'Arial', size: 10, bold: true };
+            fundClusterRow.getCell(2).font = { name: 'Arial', size: 10 };
+            
+            // Add empty row
+            worksheet.addRow([]);
+            
+            // Add item information
+            const itemRow = worksheet.addRow(['Item:', stockData.item, '', '', 'Stock No. :', '', stockData.stocknumber]);
+            itemRow.getCell(1).font = { name: 'Arial', size: 10, bold: true };
+            itemRow.getCell(2).font = { name: 'Arial', size: 10 };
+            itemRow.getCell(5).font = { name: 'Arial', size: 10, bold: true };
+            itemRow.getCell(7).font = { name: 'Arial', size: 10 };
+            
+            const descRow = worksheet.addRow(['Description:', stockData.description]);
+            descRow.getCell(1).font = { name: 'Arial', size: 10, bold: true };
+            descRow.getCell(2).font = { name: 'Arial', size: 10 };
+            
+            const unitRow = worksheet.addRow(['Unit of Measurement:', stockData.unitofmeasurement]);
+            unitRow.getCell(1).font = { name: 'Arial', size: 10, bold: true };
+            unitRow.getCell(2).font = { name: 'Arial', size: 10 };
+            
+            // Add empty row
+            worksheet.addRow([]);
+            
+            // Add table headers
+            const mainHeaderRow = worksheet.addRow([
+                'Date', 'Reference', '', 'RECEIPT', '', '', 'ISSUE', '', 'BALANCE', '', '', 'No. of Days to Consume'
+            ]);
+            mainHeaderRow.font = { name: 'Arial', size: 10, bold: true };
+            mainHeaderRow.alignment = { horizontal: 'center' };
+            
+            // Merge header cells
+            worksheet.mergeCells(`D${mainHeaderRow.number}:F${mainHeaderRow.number}`);
+            worksheet.mergeCells(`G${mainHeaderRow.number}:H${mainHeaderRow.number}`);
+            worksheet.mergeCells(`I${mainHeaderRow.number}:K${mainHeaderRow.number}`);
+            worksheet.mergeCells(`L${mainHeaderRow.number}:M${mainHeaderRow.number}`);
+            
+            const subHeaderRow = worksheet.addRow([
                 '', '', 'Qty.', 'Unit Cost', 'Total Cost', 'Qty.', 'Office', 'Qty.', 'Unit Cost', 'Total Cost', ''
             ]);
-            headerRow2.font = { bold: true };
-
-            // Merge header cells
-            worksheet.mergeCells('D4:F4'); // Receipt header
-            worksheet.mergeCells('G4:H4'); // Issue header
-            worksheet.mergeCells('I4:K4'); // Balance header
-            worksheet.mergeCells('L4:L4'); // Days to consume header
-
+            subHeaderRow.font = { name: 'Arial', size: 10, bold: true };
+            subHeaderRow.alignment = { horizontal: 'center' };
+            
             // Add transaction data
             stockData.transactions.forEach(transaction => {
-                worksheet.addRow([
+                const row = worksheet.addRow([
                     transaction.date,
                     transaction.reference,
                     transaction.receiptqty,
@@ -581,53 +745,48 @@ const StockCardsPage = () => {
                     '',
                     transaction.daystoconsume
                 ]);
-            });
-
-            // Set column widths to match the image
-            worksheet.columns = [
-                { width: 10 }, // Date
-                { width: 20 }, // Reference
-                { width: 8 },  // Qty (Receipt)
-                { width: 10 }, // Unit Cost (Receipt)
-                { width: 12 }, // Total Cost (Receipt)
-                { width: 8 },  // Qty (Issue)
-                { width: 10 }, // Office (Issue)
-                { width: 8 },  // Qty (Balance)
-                { width: 10 }, // Unit Cost (Balance)
-                { width: 12 }, // Total Cost (Balance)
-                { width: 5 },  // Empty
-                { width: 15 }  // Days to consume
-            ];
-
-            // Format all cells with borders
-            const lastRow = worksheet.rowCount;
-            const lastCol = worksheet.columns.length;
-
-            for (let i = 3; i <= lastRow; i++) {
-                for (let j = 1; j <= lastCol; j++) {
-                    const cell = worksheet.getCell(i, j);
-                    cell.border = {
-                        top: { style: 'thin' },
-                        left: { style: 'thin' },
-                        bottom: { style: 'thin' },
-                        right: { style: 'thin' }
-                    };
-                }
-            }
-
-            // Format number cells
-            for (let i = 5; i <= lastRow; i++) {
-                // Receipt Unit Cost and Total Cost
-                worksheet.getCell(`D${i}`).numFmt = '#,##0.00';
-                worksheet.getCell(`E${i}`).numFmt = '#,##0.00';
                 
-                // Balance Unit Cost and Total Cost
-                worksheet.getCell(`I${i}`).numFmt = '#,##0.00';
-                worksheet.getCell(`J${i}`).numFmt = '#,##0.00';
-            }
-
+                // Format numbers
+                [3, 4, 5, 6, 8, 9].forEach(col => {
+                    if (row.getCell(col).value) {
+                        row.getCell(col).numFmt = '#,##0.00';
+                    }
+                });
+                
+                // Set font for all cells
+                row.eachCell(cell => {
+                    cell.font = { name: 'Arial', size: 10 };
+                });
+            });
+            
+            // Set column widths
+            worksheet.columns = [
+                { width: 12 }, // Date
+                { width: 20 }, // Reference
+                { width: 8 },  // Qty
+                { width: 12 }, // Unit Cost
+                { width: 12 }, // Total Cost
+                { width: 8 },  // Issue Qty
+                { width: 12 }, // Office
+                { width: 8 },  // Balance Qty
+                { width: 12 }, // Balance Unit Cost
+                { width: 12 }, // Balance Total Cost
+                { width: 8 },  // Empty
+                { width: 20 }  // Days to Consume
+            ];
+            
             // Save file
-            await workbook.xlsx.writeFile(`StockCard_${stockData.stocknumber || 'Inventory'}.xlsx`);
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `STOCK_CARD_${stockData.stocknumber || 'NEW'}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
             setShowExportOptions(false);
         } catch (err) {
             console.error('Error exporting to Excel:', err);
@@ -637,9 +796,280 @@ const StockCardsPage = () => {
         }
     };
 
-    const exportToPDF = () => {
-        setError('PDF export functionality will be implemented soon');
-        setShowExportOptions(false);
+    const exportToPDF = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            if (!stockData.transactions.length) {
+                setError('No data to export');
+                return;
+            }
+
+            // Create new PDF document in portrait
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            // Get current month and year for title
+            const currentDate = new Date();
+            const month = currentDate.toLocaleString('default', { month: 'long' }).toUpperCase();
+            const year = currentDate.getFullYear();
+            
+            // Add the logo
+            const logoWidth = 25;
+            const logoHeight = 25;
+            const logoX = 20;
+            const logoY = 15;
+            doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
+            
+            // Header text positioning (adjusted to align with logo)
+            const centerX = 105;
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "normal");
+            doc.text("Republic of the Philippines", centerX, 20, { align: "center" });
+            doc.text("Department of National Defense", centerX, 25, { align: "center" });
+            doc.setFont("helvetica", "bold");
+            doc.text("OFFICE OF CIVIL DEFENSE", centerX, 30, { align: "center" });
+            doc.text("NATIONAL CAPITAL REGION", centerX, 35, { align: "center" });
+            
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "normal");
+            doc.text("NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY", centerX, 42, { align: "center" });
+            doc.text("Telephone Number: (02) 421-1918; OPCEN Mobile Number: 0917-8276325", centerX, 47, { align: "center" });
+            doc.text("E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com", centerX, 52, { align: "center" });
+
+            // Add title with current month and year
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text(`STOCK CARD AS OF ${month} ${year}`, centerX, 62, { align: "center" });
+            
+            // Create a table for the item information
+            autoTable(doc, {
+                startY: 70,
+                head: [[
+                    { content: 'Fund Cluster:', colSpan: 2 },
+                    { content: 'Stock No.:', colSpan: 1 },
+                    { content: '', colSpan: 1 }
+                ]],
+                body: [
+                    [
+                        { content: stockData.fundcluster, colSpan: 2 },
+                        { content: stockData.stocknumber, colSpan: 2 }
+                    ],
+                    [
+                        { content: 'Item:', colSpan: 1 },
+                        { content: stockData.item, colSpan: 3 }
+                    ],
+                    [
+                        { content: 'Description:', colSpan: 1 },
+                        { content: stockData.description, colSpan: 3 }
+                    ],
+                    [
+                        { content: 'Unit of Measurement:', colSpan: 1 },
+                        { content: stockData.unitofmeasurement, colSpan: 3 }
+                    ]
+                ],
+                theme: 'plain',
+                styles: {
+                    fontSize: 10,
+                    cellPadding: 2
+                },
+                columnStyles: {
+                    0: { cellWidth: 40 },
+                    1: { cellWidth: 60 },
+                    2: { cellWidth: 40 },
+                    3: { cellWidth: 50 }
+                }
+            });
+            
+            // Prepare table data
+            const tableData = [];
+            const transactions = stockData.transactions || [];
+
+            // Robust date parser for multiple formats
+            function parseDate(d) {
+                if (!d) return null;
+                // Try ISO first
+                let date = new Date(d);
+                if (!isNaN(date)) return date;
+                // Try MM/DD/YYYY or MM-DD-YYYY
+                const parts = d.split(/[\/-]/);
+                if (parts.length === 3) {
+                    // If year is first
+                    if (parts[0].length === 4) {
+                        return new Date(parts[0], parts[1] - 1, parts[2]);
+                    }
+                    // If month is first
+                    return new Date(parts[2], parts[0] - 1, parts[1]);
+                }
+                return null;
+            }
+
+            // Find all months between first and last transaction
+            const validDates = transactions.map(t => parseDate(t.date)).filter(d => d);
+            let minDate = validDates.length ? new Date(Math.min(...validDates.map(d => d.getTime()))) : null;
+            let maxDate = validDates.length ? new Date(Math.max(...validDates.map(d => d.getTime()))) : null;
+            if (minDate) minDate = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+            if (maxDate) maxDate = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+
+            if (minDate && maxDate) {
+                let current = new Date(minDate);
+                while (current <= maxDate) {
+                    const month = current.getMonth();
+                    const year = current.getFullYear();
+                    // All transactions for this month
+                    const monthTx = transactions.filter(t => {
+                        const td = parseDate(t.date);
+                        return td && td.getMonth() === month && td.getFullYear() === year;
+                    });
+                    if (monthTx.length === 0) {
+                        // No issued supplies for this month
+                        const monthName = current.toLocaleString('default', { month: 'long' });
+                        tableData.push([
+                            { content: `No issued supplies for the month of ${monthName} ${year}`, colSpan: 11, styles: { halign: 'left' } }
+                        ]);
+                    } else {
+                        // Add all transactions for this month
+                        monthTx.forEach(t => {
+                            tableData.push([
+                                t.date || '',
+                                t.reference || '',
+                                t.receiptqty || '',
+                                t.receiptunitcost || '',
+                                t.receipttotalcost || '',
+                                t.issueqty || '',
+                                t.issueoffice || '',
+                                t.balanceqty || '',
+                                t.balanceunitcost || '',
+                                t.balancetotalcost || '',
+                                t.daystoconsume || ''
+                            ]);
+                        });
+                    }
+                    current.setMonth(current.getMonth() + 1);
+                }
+            } else {
+                // No valid dates, just add all transactions
+                transactions.forEach(t => {
+                    tableData.push([
+                        t.date || '',
+                        t.reference || '',
+                        t.receiptqty || '',
+                        t.receiptunitcost || '',
+                        t.receipttotalcost || '',
+                        t.issueqty || '',
+                        t.issueoffice || '',
+                        t.balanceqty || '',
+                        t.balanceunitcost || '',
+                        t.balancetotalcost || '',
+                        t.daystoconsume || ''
+                    ]);
+                });
+            }
+
+            // Add empty rows
+            for (let i = 0; i < 15; i++) {
+                tableData.push(['', '', '', '', '', '', '', '', '', '', '']);
+            }
+
+            // Main table
+            autoTable(doc, {
+                startY: doc.lastAutoTable.finalY + 10,
+                head: [
+                    [
+                        { content: 'Date', rowSpan: 2 },
+                        { content: 'Reference', rowSpan: 2 },
+                        { content: 'Receipt', colSpan: 3 },
+                        { content: 'Issue', colSpan: 2 },
+                        { content: 'Balance', colSpan: 3 },
+                        { content: 'No. of Days to Consume', rowSpan: 2 }
+                    ],
+                    [
+                        'Qty', 'Unit Cost', 'Total Cost',
+                        'Qty', 'Office',
+                        'Qty', 'Unit Cost', 'Total Cost',
+                        ''
+                    ]
+                ],
+                body: tableData,
+                theme: 'grid',
+                styles: {
+                    fontSize: 8,
+                    cellPadding: 1,
+                    lineWidth: 0.1,
+                    lineColor: [0, 0, 0],
+                    halign: 'center'
+                },
+                headStyles: {
+                    fillColor: [255, 255, 255],
+                    textColor: [0, 0, 0],
+                    fontStyle: 'bold',
+                    lineWidth: 0.1,
+                    halign: 'center'
+                },
+                columnStyles: {
+                    0: { cellWidth: 18 },  // Date
+                    1: { cellWidth: 25 },  // Reference
+                    2: { cellWidth: 12 },  // Receipt Qty
+                    3: { cellWidth: 15 },  // Receipt Unit Cost
+                    4: { cellWidth: 18 },  // Receipt Total Cost
+                    5: { cellWidth: 12 },  // Issue Qty
+                    6: { cellWidth: 18 },  // Issue Office
+                    7: { cellWidth: 12 },  // Balance Qty
+                    8: { cellWidth: 15 },  // Balance Unit Cost
+                    9: { cellWidth: 18 },  // Balance Total Cost
+                    10: { cellWidth: 25 }  // Days to Consume
+                },
+                didParseCell: function(data) {
+                    // Center align all header cells
+                    if (data.section === 'head') {
+                        data.cell.styles.halign = 'center';
+                    }
+                    // Right align numeric columns in the body
+                    if (data.section === 'body') {
+                        const numericColumns = [2,3,4,5,7,8,9,10]; // columns with numbers
+                        if (numericColumns.includes(data.column.index)) {
+                            data.cell.styles.halign = 'right';
+                        }
+                    }
+                }
+            });
+            
+            // Get the PDF as a data URL
+            const pdfDataUrl = doc.output('dataurlstring');
+            
+            // Open the PDF in a new tab
+            const newWindow = window.open();
+            if (newWindow) {
+                newWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>Stock Card - ${stockData.stocknumber || 'NEW'}</title>
+                        <style>
+                            body { margin: 0; padding: 20px; }
+                            iframe { width: 100%; height: 100vh; border: none; }
+                        </style>
+                    </head>
+                    <body>
+                        <iframe src="${pdfDataUrl}"></iframe>
+                    </body>
+                    </html>
+                `);
+                newWindow.document.close();
+            } else {
+                doc.save(`STOCK_CARD_${stockData.stocknumber || 'NEW'}.pdf`);
+            }
+            
+            setShowExportOptions(false);
+        } catch (err) {
+            console.error('Error in PDF export:', err);
+            setError(`Failed to export to PDF: ${err.message}`);
+        } finally {
+            setLoading(false);
+        }
     };
 
     // JSX Return
@@ -748,8 +1178,8 @@ const StockCardsPage = () => {
                                 type="text"
                                 value={newItemData.stocknumber}
                                 onChange={(e) => handleNewItemChange('stocknumber', e.target.value)}
+                                placeholder="Enter stock number"
                                 className="custom-stocknumber-input"
-                                required
                             />
                         </div>
                         

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ExcelJS from 'exceljs';
 import { jsPDF } from 'jspdf';
@@ -8,74 +8,44 @@ import logo from '../../../../Assets/OCD-main.jpg';
 const RPCIPage = () => {
     const [rows, setRows] = useState([
         {
-            article: '1',
-            description: 'CLEARBOOK, Ad Size',
-            stockNumber: 'A1',
-            unitofMeasure: 'pcs',
-            unitValue: '38.00',
-            balancePerCard: '14',
+            article: '',
+            description: '',
+            category: '',
+            stockNumber: '',
+            unitofMeasure: '',
+            unitValue: '',
+            balancePerCard: '',
+            onhandPerCountPallada: '',
+            onhandPerCountMedina: '',
             onhandPerCount: '',
             shortageOverage: '',
-            totalCost: '532.00',
-            remarks: ''
-        },
-        {
-            article: '2',
-            description: 'Cashbook, Legal/Reaic',
-            stockNumber: 'A2',
-            unitofMeasure: 'pcs',
-            unitValue: '40.00',
-            balancePerCard: '2',
-            onhandPerCount: '',
-            shortageOverage: '',
-            totalCost: '80.00',
-            remarks: ''
-        },
-        {
-            article: '3',
-            description: 'SIGN PEN, black',
-            stockNumber: 'A3',
-            unitofMeasure: 'pcs',
-            unitValue: '-',
-            balancePerCard: '0',
-            onhandPerCount: '',
-            shortageOverage: '',
-            totalCost: '-',
-            remarks: ''
-        },
-        {
-            article: '4',
-            description: 'SIGN PEN, blue',
-            stockNumber: 'A4',
-            unitofMeasure: 'pcs',
-            unitValue: '-',
-            balancePerCard: '0',
-            onhandPerCount: '',
-            shortageOverage: '',
-            totalCost: '-',
-            remarks: ''
-        },
-        {
-            article: '5',
-            description: 'SIGN PEN, red',
-            stockNumber: 'A5',
-            unitofMeasure: 'pcs',
-            unitValue: '-',
-            balancePerCard: '0',
-            onhandPerCount: '',
-            shortageOverage: '',
-            totalCost: '-',
+            totalCost: '',
             remarks: ''
         }
     ]);
     
     const [fundCluster, setFundCluster] = useState('');
-    const [accountableOfficer, setAccountableOfficer] = useState('MS. KRIZELLE JANE MATIAS');
-    const [assumptionDate, setAssumptionDate] = useState('April 11, 2023');
-    const [inventoryType, setInventoryType] = useState('OFFICE SUPPLIES');
-    const [reportDate, setReportDate] = useState('DECEMBER 31, 2024');
+    const [accountableOfficer, setAccountableOfficer] = useState('');
+    const [assumptionDate, setAssumptionDate] = useState('');
+    const [inventoryType, setInventoryType] = useState('');
+    const [reportDate, setReportDate] = useState('');
 
     const navigate = useNavigate();
+
+    // Calculate totals whenever rows change
+    useEffect(() => {
+        const updatedRows = rows.map(row => {
+            const unitValue = parseFloat(row.unitValue) || 0;
+            const balancePerCard = parseFloat(row.balancePerCard) || 0;
+            const totalCost = unitValue * balancePerCard;
+            
+            return {
+                ...row,
+                totalCost: isNaN(totalCost) ? '' : totalCost.toFixed(2)
+            };
+        });
+        setRows(updatedRows);
+    }, [rows]);
 
     const onBack = () => {
         navigate(-1);
@@ -84,108 +54,228 @@ const RPCIPage = () => {
     const onExportExcel = async () => {
         try {
             const workbook = new ExcelJS.Workbook();
-            const worksheet = workbook.addWorksheet('RPCI');
+            const worksheet = workbook.addWorksheet('Sheet2');
 
+            // Set default font
+            workbook.creator = 'OCD-NCR';
+            workbook.lastModifiedBy = 'OCD-NCR';
+            workbook.created = new Date();
+            workbook.modified = new Date();
+            
             // Set default font
             worksheet.properties.defaultRowHeight = 15;
 
             // Add header information
-            worksheet.addRow(['Republic of the Philippines']);
-            worksheet.addRow(['Department of National Defense']);
-            worksheet.addRow(['OFFICE OF CIVIL DEFENSE']);
-            worksheet.addRow(['NATIONAL CAPITAL REGION']);
-            worksheet.addRow(['NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY']);
-            worksheet.addRow(['Telephone Number: (02) 421-1918; OPCEN Mobile Number: 0917-8276325']);
-            worksheet.addRow(['E-Mail Address: ncr@ocd.gov.ph / childefensenc@gmail.com']);
+            const addHeaderRow = (text) => {
+                const row = worksheet.addRow([text]);
+                row.font = { name: 'Arial', size: 12 };
+                worksheet.mergeCells(`A${row.number}:N${row.number}`);
+                row.alignment = { horizontal: 'center' };
+                return row;
+            };
+
+            addHeaderRow('Republic of the Philippines');
+            addHeaderRow('Department of National Defense');
+            addHeaderRow('OFFICE OF CIVIL DEFENSE');
+            addHeaderRow('NATIONAL CAPITAL REGION');
+            addHeaderRow('NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY');
+            addHeaderRow('Telephone Number: (02) 421-1918; OPCEN Mobile Number: 0917-8276325');
+            addHeaderRow('E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com');
             worksheet.addRow([]);
 
             // Add report title
             const reportTitleRow = worksheet.addRow(['REPORT ON THE PHYSICAL COUNT OF INVENTORIES']);
-            reportTitleRow.font = { bold: true };
+            reportTitleRow.font = { name: 'Arial', bold: true, size: 14 };
             reportTitleRow.alignment = { horizontal: 'center' };
-            worksheet.mergeCells('A8:J8');
+            worksheet.mergeCells(`A${reportTitleRow.number}:N${reportTitleRow.number}`);
 
-            // Add inventory type
-            const inventoryTypeRow = worksheet.addRow([inventoryType]);
-            inventoryTypeRow.font = { italic: true };
-            inventoryTypeRow.alignment = { horizontal: 'center' };
-            worksheet.mergeCells('A9:J9');
-            worksheet.addRow([`(Type of Inventory Item)`]);
-            worksheet.mergeCells('A10:J10');
-            worksheet.addRow([`As of ${reportDate}`]);
-            worksheet.mergeCells('A11:J11');
+            // Add inventory type (only if user provided it)
+            if (inventoryType) {
+                const inventoryTypeRow = worksheet.addRow([inventoryType]);
+                inventoryTypeRow.font = { name: 'Arial', bold: true, size: 12 };
+                inventoryTypeRow.alignment = { horizontal: 'center' };
+                worksheet.mergeCells(`A${inventoryTypeRow.number}:N${inventoryTypeRow.number}`);
+                
+                const typeRow = worksheet.addRow(['(Type of Inventory Item)']);
+                typeRow.font = { name: 'Arial', size: 12 };
+                typeRow.alignment = { horizontal: 'center' };
+                worksheet.mergeCells(`A${typeRow.number}:N${typeRow.number}`);
+            }
+            
+            // Add report date (only if user provided it)
+            if (reportDate) {
+                const dateRow = worksheet.addRow([`As of  ${reportDate}`]);
+                dateRow.font = { name: 'Arial', size: 12 };
+                dateRow.alignment = { horizontal: 'center' };
+                worksheet.mergeCells(`A${dateRow.number}:N${dateRow.number}`);
+            }
             worksheet.addRow([]);
 
-            // Add fund cluster and accountable officer
-            worksheet.addRow([`Fund Cluster : ${fundCluster}`]);
-            worksheet.mergeCells('A13:J13');
-            worksheet.addRow([`For which ${accountableOfficer}, Accountable Officer, OCD-RCB is accountable, having assumed such accountability on ${assumptionDate}.`]);
-            worksheet.mergeCells('A14:J14');
-            worksheet.addRow([]);
+            // Add fund cluster (only if user provided it)
+            if (fundCluster) {
+                const fundRow = worksheet.addRow([`Fund Cluster : ${fundCluster}`]);
+                fundRow.font = { name: 'Arial', size: 12 };
+                worksheet.mergeCells(`A${fundRow.number}:N${fundRow.number}`);
+            }
+            
+            // Add accountable officer (only if user provided it)
+            if (accountableOfficer || assumptionDate) {
+                const officerText = `For which ${accountableOfficer || '[Accountable Officer]'}, Supply Accountable Officer, OCD-NCR is accountable, having assumed such accountability on _${assumptionDate || '[Date]'}_.`;
+                const officerRow = worksheet.addRow([officerText]);
+                officerRow.font = { name: 'Arial', size: 12 };
+                worksheet.mergeCells(`A${officerRow.number}:N${officerRow.number}`);
+            }
 
             // Add table headers
             const headerRow1 = worksheet.addRow([
-                'Article', 'Description', 'Stock Number', 'Unit of Measure', 'Unit Value', 
-                'Balance Per Card', 'On Hand Per Count', 'Shortage/Overage', 'TOTAL COST', 'Remarks'
+                'Article', 'Description', 'Categories', 'Stock Number', 'Unit of Measure', 'Unit Value', 
+                'Balance Per Card', 'On Hand Per Count\n(Pallada)', 'On Hand Per Count\n(Medina)', 'On Hand Per Count', 
+                'Shortage/Overage', '', 'TOTAL COST', 'Remarks'
             ]);
-            headerRow1.font = { bold: true };
+            headerRow1.font = { name: 'Arial', bold: true, size: 12 };
+            headerRow1.alignment = { wrapText: true, vertical: 'top' };
 
             const headerRow2 = worksheet.addRow([
-                '', '', '', '', '', '(Quantity)', '(Quantity)', 'Quantity', 'Quantity', ''
+                '', '', '', '', '', '', '(Quantity)', '(Quantity)', '(Quantity)', '(Quantity)', 'Quantity', 'Quantity', '', ''
             ]);
-            headerRow2.font = { bold: true };
+            headerRow2.font = { name: 'Arial', bold: true, size: 12 };
 
-            // Add section header
-            const sectionHeaderRow = worksheet.addRow(['A. Arts and Crafts Equipment and Accessories and Supplies']);
-            sectionHeaderRow.font = { bold: true };
-            worksheet.mergeCells('A17:J17');
-
-            // Add data rows
-            rows.forEach(row => {
-                worksheet.addRow([
+            // Add data rows (only if there's data)
+            let currentSection = '';
+            rows.forEach((row, rowIndex) => {
+                // Skip completely empty rows
+                if (!row.article && !row.description && !row.stockNumber) return;
+                
+                if (row.category && row.category !== currentSection) {
+                    currentSection = row.category;
+                    const sectionRow = worksheet.addRow([`${String.fromCharCode(65 + worksheet.rowCount - headerRow2.number - 2)}. ${currentSection}`]);
+                    sectionRow.font = { name: 'Arial', bold: true, size: 12 };
+                    worksheet.mergeCells(`A${sectionRow.number}:N${sectionRow.number}`);
+                }
+                
+                const dataRow = worksheet.addRow([
                     row.article,
                     row.description,
+                    row.category,
                     row.stockNumber,
                     row.unitofMeasure,
                     row.unitValue,
                     row.balancePerCard,
+                    row.onhandPerCountPallada,
+                    row.onhandPerCountMedina,
                     row.onhandPerCount,
                     row.shortageOverage,
+                    '',
                     row.totalCost,
                     row.remarks
                 ]);
+                
+                // Set font for all cells in the row
+                dataRow.eachCell((cell) => {
+                    cell.font = { name: 'Arial', size: 12 };
+                });
             });
 
-            // Set column widths
+            // Add total row if there are data rows
+            if (worksheet.rowCount > headerRow2.number + 1) {
+                const totalRow = worksheet.addRow([
+                    '', '', '', '', '', '', '', '', '', '', 'TOTAL', `=SUM(M${headerRow1.number + 2}:M${worksheet.rowCount})`, ''
+                ]);
+                totalRow.getCell('L').font = { name: 'Arial', bold: true, size: 12 };
+                totalRow.getCell('M').font = { name: 'Arial', bold: true, size: 12 };
+                worksheet.mergeCells(`L${totalRow.number}:K${totalRow.number}`);
+            }
+
+            // Add signature rows
+            worksheet.addRow([]);
+            const signatureHeaderRow = worksheet.addRow([
+                'Prepared by:', '', '', 'Certified Correct by:', '', '', 'Approved by:', '', '', '', '', 'Verified by:', ''
+            ]);
+            signatureHeaderRow.font = { name: 'Arial', size: 12 };
+            worksheet.mergeCells(`A${signatureHeaderRow.number}:B${signatureHeaderRow.number}`);
+            worksheet.mergeCells(`D${signatureHeaderRow.number}:F${signatureHeaderRow.number}`);
+            worksheet.mergeCells(`G${signatureHeaderRow.number}:J${signatureHeaderRow.number}`);
+            worksheet.mergeCells(`L${signatureHeaderRow.number}:N${signatureHeaderRow.number}`);
+
+            worksheet.addRow([]);
+            const signatureNameRow = worksheet.addRow([
+                'KRIZELLE JANE MATIAS', '', '', 'ROSEMARIE BARGAN', '', '', 'DIR. ROMULO M. CABANTAC JR.', '', '', '', '', 'ROBY JANE L. BERNABE', ''
+            ]);
+            signatureNameRow.font = { name: 'Arial', size: 12 };
+            worksheet.mergeCells(`A${signatureNameRow.number}:B${signatureNameRow.number}`);
+            worksheet.mergeCells(`D${signatureNameRow.number}:F${signatureNameRow.number}`);
+            worksheet.mergeCells(`G${signatureNameRow.number}:J${signatureNameRow.number}`);
+            worksheet.mergeCells(`L${signatureNameRow.number}:N${signatureNameRow.number}`);
+
+            worksheet.addRow([]);
+            const signatureTitleRow = worksheet.addRow([
+                'Member of Inventory Committee', '', '', 'Chairman, Inventory Committee', '', '', 'OCD NCR, Regional Director', '', '', '', '', 'State Auditor III/OIC, Audit Team Leader', ''
+            ]);
+            signatureTitleRow.font = { name: 'Arial', size: 10 };
+            worksheet.mergeCells(`A${signatureTitleRow.number}:B${signatureTitleRow.number}`);
+            worksheet.mergeCells(`D${signatureTitleRow.number}:F${signatureTitleRow.number}`);
+            worksheet.mergeCells(`G${signatureTitleRow.number}:J${signatureTitleRow.number}`);
+            worksheet.mergeCells(`L${signatureTitleRow.number}:N${signatureTitleRow.number}`);
+
+            worksheet.addRow([]);
+            const saoRow = worksheet.addRow([
+                '', '', 'NIEL PATRICK PALLADA', '', '', '', '', '', '', '', '', '', ''
+            ]);
+            saoRow.font = { name: 'Arial', size: 12 };
+            worksheet.mergeCells(`C${saoRow.number}:F${saoRow.number}`);
+            const saoTitleRow = worksheet.addRow([
+                '', '', 'SAO, Member of Inventory Committee', '', '', '', '', '', '', '', '', '', ''
+            ]);
+            saoTitleRow.font = { name: 'Arial', size: 10 };
+            worksheet.mergeCells(`C${saoTitleRow.number}:F${saoTitleRow.number}`);
+
+            // Set column widths to match the original file
             worksheet.columns = [
-                { width: 8 },  // Article
-                { width: 25 }, // Description
-                { width: 12 }, // Stock Number
-                { width: 12 }, // Unit of Measure
-                { width: 10 }, // Unit Value
-                { width: 12 }, // Balance Per Card
-                { width: 12 }, // On Hand Per Count
-                { width: 12 }, // Shortage/Overage
-                { width: 12 }, // TOTAL COST
-                { width: 15 }  // Remarks
+                { width: 8 },   // Article
+                { width: 30 },  // Description
+                { width: 30 },  // Categories
+                { width: 12 },  // Stock Number
+                { width: 12 },  // Unit of Measure
+                { width: 10 },  // Unit Value
+                { width: 12 },  // Balance Per Card
+                { width: 12 },  // On Hand Per Count (Pallada)
+                { width: 12 },  // On Hand Per Count (Medina)
+                { width: 12 },  // On Hand Per Count
+                { width: 12 },  // Shortage/Overage Qty
+                { width: 12 },  // Shortage/Overage Qty
+                { width: 12 },  // TOTAL COST
+                { width: 15 }   // Remarks
             ];
 
-            // Add borders to all cells
+            // Add borders to all cells with data
+            const firstDataRow = headerRow1.number;
             const lastRow = worksheet.rowCount;
-            for (let i = 16; i <= lastRow; i++) {
-                for (let j = 1; j <= 10; j++) {
-                    const cell = worksheet.getCell(i, j);
-                    cell.border = {
-                        top: { style: 'thin' },
-                        left: { style: 'thin' },
-                        bottom: { style: 'thin' },
-                        right: { style: 'thin' }
-                    };
+            
+            for (let i = firstDataRow; i <= lastRow; i++) {
+                const row = worksheet.getRow(i);
+                
+                // Skip empty rows and signature section rows
+                if (row.actualCellCount > 0 && i < signatureHeaderRow.number - 1) {
+                    for (let j = 1; j <= 14; j++) {
+                        const cell = worksheet.getCell(i, j);
+                        cell.border = {
+                            top: { style: 'thin' },
+                            left: { style: 'thin' },
+                            bottom: { style: 'thin' },
+                            right: { style: 'thin' }
+                        };
+                        
+                        // Align numeric cells to right
+                        if ([6,7,8,9,10,11,12,13].includes(j)) {
+                            cell.alignment = { horizontal: 'right' };
+                        }
+                    }
                 }
             }
 
             // Save the workbook
-            await workbook.xlsx.writeFile(`RPCI_Inventory_${reportDate.replace(/\s+/g, '_')}.xlsx`);
+            const fileName = reportDate ? `RPCI_Inventory_${reportDate.replace(/\s+/g, '_')}.xlsx` : 'RPCI_Inventory.xlsx';
+            await workbook.xlsx.writeFile(fileName);
         } catch (error) {
             console.error('Error exporting to Excel:', error);
         }
@@ -204,80 +294,156 @@ const RPCIPage = () => {
         doc.text('NATIONAL CAPITAL REGION', 140, 28, { align: 'center' });
         doc.text('NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY', 140, 34, { align: 'center' });
         doc.text('Telephone Number: (02) 421-1918; OPCEN Mobile Number: 0917-8276325', 140, 40, { align: 'center' });
-        doc.text('E-Mail Address: ncr@ocd.gov.ph / childefensenc@gmail.com', 140, 46, { align: 'center' });
+        doc.text('E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com', 140, 46, { align: 'center' });
         
         // Report title
         doc.setFontSize(14);
         doc.setFont('helvetica', 'bold');
         doc.text('REPORT ON THE PHYSICAL COUNT OF INVENTORIES', 140, 56, { align: 'center' });
         
-        // Inventory type
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.text(inventoryType, 140, 62, { align: 'center' });
-        doc.setFont('helvetica', 'italic');
-        doc.text('(Type of Inventory Item)', 140, 68, { align: 'center' });
-        doc.setFont('helvetica', 'normal');
-        doc.text(`As of ${reportDate}`, 140, 74, { align: 'center' });
+        // Inventory type (only if provided)
+        if (inventoryType) {
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text(inventoryType, 140, 62, { align: 'center' });
+            doc.setFont('helvetica', 'normal');
+            doc.text('(Type of Inventory Item)', 140, 68, { align: 'center' });
+        }
         
-        // Fund cluster and accountable officer
-        doc.text(`Fund Cluster : ${fundCluster}`, 15, 84);
-        doc.text(`For which ${accountableOfficer}, Accountable Officer, OCD-RCB is accountable, having assumed such accountability on ${assumptionDate}.`, 15, 90);
+        // Report date (only if provided)
+        if (reportDate) {
+            doc.text(`As of  ${reportDate}`, 140, 74, { align: 'center' });
+        }
+        
+        // Fund cluster (only if provided)
+        if (fundCluster) {
+            doc.text(`Fund Cluster : ${fundCluster}`, 15, 84);
+        }
+        
+        // Accountable officer (only if provided)
+        if (accountableOfficer || assumptionDate) {
+            const officerText = `For which ${accountableOfficer || '[Accountable Officer]'}, Supply Accountable Officer, OCD-NCR is accountable, having assumed such accountability on _${assumptionDate || '[Date]'}_.`;
+            doc.text(officerText, 15, 90);
+        }
         
         // Table headers
         const startY = 100;
-        const cellWidth = 25;
-        const cellHeight = 10;
+        const cellWidths = [10, 30, 30, 12, 12, 10, 12, 12, 12, 12, 12, 12, 12, 15];
         
         // Main headers
         doc.setFont('helvetica', 'bold');
-        const mainHeaders = ['Article', 'Description', 'Stock Number', 'Unit of Measure', 'Unit Value', 
-                           'Balance Per Card', 'On Hand Per Count', 'Shortage/Overage', 'TOTAL COST', 'Remarks'];
+        const mainHeaders = [
+            'Article', 'Description', 'Categories', 'Stock Number', 'Unit of Measure', 'Unit Value', 
+            'Balance Per Card', 'On Hand Per Count\n(Pallada)', 'On Hand Per Count\n(Medina)', 'On Hand Per Count', 
+            'Shortage/Overage', '', 'TOTAL COST', 'Remarks'
+        ];
         
+        let xPos = 15;
         mainHeaders.forEach((header, i) => {
-            doc.text(header, 15 + (i * cellWidth), startY);
+            doc.text(header, xPos, startY, { maxWidth: cellWidths[i] });
+            xPos += cellWidths[i];
         });
         
         // Sub-headers
-        doc.setFont('helvetica', 'bold');
-        doc.text('(Quantity)', 15 + (5 * cellWidth), startY + 6);
-        doc.text('(Quantity)', 15 + (6 * cellWidth), startY + 6);
-        doc.text('Quantity', 15 + (7 * cellWidth), startY + 6);
-        doc.text('Quantity', 15 + (8 * cellWidth), startY + 6);
+        doc.setFontSize(10);
+        doc.text('(Quantity)', 15 + 6 * cellWidths[6], startY + 6);
+        doc.text('(Quantity)', 15 + 7 * cellWidths[7], startY + 6);
+        doc.text('(Quantity)', 15 + 8 * cellWidths[8], startY + 6);
+        doc.text('(Quantity)', 15 + 9 * cellWidths[9], startY + 6);
+        doc.text('Quantity', 15 + 10 * cellWidths[10], startY + 6);
+        doc.text('Quantity', 15 + 11 * cellWidths[11], startY + 6);
+        doc.setFontSize(12);
         
-        // Section header
-        doc.text('A. Arts and Crafts Equipment and Accessories and Supplies', 15, startY + 16);
+        // Add data rows
+        let currentY = startY + 16;
+        let currentSection = '';
+        let hasData = false;
         
-        // Table data
-        doc.setFont('helvetica', 'normal');
         rows.forEach((row, rowIndex) => {
-            const y = startY + 22 + (rowIndex * cellHeight);
+            // Skip empty rows
+            if (!row.article && !row.description && !row.stockNumber) return;
+            hasData = true;
+            
+            // Add section header if changed
+            if (row.category && row.category !== currentSection) {
+                currentSection = row.category;
+                doc.setFont('helvetica', 'bold');
+                doc.text(`${String.fromCharCode(65 + rowIndex)}. ${currentSection}`, 15, currentY);
+                currentY += 8;
+            }
+            
+            // Add row data
+            doc.setFont('helvetica', 'normal');
+            xPos = 15;
             const rowData = [
                 row.article,
                 row.description,
+                row.category,
                 row.stockNumber,
                 row.unitofMeasure,
                 row.unitValue,
                 row.balancePerCard,
+                row.onhandPerCountPallada,
+                row.onhandPerCountMedina,
                 row.onhandPerCount,
                 row.shortageOverage,
+                '',
                 row.totalCost,
                 row.remarks
             ];
             
             rowData.forEach((cell, i) => {
-                doc.text(cell, 15 + (i * cellWidth), y);
+                doc.text(cell.toString(), xPos, currentY, { maxWidth: cellWidths[i] });
+                xPos += cellWidths[i];
             });
+            
+            currentY += 8;
         });
         
-        // Add borders
-        for (let i = 0; i < rows.length; i++) {
-            for (let j = 0; j < mainHeaders.length; j++) {
-                doc.rect(15 + (j * cellWidth), startY + 20 + (i * cellHeight), cellWidth, cellHeight);
+        // Add borders if there's data
+        if (hasData) {
+            xPos = 15;
+            for (let i = 0; i < cellWidths.length; i++) {
+                doc.rect(xPos, startY + 12, cellWidths[i], currentY - startY - 12);
+                xPos += cellWidths[i];
             }
+            
+            // Add total row
+            doc.setFont('helvetica', 'bold');
+            doc.text('TOTAL', 15 + 10 * cellWidths[10], currentY + 8);
+            currentY += 16;
+        } else {
+            currentY += 8;
         }
         
-        doc.save(`RPCI_Inventory_${reportDate.replace(/\s+/g, '_')}.pdf`);
+        // Add signature section
+        doc.setFontSize(10);
+        doc.text('Prepared by:', 15, currentY);
+        doc.text('Certified Correct by:', 15 + 3 * cellWidths[3], currentY);
+        doc.text('Approved by:', 15 + 6 * cellWidths[6], currentY);
+        doc.text('Verified by:', 15 + 11 * cellWidths[11], currentY);
+        
+        currentY += 6;
+        doc.setFontSize(12);
+        doc.text('KRIZELLE JANE MATIAS', 15, currentY);
+        doc.text('ROSEMARIE BARGAN', 15 + 3 * cellWidths[3], currentY);
+        doc.text('DIR. ROMULO M. CABANTAC JR.', 15 + 6 * cellWidths[6], currentY);
+        doc.text('ROBY JANE L. BERNABE', 15 + 11 * cellWidths[11], currentY);
+        
+        currentY += 6;
+        doc.setFontSize(10);
+        doc.text('Member of Inventory Committee', 15, currentY);
+        doc.text('Chairman, Inventory Committee', 15 + 3 * cellWidths[3], currentY);
+        doc.text('OCD NCR, Regional Director', 15 + 6 * cellWidths[6], currentY);
+        doc.text('State Auditor III/OIC, Audit Team Leader', 15 + 11 * cellWidths[11], currentY);
+        
+        currentY += 12;
+        doc.text('NIEL PATRICK PALLADA', 15 + 2 * cellWidths[2], currentY);
+        currentY += 6;
+        doc.text('SAO, Member of Inventory Committee', 15 + 2 * cellWidths[2], currentY);
+        
+        const fileName = reportDate ? `RPCI_Inventory_${reportDate.replace(/\s+/g, '_')}.pdf` : 'RPCI_Inventory.pdf';
+        doc.save(fileName);
     };
 
     const handleInputChange = (index, field, value) => {
@@ -290,54 +456,36 @@ const RPCIPage = () => {
         setRows(updatedRows);
     };
 
+    const addNewRow = () => {
+        setRows([...rows, {
+            article: '',
+            description: '',
+            category: '',
+            stockNumber: '',
+            unitofMeasure: '',
+            unitValue: '',
+            balancePerCard: '',
+            onhandPerCountPallada: '',
+            onhandPerCountMedina: '',
+            onhandPerCount: '',
+            shortageOverage: '',
+            totalCost: '',
+            remarks: ''
+        }]);
+    };
+
+    const removeRow = (index) => {
+        if (rows.length > 1) {
+            const updatedRows = rows.filter((_, i) => i !== index);
+            setRows(updatedRows);
+        }
+    };
+
     return (
         <div className="rpci-container">
             <div className="header-top">
                 <button className="return-button" onClick={onBack}> &larr; </button>
                 <h1>RPCI</h1>
-            </div>
-
-            <div className="rpci-header-controls">
-                <div className="rpci-control-group">
-                    <label>Fund Cluster:</label>
-                    <input 
-                        type="text" 
-                        value={fundCluster}
-                        onChange={(e) => setFundCluster(e.target.value)}
-                    />
-                </div>
-                <div className="rpci-control-group">
-                    <label>Accountable Officer:</label>
-                    <input 
-                        type="text" 
-                        value={accountableOfficer}
-                        onChange={(e) => setAccountableOfficer(e.target.value)}
-                    />
-                </div>
-                <div className="rpci-control-group">
-                    <label>Assumption Date:</label>
-                    <input 
-                        type="text" 
-                        value={assumptionDate}
-                        onChange={(e) => setAssumptionDate(e.target.value)}
-                    />
-                </div>
-                <div className="rpci-control-group">
-                    <label>Inventory Type:</label>
-                    <input 
-                        type="text" 
-                        value={inventoryType}
-                        onChange={(e) => setInventoryType(e.target.value)}
-                    />
-                </div>
-                <div className="rpci-control-group">
-                    <label>Report Date:</label>
-                    <input 
-                        type="text" 
-                        value={reportDate}
-                        onChange={(e) => setReportDate(e.target.value)}
-                    />
-                </div>
             </div>
 
             <div className="stock-cards-header">
@@ -350,117 +498,225 @@ const RPCIPage = () => {
                     <p>Telephone No: (02) 421-1918; OPCEN Mobile Number: 0917-827-6325</p>
                     <p>E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com</p>
                 </div>
-                <div className="table-container">
-                    <table className="inner-table">
-                        <thead>
-                            <tr>
-                                <th>Article</th>
-                                <th>Description</th>
-                                <th>Stock Number</th>
-                                <th>Unit of Measure</th>
-                                <th>Unit Value</th>
-                                <th>Balance Per Card</th>
-                                <th>On Hand Per Count</th>
-                                <th colSpan="2">Shortage/Overage</th>
-                                <th>Total Cost</th>
-                                <th>Remarks</th>
-                            </tr>
-                            <tr>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                                <th></th>
-                                <th>Qty</th>
-                                <th>Qty</th>
-                                <th>Qty</th>
-                                <th>Qty</th>
-                                <th></th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {rows.map((row, index) => (
-                                <tr key={index}>
+
+                <div className="tables-container">
+                    <div className="rpci-header-controls">
+                        <table className="horizontal-controls-table">
+                            <tbody>
+                                <tr>
                                     <td>
-                                        <input
-                                            type="text"
-                                            value={row.article}
-                                            onChange={(e) => handleInputChange(index, 'article', e.target.value)}
+                                        <label>Fund Cluster:</label>
+                                        <input 
+                                            type="text" 
+                                            value={fundCluster}
+                                            onChange={(e) => setFundCluster(e.target.value)}
+                                            placeholder="Enter fund cluster"
                                         />
                                     </td>
                                     <td>
-                                        <input
-                                            type="text"
-                                            value={row.description}
-                                            onChange={(e) => handleInputChange(index, 'description', e.target.value)}
-                                        />
-                                    </td>
-                                    <td>
-                                        <input
-                                            type="text"
-                                            value={row.stockNumber}
-                                            onChange={(e) => handleInputChange(index, 'stockNumber', e.target.value)}
-                                        />
-                                    </td>
-                                    <td>
-                                        <input
-                                            type="text"
-                                            value={row.unitofMeasure}
-                                            onChange={(e) => handleInputChange(index, 'unitofMeasure', e.target.value)}
-                                        />
-                                    </td>
-                                    <td>   
-                                        <input
-                                            type="text"
-                                            value={row.unitValue}
-                                            onChange={(e) => handleInputChange(index, 'unitValue', e.target.value)}
-                                        />
-                                    </td>
-                                    <td>
-                                        <input
-                                            type="text"
-                                            value={row.balancePerCard}
-                                            onChange={(e) => handleInputChange(index, 'balancePerCard', e.target.value)}
-                                        />
-                                    </td>
-                                    <td>
-                                        <input
-                                            type="text"
-                                            value={row.onhandPerCount}
-                                            onChange={(e) => handleInputChange(index, 'onhandPerCount', e.target.value)}
-                                        />
-                                    </td>
-                                    <td>
-                                        <input
-                                            type="text"
-                                            value={row.shortageOverage}
-                                            onChange={(e) => handleInputChange(index, 'shortageOverage', e.target.value)}
-                                        />
-                                    </td>
-                                    <td>
-                                        <input
-                                            type="text"
-                                            value={row.totalCost}
-                                            onChange={(e) => handleInputChange(index, 'totalCost', e.target.value)}
-                                        />
-                                    </td>
-                                    <td>
-                                        <input
-                                            type="text"
-                                            value={row.remarks}
-                                            onChange={(e) => handleInputChange(index, 'remarks', e.target.value)}
+                                        <label>Accountable Officer:</label>
+                                        <input 
+                                            type="text" 
+                                            value={accountableOfficer}
+                                            onChange={(e) => setAccountableOfficer(e.target.value)}
+                                            placeholder="Enter accountable officer"
                                         />
                                     </td>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                                <tr>
+                                    <td>
+                                        <label>Assumption Date:</label>
+                                        <input 
+                                            type="text" 
+                                            value={assumptionDate}
+                                            onChange={(e) => setAssumptionDate(e.target.value)}
+                                            placeholder="Enter assumption date"
+                                        />
+                                    </td>
+                                    <td>
+                                        <label>Inventory Type:</label>
+                                        <input 
+                                            type="text" 
+                                            value={inventoryType}
+                                            onChange={(e) => setInventoryType(e.target.value)}
+                                            placeholder="Enter inventory type"
+                                        />
+                                    </td>
+                                    <td>
+                                        <label>Report Date:</label>
+                                        <input 
+                                            type="text" 
+                                            value={reportDate}
+                                            onChange={(e) => setReportDate(e.target.value)}
+                                            placeholder="Enter report date"
+                                        />
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div className="table-container">
+                        <table className="inner-table">
+                            <thead>
+                                <tr>
+                                    <th>Article</th>
+                                    <th>Description</th>
+                                    <th>Categories</th>
+                                    <th>Stock Number</th>
+                                    <th>Unit of Measure</th>
+                                    <th>Unit Value</th>
+                                    <th>Balance Per Card</th>
+                                    <th>On Hand Per Count (Pallada)</th>
+                                    <th>On Hand Per Count (Medina)</th>
+                                    <th>On Hand Per Count</th>
+                                    <th>Shortage/Overage</th>
+                                    <th>TOTAL COST</th>
+                                    <th>Remarks</th>
+                                    <th>Action</th>
+                                </tr>
+                                <tr>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                    <th>(Quantity)</th>
+                                    <th>(Quantity)</th>
+                                    <th>(Quantity)</th>
+                                    <th>(Quantity)</th>
+                                    <th>Quantity</th>
+                                    <th></th>
+                                    <th></th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rows.map((row, index) => (
+                                    <tr key={index}>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                value={row.article}
+                                                onChange={(e) => handleInputChange(index, 'article', e.target.value)}
+                                                placeholder="Article"
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                value={row.description}
+                                                onChange={(e) => handleInputChange(index, 'description', e.target.value)}
+                                                placeholder="Description"
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                value={row.category}
+                                                onChange={(e) => handleInputChange(index, 'category', e.target.value)}
+                                                placeholder="Category"
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                value={row.stockNumber}
+                                                onChange={(e) => handleInputChange(index, 'stockNumber', e.target.value)}
+                                                placeholder="Stock No."
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                value={row.unitofMeasure}
+                                                onChange={(e) => handleInputChange(index, 'unitofMeasure', e.target.value)}
+                                                placeholder="Unit"
+                                            />
+                                        </td>
+                                        <td>   
+                                            <input
+                                                type="text"
+                                                value={row.unitValue}
+                                                onChange={(e) => handleInputChange(index, 'unitValue', e.target.value)}
+                                                placeholder="Unit Value"
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                value={row.balancePerCard}
+                                                onChange={(e) => handleInputChange(index, 'balancePerCard', e.target.value)}
+                                                placeholder="Balance"
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                value={row.onhandPerCountPallada}
+                                                onChange={(e) => handleInputChange(index, 'onhandPerCountPallada', e.target.value)}
+                                                placeholder="Count (Pallada)"
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                value={row.onhandPerCountMedina}
+                                                onChange={(e) => handleInputChange(index, 'onhandPerCountMedina', e.target.value)}
+                                                placeholder="Count (Medina)"
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                value={row.onhandPerCount}
+                                                onChange={(e) => handleInputChange(index, 'onhandPerCount', e.target.value)}
+                                                placeholder="Count"
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                value={row.shortageOverage}
+                                                onChange={(e) => handleInputChange(index, 'shortageOverage', e.target.value)}
+                                                placeholder="Shortage/Overage"
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                value={row.totalCost}
+                                                readOnly
+                                                placeholder="Auto-calculated"
+                                            />
+                                        </td>
+                                        <td>
+                                            <input
+                                                type="text"
+                                                value={row.remarks}
+                                                onChange={(e) => handleInputChange(index, 'remarks', e.target.value)}
+                                                placeholder="Remarks"
+                                            />
+                                        </td>
+                                        <td>
+                                            <button onClick={() => removeRow(index)} className="remove-row-button">
+                                                delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
             <div className="action-buttons-container">
                 <div className="action-buttons">
+                    <button onClick={addNewRow} className="add-row-button">
+                        + Add Row
+                    </button>
                     <div className="export-dropdown">
                         <button className="export-main-button">Export ▼</button>
                         <div className="export-dropdown-content">

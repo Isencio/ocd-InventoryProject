@@ -22,6 +22,24 @@
   margin: #ddd;
 }
 
+.save-notification {
+  position: fixed;
+  top: 20px;
+  right: 45px;
+  background-color: #f0ad4e;
+  color: white;
+  padding: 10px 15px;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 100;
+}
+
+.save-notification.visible {
+  opacity: 1;
+}
+
 .stock-cards-header {
   width: 85%;
   display: flex;
@@ -31,12 +49,6 @@
   padding-top: 80px;
   margin-left: 40px;
   border: #ddd;
-}
-.table-container {
-  width: 90%;
-  border-collapse: collapse;
-  background-color: white;
-  color: #231e54;
 }
 
 .header-text {
@@ -52,144 +64,138 @@
   margin: 5px 0;
 }
 
+/*.item-controls {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  width: 90%;
+}*/
+
+.search-container {
+  flex: 1;
+  margin-right: 10px;
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background: white;
+  color: #000;
+}
+
+.suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 100;
+  color: #000;
+}
+
+.suggestion-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  color: #333;
+  border-bottom: 1px solid #eee;
+}
+
+.suggestion-item:hover {
+  background-color: #f5f5f5;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
 
 .table-container {
   width: 90%;
   padding: 10px;
-  overflow-x: auto;
-}
-
-/* Styles for the new Item and Stock No. row */
-.item-stock-row, .description-reorder-row, .unit-of-measurement-cell {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  background-color: rgb(136, 139, 145);
-  color: white;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 5px;
-}
-
-.item-cell, .description-cell, .unit-of-measurement-cell {
-  margin-right: 20px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-}
-.stock-no-cell{
-  margin-left: 200px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-}
-
-.stock-no-cell label{
-  margin-left: 150px;
-}
-.stock-no-cell input{
-  padding: 5px 10px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  background-color: #fff;
-  color: #231e54;
-  font-size: 14px;
-  margin-left: 10px;
-}
-.stock-no-cell input:focus{
-  outline: none;
-  border-color: #f28920;
-  box-shadow: 0 0 5px rgba(242, 137, 32, 0.5);
-}
-
-.reorder-point-cell{
-  margin-left: 150px;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-}
-
-.reorder-point-cell label{
-  margin-left: 150px;
-}
-.reorder-point-cell input{
-  padding: 5px 10px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  background-color: #fff;
-  color: #231e54;
-  font-size: 14px;
-  margin-left: 10px;
-}
-.reorder-point-cell input:focus{
-  outline: none;
-  border-color: #f28920;
-  box-shadow: 0 0 5px rgba(242, 137, 32, 0.5);
-}
-
-.item-cell label, .description-cell label, .unit-of-measurement-cell label {
-  margin-right: 10px;
-}
-
-
-.item-cell label, .description-cell label, .unit-of-measurement-cell label {
-  margin-right: 10px;
-}
-
-.item-cell input, .description-cell input, .unit-of-measurement-cell input {
-  padding: 5px 20px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  background-color: #fff;
-  color: #231e54;
-  font-size: 14px;
-}
-
-.item-cell input:focus, .description-cell input:focus, .unit-of-measurement-cell input:focus {
-  outline: none;
-  border-color: #f28920;
-  box-shadow: 0 0 5px rgba(242, 137, 32, 0.5);
-}
-
-
-/* Table styles */
-table {
-  width: 90%;
   border-collapse: collapse;
-  background-color: white;
-  color: #231e54;
+  color: #ffffff;
+  overflow-x: auto;
+  font-size: small;
 }
 
-table th, table td {
-  padding: 5px;
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 8px;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+th {
+  background-color: #46407f;
+}
+
+.custom-stocknumber-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  color: #000;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.stock-number-controls {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+input {
+  width: auto;
+  box-sizing: border-box;
+  background: white;
+  color: #000000;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.inner-table {
+  width: 100%;
+}
+
+.inner-table th {
+  padding: 15px;
   text-align: center;
   border: 1px solid #ddd;
 }
 
-table th {
-  background-color: rgb(136, 139, 145);
-  color: white;
-  font-weight: bold;
+.inner-table td {
+  font-size: 5px;
+  padding: 10px;
 }
 
-table tr:nth-child(even) {
-  background-color: #f9f9f9;
-}
-
-table tr:hover {
-  background-color: #f1f1f1;
-}
-
-/* Editable cells */
-table td[contentEditable="true"] {
-  background-color: #fff;
-  min-width: 100px;
+.inner-table input {
+  border: none;
   outline: none;
+  background: transparent;
+  width: 100%;
+  padding: 1px;
+  margin: 0px;
+  font-family: inherit;
+  font-size: 12px;
+  text-align: inherit;
 }
 
-table td[contentEditable="true"]:focus {
-  background-color: #f0f8ff;
-  border: rgb(136, 139, 145);
+.inner-table input:focus {
+  border: 1px solid #ccc;
 }
 
 .right-image-section {
@@ -211,7 +217,7 @@ table td[contentEditable="true"]:focus {
   color: rgb(255, 255, 255);
   border: none;
   padding: 10px 20px;
-  font-size: 1rem;
+  font-size: 1.5rem;
   font-weight: bold;
   border-radius: 5px;
   cursor: pointer;
@@ -221,21 +227,459 @@ table td[contentEditable="true"]:focus {
   background-color: #f28920;
 }
 
-.stock-cards-container .export-button {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  background-color: #1c1841;
-  color: rgb(255, 255, 255);
-  border: none;
-  padding: 10px 20px;
-  font-size: 1rem;
-  font-weight: bold;
-  border-radius: 5px;
-  cursor: pointer;
+.action-buttons {
+  position: fixed;
+  right: 50px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   z-index: 1;
 }
 
-.stock-cards-container .export-button:hover {
-  background-color: #f28920;
+.action-buttons button {
+  width: 150px;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  text-align: center;
+}
+
+.add-item-button {
+  background-color: #337ab7;
+  color: white;
+}
+
+.add-item-button:hover {
+  background-color: #286090;
+}
+
+.add-row-button {
+  background-color: #337ab7;
+  color: white;
+}
+
+.add-row-button:hover {
+  background-color: #286090;
+}
+
+.save-button {
+  background-color: #5cb85c;
+  color: white;
+}
+
+.save-button:hover:not(:disabled) {
+  background-color: #449d44;
+}
+
+.export-button {
+  background-color: #5bc0de;
+  color: white;
+}
+
+.export-button:hover {
+  background-color: #31b0d5;
+}
+
+.save-button:disabled,
+.export-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.loading-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.loading-content {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 300px;
+}
+
+.loading-spinner {
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #3498db;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 15px;
+}
+
+.error-text {
+  color: #e74c3c;
+  margin-top: 10px;
+  font-size: 0.9em;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.error-content {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.error-content h3 {
+  color: #e74c3c;
+  margin-bottom: 15px;
+}
+
+.error-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.error-actions button {
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: none;
+  font-weight: bold;
+}
+
+.error-actions button:first-child {
+  background: #3498db;
+  color: white;
+}
+
+.error-actions button:last-child {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.confirmation-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.confirmation-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+
+.confirmation-buttons {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 20px;
+}
+
+.confirmation-buttons button {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.confirmation-buttons button:first-child {
+  background-color: #5cb85c;
+  color: white;
+}
+
+.confirmation-buttons button:last-child {
+  background-color: #d9534f;
+  color: white;
+}
+
+.delete-row-button {
+  background-color: #d9534f;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.delete-row-button:hover {
+  background-color: #c9302c;
+}
+
+.export-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.export-options {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1;
+  width: 150px;
+}
+
+.export-dropdown:hover .export-options {
+  display: block;
+}
+
+.export-options button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  text-align: left;
+  border: none;
+  background-color: white;
+  cursor: pointer;
+  color: #333;
+}
+
+.export-options button:hover {
+  background-color: #f5f5f5;
+}
+
+.fetch-button {
+  padding: 8px 12px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.fetch-button:hover {
+  background-color: #45a049;
+}
+
+.delete-stocknumber-button {
+  padding: 8px 12px;
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delete-stocknumber-button:hover {
+  background-color: #d32f2f;
+}
+
+.item-form-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.item-form-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  width: 400px;
+  max-width: 90%;
+  color: #000;
+}
+
+.item-form-content h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  color: #000;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+  background: white;
+  color: #000;
+}
+
+.form-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.form-buttons button {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.form-buttons button:first-child {
+  background-color: #5cb85c;
+  color: white;
+}
+
+.form-buttons button:last-child {
+  background-color: #d9534f;
+  color: white;
+}
+
+.add-row-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.add-row-options {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 1;
+  width: 150px;
+}
+
+.add-row-dropdown:hover .add-row-options {
+  display: block;
+}
+
+.add-row-options button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #333;
+}
+
+.add-row-options button:hover {
+  background-color: #f5f5f5;
+}
+
+@media (max-width: 768px) {
+  .stock-cards-header {
+    width: 75%;
+    margin-left: 20px;
+  }
+  
+  .right-image-section {
+    width: 25%;
+  }
+  
+  .stock-number-controls {
+    flex-direction: column;
+  }
+  
+  .action-buttons {
+    right: 20px;
+    bottom: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-top h1 {
+    font-size: 24px;
+  }
+  
+  .stock-cards-header {
+    width: 70%;
+    padding-top: 70px;
+  }
+  
+  .header-text {
+    font-size: 14px;
+  }
+  
+  .table-container {
+    width: 95%;
+    font-size: 12px;
+  }
+  
+  .inner-table th, 
+  .inner-table td {
+    padding: 5px;
+  } 
+  
+  .action-buttons button {
+    width: 120px;
+    padding: 8px;
+    font-size: 14px;
+  }
+}
+
+.qty-input {
+  text-align: right;
+}
+
+.office-select {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: white;
+  color: #000;
+  font-size: 12px;
 }

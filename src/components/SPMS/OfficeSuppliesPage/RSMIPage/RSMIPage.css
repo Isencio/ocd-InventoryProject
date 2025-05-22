@@ -1,55 +1,404 @@
 .rsmi-container {
-    display: flex;
-    height: 100vh;
-    background-color: #231e54;
-}
-.rsmi-header {
-    width: 80%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding-top: 20px;
+  display: flex;
+  height: 100vh;
+  background-color: #231e54;
+  position: relative;
 }
 
-.rsmi-header h1{
-    color: white;
-    font-size: 45px;
-    font-weight: bold;
-    margin-bottom: 40px;
-    text-align: center;
-    width: 100%;
+.header-top {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 2;
+}
+
+.header-top h1 {
+  color: white;
+  font-size: 30px;
+  font-weight: bold;
+  margin: #ddd;
+}
+
+.rsmi-header {
+  width: 85%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 80px;
+  margin-left: 40px;
+  border: #ddd;
+}
+
+.header-text {
+  text-align: center;
+  color: white;
+  margin-bottom: 20px;
+  font-size: 16px;
+  line-height: 1.5;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.header-text p {
+  margin: 5px 0;
+}
+
+.table-container {
+  width: 90%;
+  padding: 10px;
+  border-collapse: collapse;
+  color: #ffffff;
+  overflow-x: auto;
+  font-size: small;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td, tr {
+  padding: 10px;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+th {
+  background-color: #46407f;
+}
+
+.input-Item-cell, .input-stockno-cell {
+  width: 100%;
+}
+
+input {
+  width: 100%;
+  box-sizing: border-box;
+  background: transparent;
+  color: #ffffff;
+}
+
+.inner-table {
+  width: 100%;
+}
+
+.inner-table th {
+  padding: 15px;
+  text-align: center;
+  border: 1px solid #ddd;
+}
+
+.inner-table td {
+  font-size: 5px;
+}
+
+.inner-table input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+  padding: 10px;
+  margin: 0px;
+  font-family: inherit;
+  font-size: 12px;
+  text-align: inherit;
+}
+
+.inner-table input:focus {
+  border: 1px solid #ccc;
 }
 
 .right-image-section {
-    width: 20%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #f0f0f0;
+  width: 15%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #231e54;
+}
+
+.vertical-OCD-image {
+  max-width: 100%;
+  height: 100%;
+}
+
+.rsmi-container .return-button {
+  background-color: #1c1841;
+  color: rgb(255, 255, 255);
+  border: none;
+  padding: 10px 20px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.rsmi-container .return-button:hover {
+  background-color: #f28920;
+}
+
+.date-input-container {
+  position: relative;
+}
+
+.date-input {
+  cursor: pointer;
+  width: 100%;
+  background: transparent;
+  color: #ffffff;
+  border: none;
+  padding: 10px;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.month-year-picker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #46407f;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 10px;
+  z-index: 100;
+  width: 200px;
+}
+
+.picker-header {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.year-select {
+  background: #231e54;
+  color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+
+.month-grid button {
+  background: #231e54;
+  color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.month-grid button:hover {
+  background: #f28920;
+}
+
+.month-grid button.active {
+  background: #f28920;
+  font-weight: bold;
+}
+
+/* Export Button Styles - Bottom Right with Pop-up Menu */
+.export-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.export-button {
+  background-color: #1c1841;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.export-button:hover {
+  background-color: #f28920;
+}
+
+.export-options {
+  position: absolute;
+  bottom: 100%; 
+  right: 0;
+  background-color: #46407f;
+  border: 1px solid #ddd;
+  border-radius: 5px 5px 0 0;
+  padding: 0;
+  min-width: 150px;
+  box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.export-options button {
+  background-color: #1c1841;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.export-options button:hover {
+  background-color: #f28920;
+}
+
+.export-options button:first-child {
+  border-radius: 5px 5px 0 0;
+}
+
+.export-options button:last-child {
+  border-radius: 0 0 5px 5px;
+}
+
+.export-container.active .export-options {
+  display: block;
+}
+
+/* Loading Popup Styles */
+.loading-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.loading-content {
+  background-color: #46407f;
+  padding: 30px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: rgb(27, 27, 27);
+  font-family: 'Arial', sans-serif;
+}
+
+.loading-spinner {
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top: 4px solid #f28920;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+.loading-content p {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .rsmi-header {
+    width: 75%;
+    margin-left: 20px;
   }
   
-  .vertical-OCD-image {
-    max-width: 100%;
-    height: 100%;
+  .right-image-section {
+    width: 25%;
   }
+  
+  .header-text {
+    font-size: 14px;
+  }
+  
+  .inner-table th, 
+  .inner-table td {
+    padding: 8px;
+  }
+}
 
-  /* Return Button */
-  .rsmi-container .return-button {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    background-color: #1c1841;
-    color: rgb(255, 255, 255);
-    border: none;
-    padding: 10px 20px;
-    font-size: 1rem;
-    font-weight: bold;
-    border-radius: 5px;
-    cursor: pointer;
+@media (max-width: 480px) {
+  .rsmi-header {
+    width: 70%;
+    margin-left: 10px;
+    padding-top: 60px;
   }
+  
+  .right-image-section {
+    width: 30%;
+  }
+  
+  .header-top h1 {
+    font-size: 24px;
+  }
+  
+  .header-text {
+    font-size: 12px;
+  }
+  
+  .month-year-picker {
+    width: 180px;
+  }
+}
 
-  .rsmi-container .return-button:hover {
-    background-color: #f28920;
-  }
+/* Error Popup Styles */
+.error-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.error-content {
+  background-color: #46407f;
+  padding: 30px;
+  border-radius: 8px;
+  max-width: 80%;
+  text-align: center;
+  color: rgb(0, 0, 0);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.error-content p {
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+.error-content button {
+  background-color: #1c1841;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.error-content button:hover {
+  background-color: #f28920;
+}

@@ -43,6 +43,21 @@ const SPMSPage = () => {
     fetchUserData();
   }, []);
 
+  const toggleProfile = () => {
+    if (showProfile) {
+      // Clear all password fields when closing profile
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordError('');
+      setSuccessMessage('');
+      setShowOldPassword(false);
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
+    }
+    setShowProfile(!showProfile);
+  };
+
   const togglePasswordVisibility = (field) => {
     switch (field) {
       case 'old':
@@ -77,7 +92,6 @@ const SPMSPage = () => {
     setPasswordError('');
     setSuccessMessage('');
 
-    // Validate inputs
     if (!oldPassword || !newPassword || !confirmPassword) {
       setPasswordError('All fields are required');
       return;
@@ -95,16 +109,8 @@ const SPMSPage = () => {
 
     try {
       const user = auth.currentUser;
-      
-      // Reauthenticate user
-      const credential = EmailAuthProvider.credential(
-        user.email,
-        oldPassword
-      );
-      
+      const credential = EmailAuthProvider.credential(user.email, oldPassword);
       await reauthenticateWithCredential(user, credential);
-      
-      // Update password
       await updatePassword(user, newPassword);
       
       setSuccessMessage('Password updated successfully!');
@@ -112,7 +118,6 @@ const SPMSPage = () => {
       setNewPassword('');
       setConfirmPassword('');
       
-      // Hide success message after 3 seconds
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
       console.error('Password update error:', error);
@@ -141,7 +146,7 @@ const SPMSPage = () => {
           <h2 className="spms-header">SUPPLY AND PROPERTY MANAGEMENT SYSTEM</h2>
           <button 
             className="profile-button" 
-            onClick={() => setShowProfile(!showProfile)}
+            onClick={toggleProfile}
           >
             Profile
           </button>
@@ -168,7 +173,7 @@ const SPMSPage = () => {
             </div>
 
             <form onSubmit={handleUpdatePassword}>
-              <div className="form-group password-input-container">
+              <div className="form-group">
                 <label>Current Password:</label>
                 <div className="password-input-wrapper">
                   <input
@@ -177,16 +182,18 @@ const SPMSPage = () => {
                     onChange={(e) => setOldPassword(e.target.value)}
                     required
                   />
-                  <span 
+                  <button
+                    type="button"
                     className="password-toggle"
                     onClick={() => togglePasswordVisibility('old')}
+                    aria-label={showOldPassword ? "Hide password" : "Show password"}
                   >
                     {showOldPassword ? <FaEyeSlash /> : <FaEye />}
-                  </span>
+                  </button>
                 </div>
               </div>
 
-              <div className="form-group password-input-container">
+              <div className="form-group">
                 <label>New Password:</label>
                 <div className="password-input-wrapper">
                   <input
@@ -196,16 +203,18 @@ const SPMSPage = () => {
                     required
                     minLength="6"
                   />
-                  <span 
+                  <button
+                    type="button"
                     className="password-toggle"
                     onClick={() => togglePasswordVisibility('new')}
+                    aria-label={showNewPassword ? "Hide password" : "Show password"}
                   >
                     {showNewPassword ? <FaEyeSlash /> : <FaEye />}
-                  </span>
+                  </button>
                 </div>
               </div>
 
-              <div className="form-group password-input-container">
+              <div className="form-group">
                 <label>Confirm New Password:</label>
                 <div className="password-input-wrapper">
                   <input
@@ -215,17 +224,19 @@ const SPMSPage = () => {
                     required
                     minLength="6"
                   />
-                  <span 
+                  <button
+                    type="button"
                     className="password-toggle"
                     onClick={() => togglePasswordVisibility('confirm')}
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                   >
                     {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-                  </span>
+                  </button>
                 </div>
               </div>
 
-              {passwordError && <p className="error-message">{passwordError}</p>}
-              {successMessage && <p className="success-message">{successMessage}</p>}
+              {passwordError && <div className="error-message">{passwordError}</div>}
+              {successMessage && <div className="success-message">{successMessage}</div>}
               
               <button type="submit" className="update-password-button">
                 Update Password
@@ -238,7 +249,7 @@ const SPMSPage = () => {
           <button className="orange-button" onClick={() => handleNavigation('/office-supplies')}>
             OFFICE SUPPLIES
           </button>
-          <button className="orange-button">OTHER SUPPLIES</button>
+          <button className="orange-button" onClick={() => handleNavigation('/other-supplies')}>OTHER SUPPLIES</button>
           <button className="orange-button">FUEL AND OTHER LUBRICANT (FOL)</button>
           <button className="orange-button">PROPERTY AND PLANT EQUIPMENT</button>
           <button className="orange-button">SEMI-EXPENDABLE EQUIPMENT</button>
