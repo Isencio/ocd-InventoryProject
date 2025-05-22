@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ExcelJS from 'exceljs';
 import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import './RSMIPage.css';
 import logo from '../../../../Assets/OCD-main.jpg';
 import { supabase } from '../../../../supabase';
@@ -14,63 +15,7 @@ const RSMIPage = () => {
     const [showMonthYearPicker, setShowMonthYearPicker] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [rows, setRows] = useState([
-        {
-            risNo: '',
-            responsibilityCenterCode: '',
-            stockNo: '',
-            item: '',
-            unit: '',
-            quantityIssued: '',
-            unitCost: '',
-            amount: '',
-            date: ''
-        },
-        {
-            risNo: '',
-            responsibilityCenterCode: '',
-            stockNo: '',
-            item: '',
-            unit: '',
-            quantityIssued: '',
-            unitCost: '',
-            amount: '',
-            date: ''
-        },
-        {
-            risNo: '',
-            responsibilityCenterCode: '',
-            stockNo: '',
-            item: '',
-            unit: '',
-            quantityIssued: '',
-            unitCost: '',
-            amount: '',
-            date: ''
-        },
-        {
-            risNo: '',
-            responsibilityCenterCode: '',
-            stockNo: '',
-            item: '',
-            unit: '',
-            quantityIssued: '',
-            unitCost: '',
-            amount: '',
-            date: ''
-        },
-        {
-            risNo: '',
-            responsibilityCenterCode: '',
-            stockNo: '',
-            item: '',
-            unit: '',
-            quantityIssued: '',
-            unitCost: '',
-            amount: '',
-            date: ''
-        }
-    ]);
+    const [rows, setRows] = useState([]);
 
     const navigate = useNavigate();
 
@@ -97,27 +42,28 @@ const RSMIPage = () => {
             const startDate = `${year}-${monthIndex.toString().padStart(2, '0')}-01`;
             const endDate = `${year}-${monthIndex.toString().padStart(2, '0')}-31`;
 
-            const { data, error } = await supabase
+            // First fetch the stock cards data
+            const { data: stockCardsData, error: stockCardsError } = await supabase
                 .from('stock_cards')
-                .select('*')
+                .select('*, stock_cards_header(*)')
                 .gte('date', startDate)
                 .lte('date', endDate)
                 .gt('issueqty', 0)
                 .order('date', { ascending: true });
 
-            if (error) throw error;
+            if (stockCardsError) throw stockCardsError;
 
-            if (!data || data.length === 0) {
+            if (!stockCardsData || stockCardsData.length === 0) {
                 throw new Error(`No RSMI data found for ${month} ${year}`);
             }
 
             // Process the data to match RSMI format
-            const processedData = data.map(item => ({
+            const processedData = stockCardsData.map(item => ({
                 risNo: item.reference || 'N/A',
                 responsibilityCenterCode: '2016',
                 stockNo: item.stocknumber || 'N/A',
-                item: item.item || item.description || 'N/A',
-                unit: item.unitofmeasurement || 'N/A',
+                item: item.stock_cards_header?.item || item.stock_cards_header?.description || 'N/A',
+                unit: item.stock_cards_header?.unitofmeasurement || 'N/A',
                 quantityIssued: item.issueqty || '0',
                 unitCost: item.balanceunitcost || '0.00',
                 amount: item.balancetotalcost || '0.00',
@@ -171,6 +117,14 @@ const RSMIPage = () => {
 
     const onExportExcel = async () => {
         try {
+            setIsLoading(true);
+            setError(null);
+
+            // Validate data
+            if (!rows || rows.length === 0) {
+                throw new Error('No data available to export');
+            }
+
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('RSMI');
 
@@ -259,81 +213,248 @@ const RSMIPage = () => {
                 worksheet.getCell(`H${i}`).numFmt = '#,##0.00';
             }
 
-            // Save the workbook
-            await workbook.xlsx.writeFile(`RSMI_Report_${date.replace(/\s+/g, '_') || 'December_2024'}.xlsx`);
+            // Generate filename
+            const fileName = `RSMI_Report_${date.replace(/\s+/g, '_') || 'December_2024'}.xlsx`;
+            
+            // Save the file
+            await workbook.xlsx.writeFile(fileName);
+            
+            alert('Excel file exported successfully!');
         } catch (error) {
-            console.error('Error exporting to Excel:', error);
+            console.error('Export error:', error);
+            setError(`Export failed: ${error.message || 'Unknown error'}`);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const onExportPDF = () => {
-        const doc = new jsPDF({
-            orientation: 'landscape'
-        });
-        
-        // Report title
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('REPORT OF SUPPLIES AND MATERIALS ISSUED', 140, 15, { align: 'center' });
-        
-        // Date
-        doc.text(date || 'December 2024', 140, 22, { align: 'center' });
-        
-        // Entity name and fund cluster
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Entity Name: ${entityName}`, 20, 32);
-        doc.text(`Fund Cluster: ${fundCluster}`, 100, 32);
-        
-        // Table headers
-        const startY = 40;
-        const cellWidth = 25;
-        const cellHeight = 10;
-        
-        // Header note
-        doc.setFont('helvetica', 'bold');
-        doc.text('To be filled up by the Supply and/or Property Division/Unit', 20, startY + 6);
-        doc.text('To be filled up by the Accounting Division/Unit', 150, startY + 6);
-        
-        // Main headers
-        const mainHeaders = [
-            'RIS No.', 'Responsibility Center Code', 'Stock No.', 
-            'Item', 'Unit', 'Quantity Issued', 'Unit Cost', 'Amount', 'Date'
-        ];
-        
-        mainHeaders.forEach((header, i) => {
-            doc.text(header, 20 + (i * cellWidth), startY + 16);
-        });
-        
-        // Table data
-        doc.setFont('helvetica', 'normal');
-        rows.forEach((row, rowIndex) => {
-            const y = startY + 26 + (rowIndex * cellHeight);
-            const rowData = [
-                row.risNo,
-                row.responsibilityCenterCode,
-                row.stockNo,
-                row.item,
-                row.unit,
-                row.quantityIssued,
-                row.unitCost,
-                row.amount,
-                row.date
-            ];
-            
-            rowData.forEach((cell, i) => {
-                doc.text(cell, 20 + (i * cellWidth), y);
-            });
-        });
-        
-        // Add borders
-        for (let i = 0; i < rows.length; i++) {
-            for (let j = 0; j < mainHeaders.length; j++) {
-                doc.rect(20 + (j * cellWidth), startY + 20 + (i * cellHeight), cellWidth, cellHeight);
+        try {
+            setIsLoading(true);
+            setError(null);
+
+            if (!rows || rows.length === 0) {
+                throw new Error('No data available to export');
             }
+
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            // --- HEADER ---
+            const leftMargin = 13;
+            const rightMargin = 13;
+            const usableWidth = 210 - leftMargin - rightMargin;
+            const logoWidth = 18;
+            const logoHeight = 18;
+            const logoX = leftMargin;
+            const logoY = 12;
+            doc.addImage(logo, 'PNG', logoX, logoY, logoWidth, logoHeight);
+            const centerX = 105;
+            let y = 18;
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Republic of the Philippines', centerX, y, { align: 'center' }); y += 4;
+            doc.text('Department of National Defense', centerX, y, { align: 'center' }); y += 4;
+            doc.setFont('helvetica', 'bold');
+            doc.text('OFFICE OF CIVIL DEFENSE', centerX, y, { align: 'center' }); y += 4;
+            doc.text('NATIONAL CAPITAL REGION', centerX, y, { align: 'center' }); y += 5;
+            doc.setFontSize(7);
+            doc.setFont('helvetica', 'normal');
+            doc.text('NO. 81 RBA BLDG., 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY', centerX, y, { align: 'center' }); y += 4;
+            doc.text('Telephone Number: (02) 421-1918; OPCEN Mobile Number: 0917-8276325', centerX, y, { align: 'center' }); y += 4;
+            doc.text('E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com', centerX, y, { align: 'center' }); y += 6;
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'bold');
+            doc.text('REPORT OF SUPPLIES AND MATERIALS ISSUED', centerX, y, { align: 'center' }); y += 5;
+            doc.setFontSize(9);
+            doc.text(date || 'December 2024', centerX, y, { align: 'center' }); y += 6;
+
+            // --- ENTITY/FUND/SERIAL/DATE ROW ---
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`Entity Name: ${entityName || ''}`, leftMargin, y);
+            doc.text(`Fund Cluster: ${fundCluster || ''}`, leftMargin + 65, y);
+            doc.text(`Serial No.: ${serialNo || ''}`, leftMargin + 130, y);
+            doc.text(`Date:`, leftMargin + 170, y);
+            y += 4;
+
+            // --- MAIN TABLE ---
+            const tableStartY = y;
+            const tableHead = [
+                [
+                    { content: 'To be filled up by the Supply and/or Property Division/Unit', colSpan: 6, styles: { halign: 'center', fontStyle: 'bold' } },
+                    { content: 'To be filled up by the Accounting Division/Unit', colSpan: 2, styles: { halign: 'center', fontStyle: 'bold' } }
+                ],
+                [
+                    'RIS No.',
+                    'Responsibility Center Code',
+                    'Stock No.',
+                    'Item',
+                    'Unit',
+                    'Quantity Issued',
+                    'Unit Cost',
+                    'Amount'
+                ]
+            ];
+            const filledRows = rows.filter(row => row.risNo || row.stockNo || row.item || row.unit || row.quantityIssued || row.unitCost || row.amount);
+            const emptyRowsCount = Math.max(15, 15 - filledRows.length);
+            const emptyRows = Array(emptyRowsCount).fill({
+                risNo: '',
+                responsibilityCenterCode: '',
+                stockNo: '',
+                item: '',
+                unit: '',
+                quantityIssued: '',
+                unitCost: '',
+                amount: ''
+            });
+            const tableBody = [...filledRows, ...emptyRows].map(row => [
+                    row.risNo,
+                    row.responsibilityCenterCode,
+                    row.stockNo,
+                    row.item,
+                    row.unit,
+                row.quantityIssued ? parseInt(row.quantityIssued, 10) : '',
+                    row.unitCost,
+                row.amount
+            ]);
+            autoTable(doc, {
+                startY: tableStartY,
+                margin: { left: leftMargin, right: rightMargin },
+                tableWidth: usableWidth,
+                head: tableHead,
+                body: tableBody,
+                theme: 'grid',
+                styles: {
+                    fontSize: 7,
+                    cellPadding: 1.5,
+                    halign: 'center',
+                    valign: 'middle',
+                },
+                headStyles: {
+                    fontSize: 7,
+                    fillColor: [255, 255, 255],
+                    textColor: [0, 0, 0],
+                    fontStyle: 'bold',
+                    lineWidth: 0.1,
+                    halign: 'center',
+                },
+                columnStyles: {
+                    0: { cellWidth: 25 },
+                    1: { cellWidth: 30 },
+                    2: { cellWidth: 18 },
+                    3: { cellWidth: 45 },
+                    4: { cellWidth: 18 },
+                    5: { cellWidth: 22 },
+                    6: { cellWidth: 18 },
+                    7: { cellWidth: 22 },
+                },
+                didDrawPage: (data) => {
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    doc.setLineWidth(0.7);
+                    doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
+                }
+            });
+            let finalY = doc.lastAutoTable.finalY + 2;
+
+            // --- RECAPIULATION TABLES ---
+            autoTable(doc, {
+                startY: finalY,
+                margin: { left: leftMargin },
+                tableWidth: 60,
+                head: [[ 'Recapitulation:', '' ]],
+                body: [
+                    [ 'Stock No.', 'Quantity' ],
+                    [ filledRows[0]?.stockNo || '', '111' ],
+                    [ 'Less Issuance', filledRows[0]?.quantityIssued || '7' ],
+                    [ date || 'December 2024', '104' ],
+                    [ '', '' ],
+                    [ '', '' ]
+                ],
+                theme: 'grid',
+                styles: { fontSize: 7, cellPadding: 1.5, halign: 'center' },
+                headStyles: { fontSize: 7, fillColor: [255,255,255], textColor: [0,0,0], fontStyle: 'bold', halign: 'left' }
+            });
+            autoTable(doc, {
+                startY: finalY,
+                margin: { left: leftMargin + 75 },
+                tableWidth: 80,
+                head: [[ 'Recapitulation:', '', '' ]],
+                body: [
+                    [ 'Unit Cost', 'Total Cost', 'UACS Object Code' ],
+                    [ filledRows[0]?.unitCost || '', filledRows[0]?.amount || '', '' ],
+                    [ '', '', '' ],
+                    [ '', '', '' ],
+                    [ '', '', '' ],
+                    [ '', '', '' ]
+                ],
+                theme: 'grid',
+                styles: { fontSize: 7, cellPadding: 1.5, halign: 'center' },
+                headStyles: { fontSize: 7, fillColor: [255,255,255], textColor: [0,0,0], fontStyle: 'bold', halign: 'left' }
+            });
+            finalY += 36;
+
+            // Add extra space after recapitulation tables
+            finalY += 8;
+
+            // --- CERTIFICATION/SIGNATURE TABLE ---
+            autoTable(doc, {
+                startY: finalY,
+                margin: { left: leftMargin, right: rightMargin },
+                tableWidth: usableWidth,
+                body: [
+                    [
+                        { content: 'I hereby certify to the correctness of the above information.', styles: { halign: 'left', fontStyle: 'normal', fontSize: 8 } },
+                        { content: 'Posted by:', styles: { halign: 'left', fontStyle: 'normal', fontSize: 8 } }
+                    ],
+                    [
+                        { content: 'KRIZELLE JANE G. MATIAS', styles: { halign: 'left', fontStyle: 'bold', fontSize: 8 } },
+                        { content: '', styles: { halign: 'left', fontStyle: 'normal', fontSize: 8 } }
+                    ],
+                    [
+                        { content: 'Signature over Printed Name of Supply and/or Property Custodian', styles: { halign: 'left', fontStyle: 'normal', fontSize: 8 } },
+                        { content: 'Signature over Printed Name of Designated Account Staff    Date', styles: { halign: 'left', fontStyle: 'normal', fontSize: 8 } }
+                    ]
+                ],
+                theme: 'grid',
+                styles: { fontSize: 8, cellPadding: 2, halign: 'left', valign: 'middle' },
+                head: [],
+                didDrawPage: (data) => {}
+            });
+            finalY = doc.lastAutoTable.finalY;
+
+            // --- OPEN PDF IN NEW TAB ---
+            const pdfDataUrl = doc.output('dataurlstring');
+            const newWindow = window.open();
+            if (newWindow) {
+                newWindow.document.write(`
+                    <html>
+                    <head>
+                        <title>RSMI Report - ${date || 'Report'}</title>
+                        <style>
+                            body { margin: 0; padding: 20px; }
+                            iframe { width: 100%; height: 100vh; border: none; }
+                        </style>
+                    </head>
+                    <body>
+                        <iframe src="${pdfDataUrl}"></iframe>
+                    </body>
+                    </html>
+                `);
+                newWindow.document.close();
+            } else {
+                doc.save(`RSMI_Report_${date.replace(/\s+/g, '_') || 'December_2024'}.pdf`);
+            }
+        } catch (error) {
+            console.error('PDF export error:', error);
+            setError(`PDF export failed: ${error.message || 'Unknown error'}`);
+        } finally {
+            setIsLoading(false);
         }
-        
-        doc.save(`RSMI_Report_${date.replace(/\s+/g, '_') || 'December_2024'}.pdf`);
     };
     
     const handleInputChange = (index, field, value) => {
