@@ -339,12 +339,12 @@ const StockCardsPage = () => {
                 
                 if (currentReceiptQty > 0) {
                     if (lastNonRISIndex >= 0) {
-                        const lastUnitCost = parseFloat(updatedTransactions[lastNonRISIndex].balanceunitcost) || 0;
-                        balanceUnitCost = lastUnitCost + currentReceiptUnitCost / 2;
-                        
-                        const lastTotalCost = parseFloat(updatedTransactions[lastNonRISIndex].balancetotalcost) || 0;
-                        balanceTotalCost = lastTotalCost + currentReceiptTotalCost / 2;
+                        // Calculate average of previous balance unit cost and current receipt unit cost
+                        const prevBalanceUnitCost = parseFloat(updatedTransactions[lastNonRISIndex].balanceunitcost) || 0;
+                        balanceUnitCost = (prevBalanceUnitCost + currentReceiptUnitCost) / 2;
+                        balanceTotalCost = balanceQty * balanceUnitCost;
                     } else {
+                        // First row - use receipt unit cost directly
                         balanceUnitCost = currentReceiptUnitCost;
                         balanceTotalCost = currentReceiptTotalCost;
                     }
@@ -353,8 +353,8 @@ const StockCardsPage = () => {
                     balanceTotalCost = parseFloat(updatedTransactions[index-1].balancetotalcost) || 0;
                 }
                 
-                updatedTransactions[index].balanceunitcost = balanceUnitCost.toFixed(2);
-                updatedTransactions[index].balancetotalcost = balanceTotalCost.toFixed(2);
+                updatedTransactions[index].balanceunitcost = balanceUnitCost.toString();
+                updatedTransactions[index].balancetotalcost = balanceTotalCost.toString();
             }
         }
         
@@ -367,7 +367,7 @@ const StockCardsPage = () => {
                 updatedTransactions[i].balanceqty = Math.max(0, prevBalanceQty - currentIssueQty).toString();
                 updatedTransactions[i].balanceunitcost = updatedTransactions[i-1].balanceunitcost;
                 updatedTransactions[i].balancetotalcost = (parseFloat(updatedTransactions[i].balanceqty) * 
-                    parseFloat(updatedTransactions[i].balanceunitcost)).toFixed(2);
+                    parseFloat(updatedTransactions[i].balanceunitcost)).toString();
             } else {
                 const currentReceiptQty = parseFloat(updatedTransactions[i].receiptqty) || 0;
                 const currentReceiptUnitCost = parseFloat(updatedTransactions[i].receiptunitcost) || 0;
@@ -375,22 +375,14 @@ const StockCardsPage = () => {
                 
                 updatedTransactions[i].balanceqty = Math.max(0, prevBalanceQty + currentReceiptQty - currentIssueQty).toString();
                 
-                let lastNonRISIndex = i - 1;
-                while (lastNonRISIndex >= 0 && updatedTransactions[lastNonRISIndex].isRISRow) {
-                    lastNonRISIndex--;
-                }
-                
                 if (currentReceiptQty > 0) {
-                    if (lastNonRISIndex >= 0) {
-                        const lastUnitCost = parseFloat(updatedTransactions[lastNonRISIndex].balanceunitcost) || 0;
-                        updatedTransactions[i].balanceunitcost = (lastUnitCost + currentReceiptUnitCost / 2).toFixed(2);
-                        
-                        const lastTotalCost = parseFloat(updatedTransactions[lastNonRISIndex].balancetotalcost) || 0;
-                        updatedTransactions[i].balancetotalcost = (lastTotalCost + currentReceiptTotalCost / 2).toFixed(2);
-                    } else {
-                        updatedTransactions[i].balanceunitcost = currentReceiptUnitCost.toFixed(2);
-                        updatedTransactions[i].balancetotalcost = currentReceiptTotalCost.toFixed(2);
-                    }
+                    // Calculate average of previous balance unit cost and current receipt unit cost
+                    const prevBalanceUnitCost = parseFloat(updatedTransactions[i-1].balanceunitcost) || 0;
+                    const newBalanceUnitCost = (prevBalanceUnitCost + currentReceiptUnitCost) / 2;
+                    const newBalanceTotalCost = parseFloat(updatedTransactions[i].balanceqty) * newBalanceUnitCost;
+                    
+                    updatedTransactions[i].balanceunitcost = newBalanceUnitCost.toString();
+                    updatedTransactions[i].balancetotalcost = newBalanceTotalCost.toString();
                 } else {
                     updatedTransactions[i].balanceunitcost = updatedTransactions[i-1].balanceunitcost;
                     updatedTransactions[i].balancetotalcost = updatedTransactions[i-1].balancetotalcost;
@@ -694,6 +686,7 @@ const StockCardsPage = () => {
             
             const contactRow = worksheet.addRow(['Telephone Number: (02) 421-1918; OPCEN Mobile Number: 0917-8276325']);
             contactRow.font = { name: 'Arial', size: 10 };
+            contactRow.alignment = { horizontal: 'center' };
             worksheet.mergeCells(`A${contactRow.number}:H${contactRow.number}`);
             
             const emailRow = worksheet.addRow(['E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com']);
@@ -856,7 +849,7 @@ const StockCardsPage = () => {
             
             // Header text positioning (adjusted to align with logo)
             const centerX = 105;
-            doc.setFontSize(11);
+            doc.setFontSize(8);
             doc.setFont("helvetica", "normal");
             doc.text("Republic of the Philippines", centerX, 20, { align: "center" });
             doc.text("Department of National Defense", centerX, 25, { align: "center" });
@@ -864,46 +857,50 @@ const StockCardsPage = () => {
             doc.text("OFFICE OF CIVIL DEFENSE", centerX, 30, { align: "center" });
             doc.text("NATIONAL CAPITAL REGION", centerX, 35, { align: "center" });
             
-            doc.setFontSize(9);
+            doc.setFontSize(8);
             doc.setFont("helvetica", "normal");
             doc.text("NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY", centerX, 42, { align: "center" });
             doc.text("Telephone Number: (02) 421-1918; OPCEN Mobile Number: 0917-8276325", centerX, 47, { align: "center" });
             doc.text("E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com", centerX, 52, { align: "center" });
 
             // Add title with current month and year
-            doc.setFontSize(12);
+            doc.setFontSize(8);
             doc.setFont("helvetica", "bold");
             doc.text(`STOCK CARD AS OF ${month} ${year}`, centerX, 62, { align: "center" });
             
             // Create a table for the item information
             autoTable(doc, {
                 startY: 70,
-                head: [[
-                    { content: 'Fund Cluster:', colSpan: 2 },
-                    { content: 'Stock No.:', colSpan: 1 },
-                    { content: '', colSpan: 1 }
-                ]],
+                head: [],
                 body: [
                     [
-                        { content: stockData.fundcluster, colSpan: 2 },
-                        { content: stockData.stocknumber, colSpan: 2 }
+                        { content: 'Fund Cluster:', styles: { halign: 'left' } },
+                        { content: stockData.fundcluster, styles: { halign: 'left' } },
+                        { content: '', styles: { halign: 'left' } },
+                        { content: '', styles: { halign: 'left' } }
                     ],
                     [
-                        { content: 'Item:', colSpan: 1 },
-                        { content: stockData.item, colSpan: 3 }
+                        { content: 'Item:', styles: { halign: 'left' } },
+                        { content: stockData.item, styles: { halign: 'left' } },
+                        { content: 'Stockcard No.:', styles: { halign: 'left' } },
+                        { content: stockData.stocknumber, styles: { halign: 'left' } }
                     ],
                     [
-                        { content: 'Description:', colSpan: 1 },
-                        { content: stockData.description, colSpan: 3 }
+                        { content: 'Description:', styles: { halign: 'left' } },
+                        { content: stockData.description, styles: { halign: 'left' } },
+                        { content: '', styles: { halign: 'left' } },
+                        { content: '', styles: { halign: 'left' } }
                     ],
                     [
-                        { content: 'Unit of Measurement:', colSpan: 1 },
-                        { content: stockData.unitofmeasurement, colSpan: 3 }
+                        { content: 'Unit of Measurement:', styles: { halign: 'left' } },
+                        { content: stockData.unitofmeasurement, styles: { halign: 'left' } },
+                        { content: '', styles: { halign: 'left' } },
+                        { content: '', styles: { halign: 'left' } }
                     ]
                 ],
-                theme: 'plain',
+                theme: 'grid',
                 styles: {
-                    fontSize: 10,
+                    fontSize: 8,
                     cellPadding: 2
                 },
                 columnStyles: {
