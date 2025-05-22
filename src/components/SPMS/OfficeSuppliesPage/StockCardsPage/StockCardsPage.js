@@ -1296,7 +1296,7 @@ const StockCardsPage = () => {
                                             className="fetch-button"
                                             onClick={handleLoadData}
                                         >
-                                            Load Data
+                                            Search
                                         </button>
                                         <button 
                                             className="delete-stocknumber-button"
