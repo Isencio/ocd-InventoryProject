@@ -99,7 +99,12 @@ const StockCardsPage = () => {
                 .eq('stocknumber', stockNumber)
                 .single();
 
-            if (headerError) throw headerError;
+            if (headerError) {
+                if (headerError.code === 'PGRST116') {
+                    throw new Error('Stockcard not found');
+                }
+                throw headerError;
+            }
 
             // Fetch transaction data
             const { data: transactionData, error: transactionError } = await supabase
@@ -531,6 +536,14 @@ const StockCardsPage = () => {
     const saveData = async () => {
         try {
             setLoading(true);
+            
+            // Check for missing dates
+            const missingDateIndex = stockData.transactions.findIndex(t => !t.date);
+            if (missingDateIndex !== -1) {
+                setError('Date is required');
+                setShowSaveConfirm(false);
+                return;
+            }
             
             const dataToSend = {
                 ...stockData,
