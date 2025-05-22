@@ -11,158 +11,7 @@ const RISPage = () => {
     const [sectionUnit, setSectionUnit] = useState('');
     const [responsibilityCenterCode, setResponsibilityCenterCode] = useState('2016');
     const [risNo, setRisNo] = useState('');
-    const [rows, setRows] = useState([
-        {
-            stockNo: 'J2',
-            unit: 'REAM',
-            description: 'PAPER, MULTICOPY, A4, 80 gsm',
-            quantity: '4',
-            yes: '/',
-            no: '',
-            quantity2: '',
-            remarks: 'Insufficient, 3 reams available'
-        },
-        {
-            stockNo: '',
-            unit: '',
-            description: '',
-            quantity: '',
-            yes: '',
-            no: '',
-            quantity2: '',
-            remarks: ''
-        },
-        {
-            stockNo: '',
-            unit: '',
-            description: '',
-            quantity: '',
-            yes: '',
-            no: '',
-            quantity2: '',
-            remarks: ''
-        },
-        {
-            stockNo: '',
-            unit: '',
-            description: '',
-            quantity: '',
-            yes: '',
-            no: '',
-            quantity2: '',
-            remarks: ''
-        },
-        {
-            stockNo: '',
-            unit: '',
-            description: '',
-            quantity: '',
-            yes: '',
-            no: '',
-            quantity2: '',
-            remarks: ''
-        },
-        {
-            stockNo: '',
-            unit: '',
-            description: '',
-            quantity: '',
-            yes: '',
-            no: '',
-            quantity2: '',
-            remarks: ''
-        },
-        {
-            stockNo: '',
-            unit: '',
-            description: '',
-            quantity: '',
-            yes: '',
-            no: '',
-            quantity2: '',
-            remarks: ''
-        },
-        {
-            stockNo: '',
-            unit: '',
-            description: '',
-            quantity: '',
-            yes: '',
-            no: '',
-            quantity2: '',
-            remarks: ''
-        },
-        {
-            stockNo: '',
-            unit: '',
-            description: '',
-            quantity: '',
-            yes: '',
-            no: '',
-            quantity2: '',
-            remarks: ''
-        },
-        {
-            stockNo: '',
-            unit: '',
-            description: '',
-            quantity: '',
-            yes: '',
-            no: '',
-            quantity2: '',
-            remarks: ''
-        },
-        {
-            stockNo: '',
-            unit: '',
-            description: '',
-            quantity: '',
-            yes: '',
-            no: '',
-            quantity2: '',
-            remarks: ''
-        },
-        {
-            stockNo: '',
-            unit: '',
-            description: '',
-            quantity: '',
-            yes: '',
-            no: '',
-            quantity2: '',
-            remarks: ''
-        },
-        {
-            stockNo: '',
-            unit: '',
-            description: '',
-            quantity: '',
-            yes: '',
-            no: '',
-            quantity2: '',
-            remarks: ''
-        },
-        {
-            stockNo: '',
-            unit: '',
-            description: '',
-            quantity: '',
-            yes: '',
-            no: '',
-            quantity2: '',
-            remarks: ''
-        },
-        {
-            stockNo: '',
-            unit: '',
-            description: '',
-            quantity: '',
-            yes: '',
-            no: '',
-            quantity2: '',
-            remarks: ''
-        }
-    ]);
+    const [rows, setRows] = useState([]);
 
     const navigate = useNavigate();
 
@@ -391,6 +240,19 @@ const RISPage = () => {
         setRows(updatedRows);
     };
 
+    const addNewRow = () => {
+        setRows([...rows, {
+            stockNo: '',
+            unit: '',
+            description: '',
+            quantity: '',
+            yes: '',
+            no: '',
+            quantity2: '',
+            remarks: ''
+        }]);
+    };
+
     return (
         <div className="ris-container">
             <div className="header-top">
@@ -553,6 +415,9 @@ const RISPage = () => {
 
             <div className="action-buttons-container">
                 <div className="action-buttons">
+                    <button onClick={addNewRow} className="add-row-button">
+                        + Add Row
+                    </button>
                     <div className="export-dropdown">
                         <button className="export-main-button">Export ▼</button>
                         <div className="export-dropdown-content">

@@ -74,3 +74,20 @@
   .ris-container .return-button:hover {
     background-color: #f28920;
   }
+
+.add-row-button {
+    background-color: #1c1841;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.3s;
+}
+
+.add-row-button:hover {
+    background-color: #f28920;
+}
