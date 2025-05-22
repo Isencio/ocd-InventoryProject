@@ -269,20 +269,24 @@ const RSMIPage = () => {
             doc.setFontSize(10);
             doc.setFont('helvetica', 'bold');
             doc.text('REPORT OF SUPPLIES AND MATERIALS ISSUED', centerX, y, { align: 'center' }); y += 5;
-            doc.setFontSize(9);
-            doc.text(date || 'December 2024', centerX, y, { align: 'center' }); y += 6;
 
             // --- ENTITY/FUND/SERIAL/DATE ROW ---
             doc.setFontSize(8);
             doc.setFont('helvetica', 'normal');
+            
+            // First row: Fund Cluster and Serial Number
+            doc.text(`Fund Cluster: ${fundCluster || ''}`, leftMargin, y);
+            doc.text(`Serial No.: ${serialNo || ''}`, leftMargin + 100, y);
+            y += 4;
+
+            // Second row: Entity Name and Date
             doc.text(`Entity Name: ${entityName || ''}`, leftMargin, y);
-            doc.text(`Fund Cluster: ${fundCluster || ''}`, leftMargin + 65, y);
-            doc.text(`Serial No.: ${serialNo || ''}`, leftMargin + 130, y);
-            doc.text(`Date:`, leftMargin + 170, y);
+            doc.text(`Date: ${date || ''}`, leftMargin + 100, y);
             y += 4;
 
             // --- MAIN TABLE ---
             const tableStartY = y;
+            // Remove infoRows from the table body
             const tableHead = [
                 [
                     { content: 'To be filled up by the Supply and/or Property Division/Unit', colSpan: 6, styles: { halign: 'center', fontStyle: 'bold' } },
@@ -311,52 +315,48 @@ const RSMIPage = () => {
                 unitCost: '',
                 amount: ''
             });
-            const tableBody = [...filledRows, ...emptyRows].map(row => [
+            const tableBody = [
+                ...tableHead,
+                ...[...filledRows, ...emptyRows].map(row => [
                     row.risNo,
                     row.responsibilityCenterCode,
                     row.stockNo,
                     row.item,
                     row.unit,
-                row.quantityIssued ? parseInt(row.quantityIssued, 10) : '',
+                    row.quantityIssued ? parseInt(row.quantityIssued, 10) : '',
                     row.unitCost,
-                row.amount
-            ]);
+                    row.amount
+                ])
+            ];
             autoTable(doc, {
                 startY: tableStartY,
-                margin: { left: leftMargin, right: rightMargin },
-                tableWidth: usableWidth,
-                head: tableHead,
                 body: tableBody,
                 theme: 'grid',
                 styles: {
-                    fontSize: 7,
+                    fontSize: 8,
                     cellPadding: 1.5,
                     halign: 'center',
                     valign: 'middle',
+                    textColor: [0, 0, 0],
                 },
                 headStyles: {
-                    fontSize: 7,
-                    fillColor: [255, 255, 255],
                     textColor: [0, 0, 0],
+                    fillColor: [255, 255, 255],
                     fontStyle: 'bold',
-                    lineWidth: 0.1,
                     halign: 'center',
                 },
                 columnStyles: {
-                    0: { cellWidth: 25 },
-                    1: { cellWidth: 30 },
-                    2: { cellWidth: 18 },
-                    3: { cellWidth: 45 },
+                    0: { cellWidth: 22 },
+                    1: { cellWidth: 22 },
+                    2: { cellWidth: 22 },
+                    3: { cellWidth: 32 },
                     4: { cellWidth: 18 },
                     5: { cellWidth: 22 },
-                    6: { cellWidth: 18 },
-                    7: { cellWidth: 22 },
+                    6: { cellWidth: 22 },
+                    7: { cellWidth: 22 }
                 },
-                didDrawPage: (data) => {
-                    const pageWidth = doc.internal.pageSize.getWidth();
-                    const pageHeight = doc.internal.pageSize.getHeight();
-                    doc.setLineWidth(0.7);
-                    doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
+                didParseCell: function(data) {
+                    // Remove bold/left for info rows since they're gone
                 }
             });
             let finalY = doc.lastAutoTable.finalY + 2;
@@ -408,22 +408,24 @@ const RSMIPage = () => {
                 tableWidth: usableWidth,
                 body: [
                     [
-                        { content: 'I hereby certify to the correctness of the above information.', styles: { halign: 'left', fontStyle: 'normal', fontSize: 8 } },
-                        { content: 'Posted by:', styles: { halign: 'left', fontStyle: 'normal', fontSize: 8 } }
+                        { content: 'Note:', colSpan: 2, styles: { fontStyle: 'bold', halign: 'left', fontSize: 10 } }
                     ],
                     [
-                        { content: 'KRIZELLE JANE G. MATIAS', styles: { halign: 'left', fontStyle: 'bold', fontSize: 8 } },
-                        { content: '', styles: { halign: 'left', fontStyle: 'normal', fontSize: 8 } }
+                        { content: 'I hereby certify to the correctness of the above information.', styles: { halign: 'left', fontSize: 9 } },
+                        { content: 'Posted by:', styles: { halign: 'left', fontSize: 9 } }
                     ],
                     [
-                        { content: 'Signature over Printed Name of Supply and/or Property Custodian', styles: { halign: 'left', fontStyle: 'normal', fontSize: 8 } },
-                        { content: 'Signature over Printed Name of Designated Account Staff    Date', styles: { halign: 'left', fontStyle: 'normal', fontSize: 8 } }
+                        { content: 'KRIZELLE JANE G. MATIAS', styles: { halign: 'center', fontStyle: 'bold', fontSize: 10, textDecoration: 'underline' } },
+                        { content: '', styles: { halign: 'center', fontSize: 9 } }
+                    ],
+                    [
+                        { content: 'Signature over Printed Name of Supply and/or Property Custodian', styles: { halign: 'center', fontSize: 9 } },
+                        { content: 'Signature over Printed Name of Designated Account Staff        Date', styles: { halign: 'center', fontSize: 9 } }
                     ]
                 ],
                 theme: 'grid',
-                styles: { fontSize: 8, cellPadding: 2, halign: 'left', valign: 'middle' },
+                styles: { fontSize: 9, cellPadding: 2, halign: 'left', valign: 'middle', textColor: [0,0,0] },
                 head: [],
-                didDrawPage: (data) => {}
             });
             finalY = doc.lastAutoTable.finalY;
 
@@ -626,7 +628,7 @@ const RSMIPage = () => {
             <div className="action-buttons-container">
                 <div className="action-buttons">
                     <div className="export-dropdown">
-                        <button className="export-main-button">Export ▼</button>
+                        <button className="export-main-button">Export</button>
                         <div className="export-dropdown-content">
                             <button onClick={onExportExcel}>Export to Excel</button>
                             <button onClick={onExportPDF}>Export to PDF</button>
