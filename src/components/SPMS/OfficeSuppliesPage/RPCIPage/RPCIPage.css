@@ -62,7 +62,6 @@
     top: 20px;
     right: 20px;
     background-color: #1c1841;
-    color: rgb(255, 255, 255);
     border: none;
     padding: 10px 20px;
     font-size: 1rem;
@@ -84,11 +83,10 @@
   .action-buttons {
     display: flex;
     gap: 10px;
+    align-items: center;
   }
   
-  .add-row-button,
-  .save-button,
-  .export-main-button {
+  .add-row-button {
     background-color: #1c1841;
     color: white;
     border: none;
@@ -100,9 +98,7 @@
     transition: background-color 0.3s;
   }
   
-  .add-row-button:hover,
-  .save-button:hover,
-  .export-main-button:hover {
+  .add-row-button:hover {
     background-color: #f28920;
   }
   
@@ -170,4 +166,86 @@
 
 .fetch-button:hover {
   background-color: #f28920;
+}
+
+.rpci-header-controls {
+    width: 100%;
+    padding: 10px 0;
+    margin-bottom: 10px;
+}
+
+.horizontal-controls-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    margin: 0 auto;
+    max-width: 1200px; /* Match the inner-table's width */
+}
+
+.horizontal-controls-table tr:first-child td {
+    width: 35%; /* For Fund Cluster and Accountable Officer */
+}
+
+.horizontal-controls-table tr:last-child td {
+    width: 20%; /* For the 3 fields in second row */
+    width:5%;/* More precise for 3 equal columns */
+}
+
+.horizontal-controls-table td {
+    width: 100%;
+    padding: 0 10px;
+    vertical-align: top;
+}
+
+.horizontal-controls-table label {
+    display: block;
+    margin-bottom: 5px;
+    color: white;
+    font-size: 14px;
+}
+
+.horizontal-controls-table input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    color: #333;
+    box-sizing: border-box; /* Include padding in width calculation */
+}
+
+.stock-cards-header {
+    width: 85%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 80px;
+    margin-left: 40px;
+}
+
+.inner-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tables-container {
+  width: 100%;
+  max-width: 1200px; /* Match this to your main table's width */
+  margin: 0 auto;
+}
+
+.export-main-button {
+    background-color: #1c1841;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.export-main-button:hover {
+    background-color: #f28920;
 }
