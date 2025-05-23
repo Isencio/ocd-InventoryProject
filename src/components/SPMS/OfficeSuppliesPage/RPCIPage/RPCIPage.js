@@ -500,216 +500,214 @@ const RPCIPage = () => {
                     <p>E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com</p>
                 </div>
 
-                <div className="tables-container">
-                    <div className="rpci-header-controls">
-                        <table className="horizontal-controls-table">
-                            <tbody>
-                                <tr>
-                                    <td>
-                                        <label>Fund Cluster:</label>
-                                        <input 
-                                            type="text" 
-                                            value={fundCluster}
-                                            onChange={(e) => setFundCluster(e.target.value)}
-                                            placeholder="Enter fund cluster"
-                                        />
-                                    </td>
-                                    <td>
-                                        <label>Accountable Officer:</label>
-                                        <input 
-                                            type="text" 
-                                            value={accountableOfficer}
-                                            onChange={(e) => setAccountableOfficer(e.target.value)}
-                                            placeholder="Enter accountable officer"
-                                        />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <label>Assumption Date:</label>
-                                        <input 
-                                            type="text" 
-                                            value={assumptionDate}
-                                            onChange={(e) => setAssumptionDate(e.target.value)}
-                                            placeholder="Enter assumption date"
-                                        />
-                                    </td>
-                                    <td>
-                                        <label>Inventory Type:</label>
-                                        <input 
-                                            type="text" 
-                                            value={inventoryType}
-                                            onChange={(e) => setInventoryType(e.target.value)}
-                                            placeholder="Enter inventory type"
-                                        />
-                                    </td>
-                                    <td>
-                                        <label>Report Date:</label>
-                                        <input 
-                                            type="text" 
-                                            value={reportDate}
-                                            onChange={(e) => setReportDate(e.target.value)}
-                                            placeholder="Enter report date"
-                                        />
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div className="table-container">
-                        <table className="inner-table">
-                            <thead>
-                                <tr>
-                                    <th>Article</th>
-                                    <th>Description</th>
-                                    <th>Categories</th>
-                                    <th>Stock Number</th>
-                                    <th>Unit of Measure</th>
-                                    <th>Unit Value</th>
-                                    <th>Balance Per Card</th>
-                                    <th>On Hand Per Count (Pallada)</th>
-                                    <th>On Hand Per Count (Medina)</th>
-                                    <th>On Hand Per Count</th>
-                                    <th>Shortage/Overage</th>
-                                    <th>TOTAL COST</th>
-                                    <th>Remarks</th>
-                                    <th>Action</th>
-                                </tr>
-                                <tr>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th>(Quantity)</th>
-                                    <th>(Quantity)</th>
-                                    <th>(Quantity)</th>
-                                    <th>(Quantity)</th>
-                                    <th>Quantity</th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {rows.map((row, index) => (
-                                    <tr key={index}>
-                                        <td>
-                                            <input
-                                                type="text"
-                                                value={row.article}
-                                                onChange={(e) => handleInputChange(index, 'article', e.target.value)}
-                                                placeholder="Article"
-                                            />
-                                        </td>
-                                        <td>
-                                            <input
-                                                type="text"
-                                                value={row.description}
-                                                onChange={(e) => handleInputChange(index, 'description', e.target.value)}
-                                                placeholder="Description"
-                                            />
-                                        </td>
-                                        <td>
-                                            <input
-                                                type="text"
-                                                value={row.category}
-                                                onChange={(e) => handleInputChange(index, 'category', e.target.value)}
-                                                placeholder="Category"
-                                            />
-                                        </td>
-                                        <td>
-                                            <input
-                                                type="text"
-                                                value={row.stockNumber}
-                                                onChange={(e) => handleInputChange(index, 'stockNumber', e.target.value)}
-                                                placeholder="Stock No."
-                                            />
-                                        </td>
-                                        <td>
-                                            <input
-                                                type="text"
-                                                value={row.unitofMeasure}
-                                                onChange={(e) => handleInputChange(index, 'unitofMeasure', e.target.value)}
-                                                placeholder="Unit"
-                                            />
-                                        </td>
-                                        <td>   
-                                            <input
-                                                type="text"
-                                                value={row.unitValue}
-                                                onChange={(e) => handleInputChange(index, 'unitValue', e.target.value)}
-                                                placeholder="Unit Value"
-                                            />
-                                        </td>
-                                        <td>
-                                            <input
-                                                type="text"
-                                                value={row.balancePerCard}
-                                                onChange={(e) => handleInputChange(index, 'balancePerCard', e.target.value)}
-                                                placeholder="Balance"
-                                            />
-                                        </td>
-                                        <td>
-                                            <input
-                                                type="text"
-                                                value={row.onhandPerCountPallada}
-                                                onChange={(e) => handleInputChange(index, 'onhandPerCountPallada', e.target.value)}
-                                                placeholder="Count (Pallada)"
-                                            />
-                                        </td>
-                                        <td>
-                                            <input
-                                                type="text"
-                                                value={row.onhandPerCountMedina}
-                                                onChange={(e) => handleInputChange(index, 'onhandPerCountMedina', e.target.value)}
-                                                placeholder="Count (Medina)"
-                                            />
-                                        </td>
-                                        <td>
-                                            <input
-                                                type="text"
-                                                value={row.onhandPerCount}
-                                                onChange={(e) => handleInputChange(index, 'onhandPerCount', e.target.value)}
-                                                placeholder="Count"
-                                            />
-                                        </td>
-                                        <td>
-                                            <input
-                                                type="text"
-                                                value={row.shortageOverage}
-                                                onChange={(e) => handleInputChange(index, 'shortageOverage', e.target.value)}
-                                                placeholder="Shortage/Overage"
-                                            />
-                                        </td>
-                                        <td>
-                                            <input
-                                                type="text"
-                                                value={row.totalCost}
-                                                readOnly
-                                                placeholder="Auto-calculated"
-                                            />
-                                        </td>
-                                        <td>
-                                            <input
-                                                type="text"
-                                                value={row.remarks}
-                                                onChange={(e) => handleInputChange(index, 'remarks', e.target.value)}
-                                                placeholder="Remarks"
-                                            />
-                                        </td>
-                                        <td>
-                                            <button onClick={() => removeRow(index)} className="remove-row-button">
-                                                delete
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                <div className="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th className="Item-left-align">Fund Cluster:</th>
+                                <td>
+                                    <input
+                                        type="text"
+                                        value={fundCluster}
+                                        onChange={(e) => setFundCluster(e.target.value)}
+                                    />
+                                </td>
+                                <th className="Item-right-align">Accountable Officer:</th>
+                                <td>
+                                    <input
+                                        type="text"
+                                        value={accountableOfficer}
+                                        onChange={(e) => setAccountableOfficer(e.target.value)}
+                                    />
+                                </td>
+                            </tr>
+                            <tr>
+                                <th className="Item-left-align">Assumption Date:</th>
+                                <td>
+                                    <input
+                                        type="text"
+                                        value={assumptionDate}
+                                        onChange={(e) => setAssumptionDate(e.target.value)}
+                                    />
+                                </td>
+                                <th className="Item-right-align">Inventory Type:</th>
+                                <td>
+                                    <input
+                                        type="text"
+                                        value={inventoryType}
+                                        onChange={(e) => setInventoryType(e.target.value)}
+                                    />
+                                </td>
+                            </tr>
+                            <tr>
+                                <th className="Item-left-align">Report Date:</th>
+                                <td>
+                                    <input
+                                        type="text"
+                                        value={reportDate}
+                                        onChange={(e) => setReportDate(e.target.value)}
+                                    />
+                                </td>
+                                <td></td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <th colSpan="4">
+                                    <table className="inner-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Article</th>
+                                                <th>Description</th>
+                                                <th>Categories</th>
+                                                <th>Stock Number</th>
+                                                <th>Unit of Measure</th>
+                                                <th>Unit Value</th>
+                                                <th>Balance Per Card</th>
+                                                <th>On Hand Per Count (Pallada)</th>
+                                                <th>On Hand Per Count (Medina)</th>
+                                                <th>On Hand Per Count</th>
+                                                <th>Shortage/Overage</th>
+                                                <th>TOTAL COST</th>
+                                                <th>Remarks</th>
+                                                <th>Action</th>
+                                            </tr>
+                                            <tr>
+                                                <th></th>
+                                                <th></th>
+                                                <th></th>
+                                                <th></th>
+                                                <th></th>
+                                                <th></th>
+                                                <th>(Quantity)</th>
+                                                <th>(Quantity)</th>
+                                                <th>(Quantity)</th>
+                                                <th>(Quantity)</th>
+                                                <th>Quantity</th>
+                                                <th></th>
+                                                <th></th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {rows.map((row, index) => (
+                                                <tr key={index}>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.article}
+                                                            onChange={(e) => handleInputChange(index, 'article', e.target.value)}
+                                                            placeholder="Article"
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.description}
+                                                            onChange={(e) => handleInputChange(index, 'description', e.target.value)}
+                                                            placeholder="Description"
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.category}
+                                                            onChange={(e) => handleInputChange(index, 'category', e.target.value)}
+                                                            placeholder="Category"
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.stockNumber}
+                                                            onChange={(e) => handleInputChange(index, 'stockNumber', e.target.value)}
+                                                            placeholder="Stock No."
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.unitofMeasure}
+                                                            onChange={(e) => handleInputChange(index, 'unitofMeasure', e.target.value)}
+                                                            placeholder="Unit"
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.unitValue}
+                                                            onChange={(e) => handleInputChange(index, 'unitValue', e.target.value)}
+                                                            placeholder="Unit Value"
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.balancePerCard}
+                                                            onChange={(e) => handleInputChange(index, 'balancePerCard', e.target.value)}
+                                                            placeholder="Balance"
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.onhandPerCountPallada}
+                                                            onChange={(e) => handleInputChange(index, 'onhandPerCountPallada', e.target.value)}
+                                                            placeholder="Count (Pallada)"
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.onhandPerCountMedina}
+                                                            onChange={(e) => handleInputChange(index, 'onhandPerCountMedina', e.target.value)}
+                                                            placeholder="Count (Medina)"
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.onhandPerCount}
+                                                            onChange={(e) => handleInputChange(index, 'onhandPerCount', e.target.value)}
+                                                            placeholder="Count"
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.shortageOverage}
+                                                            onChange={(e) => handleInputChange(index, 'shortageOverage', e.target.value)}
+                                                            placeholder="Shortage/Overage"
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.totalCost}
+                                                            readOnly
+                                                            placeholder="Auto-calculated"
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            value={row.remarks}
+                                                            onChange={(e) => handleInputChange(index, 'remarks', e.target.value)}
+                                                            placeholder="Remarks"
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <button onClick={() => removeRow(index)} className="remove-row-button">
+                                                            delete
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </th>
+                            </tr>
+                        </thead>
+                    </table>
                 </div>
             </div>
 
