@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ExcelJS from 'exceljs';
 import { jsPDF } from 'jspdf';
@@ -12,12 +12,47 @@ const RSMIPage = () => {
     const [fundCluster, setFundCluster] = useState('');
     const [serialNo, setSerialNo] = useState('');
     const [date, setDate] = useState('');
+    const [stockNo, setStockNo] = useState('');
     const [showMonthYearPicker, setShowMonthYearPicker] = useState(false);
+    const [showStockNoPicker, setShowStockNoPicker] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
     const [rows, setRows] = useState([]);
+    const [availableStockNumbers, setAvailableStockNumbers] = useState([]);
 
     const navigate = useNavigate();
+
+    // Fetch available stock numbers when component mounts
+    useEffect(() => {
+        fetchAvailableStockNumbers();
+    }, []);
+
+    const fetchAvailableStockNumbers = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('stock_cards')
+                .select('stocknumber, stock_cards_header(description)')
+                .gt('issueqty', 0)
+                .order('stocknumber');
+
+            if (error) throw error;
+
+            // Remove duplicates and format the data
+            const uniqueStockNumbers = Array.from(new Set(data.map(item => item.stocknumber)))
+                .map(stockNo => {
+                    const item = data.find(d => d.stocknumber === stockNo);
+                    return {
+                        stocknumber: stockNo,
+                        description: item.stock_cards_header?.description || 'No description'
+                    };
+                });
+
+            setAvailableStockNumbers(uniqueStockNumbers);
+        } catch (error) {
+            console.error('Error fetching stock numbers:', error);
+            setError('Failed to load stock numbers');
+        }
+    };
 
     const months = [
         'January', 'February', 'March', 'April', 
@@ -49,12 +84,13 @@ const RSMIPage = () => {
                 .gte('date', startDate)
                 .lte('date', endDate)
                 .gt('issueqty', 0)
+                .eq(stockNo ? 'stocknumber' : 'id', stockNo || '')
                 .order('date', { ascending: true });
 
             if (stockCardsError) throw stockCardsError;
 
             if (!stockCardsData || stockCardsData.length === 0) {
-                throw new Error(`No RSMI data found for ${month} ${year}`);
+                throw new Error(`No RSMI data found for ${month} ${year}${stockNo ? ` and stock number ${stockNo}` : ''}`);
             }
 
             // Process the data to match RSMI format
@@ -113,6 +149,16 @@ const RSMIPage = () => {
         setDate(`${month} ${year}`);
         setShowMonthYearPicker(false);
         fetchRSMIData(month, year);
+    };
+
+    const handleStockNoSelect = (selectedStockNo) => {
+        setStockNo(selectedStockNo);
+        setShowStockNoPicker(false);
+        // Automatically fetch data if date is selected
+        if (date) {
+            const [month, year] = date.split(' ');
+            fetchRSMIData(month, year);
+        }
     };
 
     const onExportExcel = async () => {
@@ -516,7 +562,7 @@ const RSMIPage = () => {
                                         onChange={(e) => setSerialNo(e.target.value)}
                                     />
                                 </td>
-                                <th className="Item-right-align">Date:</th>
+                                <th className="Item-right-align">Month/Year:</th>
                                 <td>
                                     <div className="date-input-container">
                                         <input
@@ -557,6 +603,53 @@ const RSMIPage = () => {
                                                         >
                                                             {month.substring(0, 3)}
                                                         </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                <th className="Item-right-align">Stock No:</th>
+                                <td>
+                                    <div className="stock-no-container">
+                                        <input
+                                            type="text"
+                                            value={stockNo}
+                                            onChange={(e) => setStockNo(e.target.value)}
+                                            onClick={() => setShowStockNoPicker(!showStockNoPicker)}
+                                            placeholder="Select Stock Number"
+                                            className="stock-no-input"
+                                        />
+                                        {showStockNoPicker && (
+                                            <div className="stock-no-picker">
+                                                <div className="stock-no-search">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Search stock numbers..."
+                                                        onChange={(e) => {
+                                                            const searchTerm = e.target.value.toLowerCase();
+                                                            const filtered = availableStockNumbers.filter(item =>
+                                                                item.stocknumber.toLowerCase().includes(searchTerm) ||
+                                                                item.description.toLowerCase().includes(searchTerm)
+                                                            );
+                                                            setAvailableStockNumbers(filtered);
+                                                        }}
+                                                    />
+                                                </div>
+                                                <div className="stock-no-list">
+                                                    {availableStockNumbers.map((item) => (
+                                                        <div
+                                                            key={item.stocknumber}
+                                                            className="stock-no-item"
+                                                            onClick={() => handleStockNoSelect(item.stocknumber)}
+                                                        >
+                                                            <span className="stock-no">{item.stocknumber}</span>
+                                                            <span className="stock-description">{item.description}</span>
+                                                        </div>
                                                     ))}
                                                 </div>
                                             </div>
