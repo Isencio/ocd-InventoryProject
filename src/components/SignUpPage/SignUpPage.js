@@ -92,7 +92,7 @@ function SignUpPage({ onBack }) {
       <div className="signup-page">
         <div className="verification-sent">
           <h2>Verify Your Email</h2>
-          <p>We've sent a verification email to <strong>{email}</strong>.</p>
+          <p>We&apos;ve sent a verification email to <strong>{email}</strong>.</p>
           <p>Please check your inbox and click the verification link to activate your account.</p>
           <button onClick={onBack}>Return to Login</button>
         </div>

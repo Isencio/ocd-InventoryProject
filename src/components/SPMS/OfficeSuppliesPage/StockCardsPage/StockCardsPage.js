@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ExcelJS from 'exceljs';
 import jsPDF from 'jspdf';
@@ -889,24 +889,16 @@ const StockCardsPage = () => {
             const tableData = [];
             const transactions = stockData.transactions || [];
 
-            // Robust date parser for multiple formats
-            function parseDate(d) {
-                if (!d) return null;
-                // Try ISO first
-                let date = new Date(d);
-                if (!isNaN(date)) return date;
-                // Try MM/DD/YYYY or MM-DD-YYYY
-                const parts = d.split(/[\/-]/);
-                if (parts.length === 3) {
-                    // If year is first
-                    if (parts[0].length === 4) {
-                        return new Date(parts[0], parts[1] - 1, parts[2]);
-                    }
-                    // If month is first
-                    return new Date(parts[2], parts[0] - 1, parts[1]);
-                }
-                return null;
-            }
+            // Helper function to parse dates
+            const parseDate = (d) => {
+                if (!d) return '';
+                const date = new Date(d);
+                return date.toLocaleDateString('en-US', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    year: 'numeric'
+                });
+            };
 
             // Find all months between first and last transaction
             const validDates = transactions.map(t => parseDate(t.date)).filter(d => d);

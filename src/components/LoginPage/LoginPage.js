@@ -96,7 +96,7 @@ function LoginPage({ onBack, onSignUp, onForgotPassword }) {
               {error}
               {error.includes('Email not verified') && (
                 <div>
-                  <p>Didn't receive the email?</p>
+                  <p>Didn&apos;t receive the email?</p>
                   <button 
                     onClick={handleResendVerification}
                     className="resend-button"
@@ -144,7 +144,7 @@ function LoginPage({ onBack, onSignUp, onForgotPassword }) {
           </form>
 
           <p className="create-account-link">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <a href="#" onClick={(e) => { e.preventDefault(); onSignUp(); }}>
               Sign Up
             </a>

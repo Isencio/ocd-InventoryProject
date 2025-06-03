@@ -13,9 +13,9 @@ const RSMIPage = () => {
     const [serialNo, setSerialNo] = useState('');
     const [date, setDate] = useState('');
     const [showMonthYearPicker, setShowMonthYearPicker] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
     const [rows, setRows] = useState([]);
+    const [error, setError] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     const navigate = useNavigate();
 
@@ -274,12 +274,32 @@ const RSMIPage = () => {
 
             // --- ENTITY/FUND/SERIAL/DATE ROW ---
             doc.setFontSize(8);
+            // First row: Entity Name (left), Serial No. (right)
+            doc.setFont('helvetica', 'bold');
+            doc.text('Entity Name:', leftMargin, y);
             doc.setFont('helvetica', 'normal');
-            doc.text(`Entity Name: ${entityName || ''}`, leftMargin, y);
-            doc.text(`Fund Cluster: ${fundCluster || ''}`, leftMargin + 65, y);
-            doc.text(`Serial No.: ${serialNo || ''}`, leftMargin + 130, y);
-            doc.text(`Date:`, leftMargin + 170, y);
-            y += 4;
+            doc.text(entityName || '', leftMargin + 22, y);
+
+            doc.setFont('helvetica', 'bold');
+            doc.text('Serial No.:', centerX + 40, y);
+            doc.setFont('helvetica', 'normal');
+            doc.text(serialNo || '', centerX + 60, y);
+
+            y += 5;
+
+            // Second row: Fund Cluster (left), Date (right)
+            doc.setFont('helvetica', 'bold');
+            doc.text('Fund Cluster:', leftMargin, y);
+            doc.setFont('helvetica', 'normal');
+            doc.text(fundCluster || '', leftMargin + 22, y);
+
+            doc.setFont('helvetica', 'bold');
+            doc.text('Date:', centerX + 40, y);
+            doc.setFont('helvetica', 'normal');
+            // Leave the date blank for handler to write manually
+            // doc.text(date || '', centerX + 60, y);
+
+            y += 6;
 
             // --- MAIN TABLE ---
             const tableStartY = y;
@@ -321,6 +341,8 @@ const RSMIPage = () => {
                     row.unitCost,
                 row.amount
             ]);
+            // Find the minimum issue quantity for Less Issuance
+            const minIssueQty = filledRows.length > 0 ? Math.min(...filledRows.map(row => parseFloat(row.quantityIssued) || 0)) : '';
             autoTable(doc, {
                 startY: tableStartY,
                 margin: { left: leftMargin, right: rightMargin },
@@ -343,16 +365,16 @@ const RSMIPage = () => {
                     halign: 'center',
                 },
                 columnStyles: {
-                    0: { cellWidth: 25 },
-                    1: { cellWidth: 30 },
-                    2: { cellWidth: 18 },
-                    3: { cellWidth: 45 },
-                    4: { cellWidth: 18 },
-                    5: { cellWidth: 22 },
-                    6: { cellWidth: 18 },
-                    7: { cellWidth: 22 },
+                    0: { cellWidth: 20 },  // RIS No.
+                    1: { cellWidth: 25 },  // Responsibility Center Code
+                    2: { cellWidth: 15 },  // Stock No.
+                    3: { cellWidth: 40 },  // Item
+                    4: { cellWidth: 15 },  // Unit
+                    5: { cellWidth: 20 },  // Quantity Issued
+                    6: { cellWidth: 20 },  // Unit Cost
+                    7: { cellWidth: 20 },  // Amount
                 },
-                didDrawPage: (data) => {
+                didDrawPage: () => {
                     const pageWidth = doc.internal.pageSize.getWidth();
                     const pageHeight = doc.internal.pageSize.getHeight();
                     doc.setLineWidth(0.7);
@@ -370,7 +392,7 @@ const RSMIPage = () => {
                 body: [
                     [ 'Stock No.', 'Quantity' ],
                     [ filledRows[0]?.stockNo || '', '111' ],
-                    [ 'Less Issuance', filledRows[0]?.quantityIssued || '7' ],
+                    [ 'Less Issuance', minIssueQty !== '' ? String(minIssueQty) : '' ],
                     [ date || 'December 2024', '104' ],
                     [ '', '' ],
                     [ '', '' ]
@@ -423,7 +445,7 @@ const RSMIPage = () => {
                 theme: 'grid',
                 styles: { fontSize: 8, cellPadding: 2, halign: 'left', valign: 'middle' },
                 head: [],
-                didDrawPage: (data) => {}
+                didDrawPage: () => {}
             });
             finalY = doc.lastAutoTable.finalY;
 
@@ -457,18 +479,10 @@ const RSMIPage = () => {
         }
     };
     
-    const handleInputChange = (index, field, value) => {
-        const updatedRows = rows.map((row, i) => {
-            if (i === index) {
-                return { ...row, [field]: value };
-            }
-            return row;
-        });
-        setRows(updatedRows);
-    };
-
     return (
         <div className="rsmi-container">
+            {error && <div className="error-message">{error}</div>}
+            {isLoading && <div className="loading-spinner">Loading...</div>}
             <div className="header-top">
                 <button className="return-button" onClick={onBack}> &larr; </button>
                 <h1>RSMI</h1>

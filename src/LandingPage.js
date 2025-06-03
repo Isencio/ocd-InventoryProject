@@ -154,7 +154,7 @@ function LandingPage() {
                 <p>I.   Uphold a culture of excellence, professionalism, integrity, and commitment; </p>
                 <p>II.  Comply with legal and applicable requirements; and </p>
                 <p>III. Ensure continual improvement of its quality management system. </p>
-                <p>To meet the highest level of stakeholder satisfaction in the administration of the country's comprehensive civil defense 
+                <p>To meet the highest level of stakeholder satisfaction in the administration of the country&apos;s comprehensive civil defense 
                   and disaster risk reduction and management program for an adaptive, safer, and resilient Filipino community.</p>
               </div>
             </div>
@@ -175,7 +175,7 @@ function LandingPage() {
               <p>ABOUT US:</p>
               <p>the OCD is an agency under the Department of National Defense (DND).</p>
               <p>It serves as the implementing arm of the National Disaster Risk Reduction and Management Council (NDRRMC).</p>
-              <p>The OCD plays a critical role in ensuring the country's readiness for disasters, given the Philippines' vulnerability to natural disasters.</p>
+              <p>The OCD plays a critical role in ensuring the country&apos;s readiness for disasters, given the Philippines&apos; vulnerability to natural disasters.</p>
               <p>Its primary focus is on disaster preparedness, response, recovery, and mitigation to ensure public safety and resilience.</p>
               
               <div className="create-account">

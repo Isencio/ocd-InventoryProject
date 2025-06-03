@@ -9,7 +9,7 @@ const RISPage = () => {
     const [fundCluster, setFundCluster] = useState('');
     const [division, setDivision] = useState('');
     const [sectionUnit, setSectionUnit] = useState('');
-    const [responsibilityCenterCode, setResponsibilityCenterCode] = useState('2016');
+    const [responsibilityCenterCode] = useState('2016');
     const [risNo, setRisNo] = useState('');
     const [rows, setRows] = useState([]);
 
@@ -149,7 +149,6 @@ const RISPage = () => {
         
         // Table headers
         const startY = 96;
-        const cellWidth = 25;
         const cellHeight = 10;
         
         // Main headers

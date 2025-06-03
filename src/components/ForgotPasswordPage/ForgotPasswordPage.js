@@ -56,7 +56,7 @@ function ForgotPasswordPage({ onBack }) {
 
         <div className="forgot-password-form">
           <h2>Reset Your Password</h2>
-          <p>Enter your email and we'll send you a link to reset your password.</p>
+          <p>Enter your email and we&apos;ll send you a link to reset your password.</p>
           
           {message && <div className="success-message">{message}</div>}
           {error && <div className="error-message">{error}</div>}

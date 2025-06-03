@@ -24,9 +24,9 @@ function Main() {
             <Route path="/ris" element={<RISPage />} />
             <Route path="/rpci" element={<RPCIPage />} />
             <Route path="/other-supplies" element={<OtherSuppliesPage />} />
-            <Route path='/other-rpci' element={<OtherRPCIPage />}/>
-            <Route path='/other-rsmi' element={<OtherRSMIPage />}/>
-            <Route path='/other-ris' element={<OtherRISPage />}/>
+            <Route path="/other-rpci" element={<OtherRPCIPage />}/>
+            <Route path="/other-rsmi" element={<OtherRSMIPage />}/>
+            <Route path="/other-ris" element={<OtherRISPage />}/>
       </Routes>
     </Router>
   );

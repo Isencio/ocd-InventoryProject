@@ -142,7 +142,7 @@ const RPCIPage = () => {
 
             // Add data rows (only if there's data)
             let currentSection = '';
-            rows.forEach((row, rowIndex) => {
+            rows.forEach((row) => {
                 // Skip completely empty rows
                 if (!row.article && !row.description && !row.stockNumber) return;
                 
@@ -359,7 +359,7 @@ const RPCIPage = () => {
         let currentSection = '';
         let hasData = false;
         
-        rows.forEach((row, rowIndex) => {
+        rows.forEach((row) => {
             // Skip empty rows
             if (!row.article && !row.description && !row.stockNumber) return;
             hasData = true;
@@ -368,7 +368,7 @@ const RPCIPage = () => {
             if (row.category && row.category !== currentSection) {
                 currentSection = row.category;
                 doc.setFont('helvetica', 'bold');
-                doc.text(`${String.fromCharCode(65 + rowIndex)}. ${currentSection}`, 15, currentY);
+                doc.text(`${String.fromCharCode(65 + rows.indexOf(row))}. ${currentSection}`, 15, currentY);
                 currentY += 8;
             }
             
@@ -392,9 +392,9 @@ const RPCIPage = () => {
                 row.remarks
             ];
             
-            rowData.forEach((cell, i) => {
-                doc.text(cell.toString(), xPos, currentY, { maxWidth: cellWidths[i] });
-                xPos += cellWidths[i];
+            rowData.forEach((cell) => {
+                doc.text(cell.toString(), xPos, currentY, { maxWidth: cellWidths[rows.indexOf(row)] });
+                xPos += cellWidths[rows.indexOf(row)];
             });
             
             currentY += 8;
