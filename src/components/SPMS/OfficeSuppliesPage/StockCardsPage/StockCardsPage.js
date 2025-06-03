@@ -643,138 +643,169 @@ const StockCardsPage = () => {
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('STOCK CARD');
 
-            // Set default font for the entire worksheet
-            worksheet.properties.defaultColWidth = 15;
-            
-            // Add header information
-            const addHeaderRow = (text) => {
+            // HEADER SECTION (centered, merged)
+            const addHeaderRow = (text, fontSize = 12, bold = true) => {
                 const row = worksheet.addRow([text]);
-                row.font = { name: 'Arial', size: 12, bold: true };
+                row.font = { name: 'Arial', size: fontSize, bold };
                 row.alignment = { horizontal: 'center' };
-                worksheet.mergeCells(`A${row.number}:H${row.number}`);
+                worksheet.mergeCells(`A${row.number}:L${row.number}`);
             };
+            addHeaderRow('Republic of the Philippines', 12, false);
+            addHeaderRow('Department of National Defense', 12, false);
+            addHeaderRow('OFFICE OF CIVIL DEFENSE', 12, true);
+            addHeaderRow('NATIONAL CAPITAL REGION', 12, true);
+            addHeaderRow('NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY', 10, false);
+            addHeaderRow('Telephone Number: (02) 421-1918; OPCEN Mobile Number: 0917-8276325', 10, false);
+            addHeaderRow('E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com', 10, false);
+            worksheet.addRow([]);
+            const now = new Date();
+            const month = now.toLocaleString('default', { month: 'long' }).toUpperCase();
+            const year = now.getFullYear();
+            addHeaderRow(`STOCK CARD AS OF ${month} ${year}`, 12, true);
+            worksheet.addRow([]);
 
-            addHeaderRow('Republic of the Philippines');
-            addHeaderRow('Department of National Defense');
-            addHeaderRow('OFFICE OF CIVIL DEFENSE');
-            addHeaderRow('NATIONAL CAPITAL REGION');
-            
-            const addressRow = worksheet.addRow(['NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY']);
-            addressRow.font = { name: 'Arial', size: 10 };
-            worksheet.mergeCells(`A${addressRow.number}:H${addressRow.number}`);
-            
-            const contactRow = worksheet.addRow(['Telephone Number: (02) 421-1918; OPCEN Mobile Number: 0917-8276325']);
-            contactRow.font = { name: 'Arial', size: 10 };
-            worksheet.mergeCells(`A${contactRow.number}:H${contactRow.number}`);
-            
-            const emailRow = worksheet.addRow(['E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com']);
-            emailRow.font = { name: 'Arial', size: 10 };
-            emailRow.alignment = { horizontal: 'center' };
-            worksheet.mergeCells(`A${emailRow.number}:H${emailRow.number}`);
-            
-            // Add empty row
+            // ITEM INFO GRID (2 rows)
+            const itemInfoRow1 = worksheet.addRow([
+                'Fund Cluster:', stockData.fundcluster || '', '', '', '', '', '', '', 'Stock No.:', stockData.stocknumber || '', 'Re-order Point:', ''
+            ]);
+            itemInfoRow1.font = { name: 'Arial', size: 10 };
+            worksheet.mergeCells(`A${itemInfoRow1.number}:B${itemInfoRow1.number}`);
+            worksheet.mergeCells(`I${itemInfoRow1.number}:J${itemInfoRow1.number}`);
+            worksheet.mergeCells(`K${itemInfoRow1.number}:L${itemInfoRow1.number}`);
+
+            const itemInfoRow2 = worksheet.addRow([
+                'Item:', stockData.item || '', '', '', '', '', '', '', 'Description:', stockData.description || '', '', ''
+            ]);
+            itemInfoRow2.font = { name: 'Arial', size: 10 };
+            worksheet.mergeCells(`A${itemInfoRow2.number}:B${itemInfoRow2.number}`);
+            worksheet.mergeCells(`I${itemInfoRow2.number}:L${itemInfoRow2.number}`);
+
+            const itemInfoRow3 = worksheet.addRow([
+                'Unit of Measurement:', stockData.unitofmeasurement || '', '', '', '', '', '', '', '', '', '', ''
+            ]);
+            itemInfoRow3.font = { name: 'Arial', size: 10 };
+            worksheet.mergeCells(`A${itemInfoRow3.number}:B${itemInfoRow3.number}`);
+            worksheet.mergeCells(`C${itemInfoRow3.number}:L${itemInfoRow3.number}`);
+
             worksheet.addRow([]);
-            
-            // Add title
-            const titleRow = worksheet.addRow(['STOCK CARD']);
-            titleRow.font = { name: 'Arial', size: 12, bold: true };
-            titleRow.alignment = { horizontal: 'center' };
-            worksheet.mergeCells(`A${titleRow.number}:H${titleRow.number}`);
-            
-            // Add empty row
-            worksheet.addRow([]);
-            
-            // Add fund cluster
-            const fundClusterRow = worksheet.addRow(['Fund Cluster:', stockData.fundcluster]);
-            fundClusterRow.getCell(1).font = { name: 'Arial', size: 10, bold: true };
-            fundClusterRow.getCell(2).font = { name: 'Arial', size: 10 };
-            
-            // Add empty row
-            worksheet.addRow([]);
-            
-            // Add item information
-            const itemRow = worksheet.addRow(['Item:', stockData.item, '', '', 'Stock No. :', '', stockData.stocknumber]);
-            itemRow.getCell(1).font = { name: 'Arial', size: 10, bold: true };
-            itemRow.getCell(2).font = { name: 'Arial', size: 10 };
-            itemRow.getCell(5).font = { name: 'Arial', size: 10, bold: true };
-            itemRow.getCell(7).font = { name: 'Arial', size: 10 };
-            
-            const descRow = worksheet.addRow(['Description:', stockData.description]);
-            descRow.getCell(1).font = { name: 'Arial', size: 10, bold: true };
-            descRow.getCell(2).font = { name: 'Arial', size: 10 };
-            
-            const unitRow = worksheet.addRow(['Unit of Measurement:', stockData.unitofmeasurement]);
-            unitRow.getCell(1).font = { name: 'Arial', size: 10, bold: true };
-            unitRow.getCell(2).font = { name: 'Arial', size: 10 };
-            
-            // Add empty row
-            worksheet.addRow([]);
-            
-            // Add table headers
+
+            // TABLE HEADERS (with merged cells for Receipt, Issue, Balance)
             const mainHeaderRow = worksheet.addRow([
                 'Date', 'Reference', '', 'RECEIPT', '', '', 'ISSUE', '', 'BALANCE', '', '', 'No. of Days to Consume'
             ]);
             mainHeaderRow.font = { name: 'Arial', size: 10, bold: true };
             mainHeaderRow.alignment = { horizontal: 'center' };
-            
-            // Merge header cells
+            worksheet.mergeCells(`C${mainHeaderRow.number}:C${mainHeaderRow.number}`); // keep for alignment
             worksheet.mergeCells(`D${mainHeaderRow.number}:F${mainHeaderRow.number}`);
             worksheet.mergeCells(`G${mainHeaderRow.number}:H${mainHeaderRow.number}`);
             worksheet.mergeCells(`I${mainHeaderRow.number}:K${mainHeaderRow.number}`);
-            worksheet.mergeCells(`L${mainHeaderRow.number}:M${mainHeaderRow.number}`);
-            
+
             const subHeaderRow = worksheet.addRow([
-                '', '', 'Qty.', 'Unit Cost', 'Total Cost', 'Qty.', 'Office', 'Qty.', 'Unit Cost', 'Total Cost', ''
+                '', '', 'Qty.', 'Unit Cost', 'Total Cost', 'Qty.', 'Office', 'Qty.', 'Unit Cost', 'Total Cost', '', ''
             ]);
             subHeaderRow.font = { name: 'Arial', size: 10, bold: true };
             subHeaderRow.alignment = { horizontal: 'center' };
-            
-            // Add transaction data
-            stockData.transactions.forEach(transaction => {
-                const row = worksheet.addRow([
-                    transaction.date,
-                    transaction.reference,
-                    transaction.receiptqty,
-                    transaction.receiptunitcost,
-                    transaction.receipttotalcost,
-                    transaction.issueqty,
-                    transaction.issueoffice,
-                    transaction.balanceqty,
-                    transaction.balanceunitcost,
-                    transaction.balancetotalcost,
-                    '',
-                    transaction.daystoconsume
-                ]);
-                
-                // Format numbers
-                [3, 4, 5, 6, 8, 9].forEach(col => {
-                    if (row.getCell(col).value) {
-                        row.getCell(col).numFmt = '#,##0.00';
+
+            // Prepare table data
+            const getDateObj = (d) => {
+                if (!d) return null;
+                const date = new Date(d);
+                return isNaN(date) ? null : date;
+            };
+            const formatDate = (d) => {
+                const date = getDateObj(d);
+                return date ? date.toLocaleDateString('en-US', {
+                    month: '2-digit',
+                    day: '2-digit',
+                    year: 'numeric'
+                }) : '';
+            };
+            const transactions = stockData.transactions || [];
+            const dateObjs = transactions.map(t => getDateObj(t.date)).filter(d => d);
+            let minDate = dateObjs.length ? new Date(Math.min(...dateObjs.map(d => d.getTime()))) : null;
+            let maxDate = dateObjs.length ? new Date(Math.max(...dateObjs.map(d => d.getTime()))) : null;
+            if (minDate) minDate = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
+            if (maxDate) maxDate = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
+
+            // Add table data, grouped by month, with 'No issued supplies...' rows
+            if (minDate && maxDate) {
+                let current = new Date(minDate);
+                while (current <= maxDate) {
+                    const month = current.getMonth();
+                    const year = current.getFullYear();
+                    const monthTx = transactions.filter(t => {
+                        const td = getDateObj(t.date);
+                        return td && td.getMonth() === month && td.getFullYear() === year;
+                    });
+                    if (monthTx.length === 0) {
+                        const monthName = current.toLocaleString('default', { month: 'long' });
+                        const row = worksheet.addRow([
+                            `No issued supplies for the month of ${monthName} ${year}`
+                        ]);
+                        row.font = { italic: true };
+                        worksheet.mergeCells(`A${row.number}:L${row.number}`);
+                    } else {
+                        monthTx.forEach(t => {
+                            const row = worksheet.addRow([
+                                formatDate(t.date),
+                                t.reference || '',
+                                t.receiptqty || '',
+                                t.receiptunitcost || '',
+                                t.receipttotalcost || '',
+                                t.issueqty || '',
+                                t.issueoffice || '',
+                                t.balanceqty || '',
+                                t.balanceunitcost || '',
+                                t.balancetotalcost || '',
+                                '',
+                                t.daystoconsume || ''
+                            ]);
+                            row.font = { name: 'Arial', size: 10 };
+                        });
                     }
+                    current.setMonth(current.getMonth() + 1);
+                }
+            } else {
+                transactions.forEach(t => {
+                    const row = worksheet.addRow([
+                        formatDate(t.date),
+                        t.reference || '',
+                        t.receiptqty || '',
+                        t.receiptunitcost || '',
+                        t.receipttotalcost || '',
+                        t.issueqty || '',
+                        t.issueoffice || '',
+                        t.balanceqty || '',
+                        t.balanceunitcost || '',
+                        t.balancetotalcost || '',
+                        '',
+                        t.daystoconsume || ''
+                    ]);
+                    row.font = { name: 'Arial', size: 10 };
                 });
-                
-                // Set font for all cells
-                row.eachCell(cell => {
-                    cell.font = { name: 'Arial', size: 10 };
-                });
-            });
-            
+            }
+
+            // Add empty rows for visual padding
+            for (let i = 0; i < 5; i++) {
+                worksheet.addRow(['', '', '', '', '', '', '', '', '', '', '', '']);
+            }
+
             // Set column widths
             worksheet.columns = [
                 { width: 12 }, // Date
-                { width: 20 }, // Reference
-                { width: 8 },  // Qty
-                { width: 12 }, // Unit Cost
-                { width: 12 }, // Total Cost
+                { width: 25 }, // Reference
+                { width: 8 },  // Receipt Qty
+                { width: 12 }, // Receipt Unit Cost
+                { width: 12 }, // Receipt Total Cost
                 { width: 8 },  // Issue Qty
-                { width: 12 }, // Office
+                { width: 12 }, // Issue Office
                 { width: 8 },  // Balance Qty
                 { width: 12 }, // Balance Unit Cost
                 { width: 12 }, // Balance Total Cost
                 { width: 8 },  // Empty
                 { width: 20 }  // Days to Consume
             ];
-            
+
             // Save file
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -889,21 +920,26 @@ const StockCardsPage = () => {
             const tableData = [];
             const transactions = stockData.transactions || [];
 
-            // Helper function to parse dates
-            const parseDate = (d) => {
-                if (!d) return '';
+            // Returns a Date object or null
+            const getDateObj = (d) => {
+                if (!d) return null;
                 const date = new Date(d);
-                return date.toLocaleDateString('en-US', {
+                return isNaN(date) ? null : date;
+            };
+            // For display only
+            const formatDate = (d) => {
+                const date = getDateObj(d);
+                return date ? date.toLocaleDateString('en-US', {
                     month: '2-digit',
                     day: '2-digit',
                     year: 'numeric'
-                });
+                }) : '';
             };
 
             // Find all months between first and last transaction
-            const validDates = transactions.map(t => parseDate(t.date)).filter(d => d);
-            let minDate = validDates.length ? new Date(Math.min(...validDates.map(d => d.getTime()))) : null;
-            let maxDate = validDates.length ? new Date(Math.max(...validDates.map(d => d.getTime()))) : null;
+            const dateObjs = transactions.map(t => getDateObj(t.date)).filter(d => d);
+            let minDate = dateObjs.length ? new Date(Math.min(...dateObjs.map(d => d.getTime()))) : null;
+            let maxDate = dateObjs.length ? new Date(Math.max(...dateObjs.map(d => d.getTime()))) : null;
             if (minDate) minDate = new Date(minDate.getFullYear(), minDate.getMonth(), 1);
             if (maxDate) maxDate = new Date(maxDate.getFullYear(), maxDate.getMonth(), 1);
 
@@ -914,7 +950,7 @@ const StockCardsPage = () => {
                     const year = current.getFullYear();
                     // All transactions for this month
                     const monthTx = transactions.filter(t => {
-                        const td = parseDate(t.date);
+                        const td = getDateObj(t.date);
                         return td && td.getMonth() === month && td.getFullYear() === year;
                     });
                     if (monthTx.length === 0) {
@@ -927,7 +963,7 @@ const StockCardsPage = () => {
                         // Add all transactions for this month
                         monthTx.forEach(t => {
                             tableData.push([
-                                t.date || '',
+                                formatDate(t.date),
                                 t.reference || '',
                                 t.receiptqty || '',
                                 t.receiptunitcost || '',
@@ -947,7 +983,7 @@ const StockCardsPage = () => {
                 // No valid dates, just add all transactions
                 transactions.forEach(t => {
                     tableData.push([
-                        t.date || '',
+                        formatDate(t.date),
                         t.reference || '',
                         t.receiptqty || '',
                         t.receiptunitcost || '',
