@@ -482,7 +482,14 @@ const RSMIPage = () => {
     return (
         <div className="rsmi-container">
             {error && <div className="error-message">{error}</div>}
-            {isLoading && <div className="loading-spinner">Loading...</div>}
+            {isLoading && (
+                <div className="loading-popup">
+                    <div className="loading-content">
+                        <div className="loading-spinner"></div>
+                        <p>Loading...</p>
+                    </div>
+                </div>
+            )}
             <div className="header-top">
                 <button className="return-button" onClick={onBack}> &larr; </button>
                 <h1>RSMI</h1>
