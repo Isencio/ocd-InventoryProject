@@ -8,7 +8,6 @@ const OtherRISPage = () => {
     const [division, setDivision] = useState('');
     const [sectionUnit, setSectionUnit] = useState('');
     const [responsibilityCenterCode, setResponsibilityCenterCode] = useState('');
-    const [risNo, setRisNo] = useState('');
     const [rows, setRows] = useState(Array(5).fill({
         stockNo: '',
         unit: '',
