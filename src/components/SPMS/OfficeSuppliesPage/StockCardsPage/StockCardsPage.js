@@ -663,7 +663,7 @@ const StockCardsPage = () => {
             const year = now.getFullYear();
             addHeaderRow(`STOCK CARD AS OF ${month} ${year}`, 12, true);
             worksheet.addRow([]);
-
+            
             // ITEM INFO GRID (2 rows)
             const itemInfoRow1 = worksheet.addRow([
                 'Fund Cluster:', stockData.fundcluster || '', '', '', '', '', '', '', 'Stock No.:', stockData.stocknumber || '', 'Re-order Point:', ''
@@ -679,7 +679,7 @@ const StockCardsPage = () => {
             itemInfoRow2.font = { name: 'Arial', size: 10 };
             worksheet.mergeCells(`A${itemInfoRow2.number}:B${itemInfoRow2.number}`);
             worksheet.mergeCells(`I${itemInfoRow2.number}:L${itemInfoRow2.number}`);
-
+            
             const itemInfoRow3 = worksheet.addRow([
                 'Unit of Measurement:', stockData.unitofmeasurement || '', '', '', '', '', '', '', '', '', '', ''
             ]);
@@ -688,7 +688,7 @@ const StockCardsPage = () => {
             worksheet.mergeCells(`C${itemInfoRow3.number}:L${itemInfoRow3.number}`);
 
             worksheet.addRow([]);
-
+            
             // TABLE HEADERS (with merged cells for Receipt, Issue, Balance)
             const mainHeaderRow = worksheet.addRow([
                 'Date', 'Reference', '', 'RECEIPT', '', '', 'ISSUE', '', 'BALANCE', '', '', 'No. of Days to Consume'
@@ -699,13 +699,13 @@ const StockCardsPage = () => {
             worksheet.mergeCells(`D${mainHeaderRow.number}:F${mainHeaderRow.number}`);
             worksheet.mergeCells(`G${mainHeaderRow.number}:H${mainHeaderRow.number}`);
             worksheet.mergeCells(`I${mainHeaderRow.number}:K${mainHeaderRow.number}`);
-
+            
             const subHeaderRow = worksheet.addRow([
                 '', '', 'Qty.', 'Unit Cost', 'Total Cost', 'Qty.', 'Office', 'Qty.', 'Unit Cost', 'Total Cost', '', ''
             ]);
             subHeaderRow.font = { name: 'Arial', size: 10, bold: true };
             subHeaderRow.alignment = { horizontal: 'center' };
-
+            
             // Prepare table data
             const getDateObj = (d) => {
                 if (!d) return null;
@@ -739,7 +739,7 @@ const StockCardsPage = () => {
                     });
                     if (monthTx.length === 0) {
                         const monthName = current.toLocaleString('default', { month: 'long' });
-                        const row = worksheet.addRow([
+                const row = worksheet.addRow([
                             `No issued supplies for the month of ${monthName} ${year}`
                         ]);
                         row.font = { italic: true };
@@ -757,7 +757,7 @@ const StockCardsPage = () => {
                                 t.balanceqty || '',
                                 t.balanceunitcost || '',
                                 t.balancetotalcost || '',
-                                '',
+                    '',
                                 t.daystoconsume || ''
                             ]);
                             row.font = { name: 'Arial', size: 10 };
@@ -789,7 +789,7 @@ const StockCardsPage = () => {
             for (let i = 0; i < 5; i++) {
                 worksheet.addRow(['', '', '', '', '', '', '', '', '', '', '', '']);
             }
-
+            
             // Set column widths
             worksheet.columns = [
                 { width: 12 }, // Date
@@ -805,7 +805,7 @@ const StockCardsPage = () => {
                 { width: 8 },  // Empty
                 { width: 20 }  // Days to Consume
             ];
-
+            
             // Save file
             const buffer = await workbook.xlsx.writeBuffer();
             const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });

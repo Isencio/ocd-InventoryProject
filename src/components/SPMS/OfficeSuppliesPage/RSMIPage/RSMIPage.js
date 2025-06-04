@@ -128,45 +128,75 @@ const RSMIPage = () => {
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('RSMI');
 
-            // Set default font
-            worksheet.properties.defaultRowHeight = 15;
-
-            // Add report title
-            const titleRow = worksheet.addRow(['REPORT OF SUPPLIES AND MATERIALS ISSUED']);
-            titleRow.font = { bold: true, size: 14 };
-            titleRow.alignment = { horizontal: 'center' };
-            worksheet.mergeCells('A1:H1');
-
-            // Add date
-            const dateRow = worksheet.addRow([date || 'December 2024']);
-            dateRow.font = { bold: true };
-            dateRow.alignment = { horizontal: 'center' };
-            worksheet.mergeCells('A2:H2');
+            // HEADER SECTION (centered, merged)
+            const addHeaderRow = (text, bold = true) => {
+                const row = worksheet.addRow([text]);
+                row.font = { name: 'Arial', size: 12, bold };
+                row.alignment = { horizontal: 'center' };
+                worksheet.mergeCells(`A${row.number}:H${row.number}`);
+            };
+            addHeaderRow('Republic of the Philippines', false);
+            addHeaderRow('Department of National Defense', false);
+            addHeaderRow('OFFICE OF CIVIL DEFENSE', true);
+            addHeaderRow('NATIONAL CAPITAL REGION', true);
+            addHeaderRow('NO. 81 RBA BLDG. 15TH AVENUE, MURPHY, CUBAO, QUEZON CITY', false);
+            addHeaderRow('Telephone Number: (02) 421-1918; OPCEN Mobile Number: 0917-8276325', false);
+            addHeaderRow('E-Mail Address: ncr@ocd.gov.ph / civildefensencr@gmail.com', false);
+            worksheet.addRow([]);
+            addHeaderRow('REPORT OF SUPPLIES AND MATERIALS ISSUED', true);
+            addHeaderRow(date || 'December 2024', true);
             worksheet.addRow([]);
 
-            // Add entity name and fund cluster
-            worksheet.addRow(['Entity Name:', entityName, 'Fund Cluster:', fundCluster]);
-            worksheet.mergeCells('B4:C4');
-            worksheet.mergeCells('D4:E4');
+            // ENTITY/FUND/SERIAL/DATE SECTION (two columns)
+            const entityRow = worksheet.addRow([
+                'Entity Name:', entityName || '', '', '', '', 'Serial No. :', serialNo || '', '']);
+            entityRow.font = { name: 'Arial', size: 12, bold: true };
+            worksheet.mergeCells(`B${entityRow.number}:E${entityRow.number}`);
+            worksheet.mergeCells(`G${entityRow.number}:H${entityRow.number}`);
+            const fundRow = worksheet.addRow([
+                'Fund Cluster:', fundCluster || '', '', '', '', 'Date :', '', '']);
+            fundRow.font = { name: 'Arial', size: 12, bold: true };
+            worksheet.mergeCells(`B${fundRow.number}:E${fundRow.number}`);
+            worksheet.mergeCells(`G${fundRow.number}:H${fundRow.number}`);
             worksheet.addRow([]);
 
-            // Add table headers
-            const headerRow1 = worksheet.addRow([
-                '', '', '', 'To be filled up by the Supply and/or Property Division/Unit',
-                '', 'To be filled up by the Accounting Division/Unit', '', ''
-            ]);
-            headerRow1.font = { bold: true };
-            worksheet.mergeCells('D5:F5');
+            // SECTION HEADER (merged)
+            const sectionHeader = worksheet.addRow([
+                '', '', '', 'To be filled up by the Supply and/or Property Division/Unit', '', '', 'To be filled up by the Accounting Division/Unit', '']);
+            sectionHeader.font = { name: 'Arial', size: 12, bold: true };
+            worksheet.mergeCells(`D${sectionHeader.number}:F${sectionHeader.number}`);
+            worksheet.mergeCells(`G${sectionHeader.number}:H${sectionHeader.number}`);
 
-            const headerRow2 = worksheet.addRow([
-                'RIS No.', 'Responsibility Center Code', 'Stock No.', 'Item', 
-                'Unit', 'Quantity Issued', 'Unit Cost', 'Amount', 'Date'
+            // TABLE HEADERS
+            const tableHeader = worksheet.addRow([
+                'RIS No.',
+                'Responsibility Center Code',
+                'Stock No.',
+                'Item',
+                'Unit',
+                'Quantity Issued',
+                'Unit Cost',
+                'Amount'
             ]);
-            headerRow2.font = { bold: true };
+            tableHeader.font = { name: 'Arial', size: 12, bold: true };
+            tableHeader.alignment = { horizontal: 'center' };
 
-            // Add data rows
-            rows.forEach(row => {
-                worksheet.addRow([
+            // TABLE BODY
+            const filledRows = rows.filter(row => row.risNo || row.stockNo || row.item || row.unit || row.quantityIssued || row.unitCost || row.amount);
+            const emptyRowsCount = Math.max(15, 15 - filledRows.length);
+            const emptyRows = Array(emptyRowsCount).fill({
+                risNo: '',
+                responsibilityCenterCode: '',
+                stockNo: '',
+                item: '',
+                unit: '',
+                quantityIssued: '',
+                unitCost: '',
+                amount: ''
+            });
+            const tableBody = [...filledRows, ...emptyRows];
+            tableBody.forEach(row => {
+                const r = worksheet.addRow([
                     row.risNo,
                     row.responsibilityCenterCode,
                     row.stockNo,
@@ -174,51 +204,111 @@ const RSMIPage = () => {
                     row.unit,
                     row.quantityIssued ? parseInt(row.quantityIssued, 10) : '',
                     row.unitCost,
-                    row.amount,
-                    row.date
+                    row.amount
                 ]);
+                r.font = { name: 'Arial', size: 12 };
             });
+
+            // RECAPIULATION TABLES (side by side)
+            worksheet.addRow([]);
+            const recapStart = worksheet.lastRow.number + 1;
+            worksheet.getCell(`B${recapStart}`).value = 'Recapitulation:';
+            worksheet.getCell(`B${recapStart}`).font = { name: 'Arial', size: 12, bold: true };
+            worksheet.mergeCells(`B${recapStart}:C${recapStart}`);
+            worksheet.getCell(`F${recapStart}`).value = 'Recapitulation:';
+            worksheet.getCell(`F${recapStart}`).font = { name: 'Arial', size: 12, bold: true };
+            worksheet.mergeCells(`F${recapStart}:H${recapStart}`);
+            worksheet.getCell(`B${recapStart+1}`).value = 'Stock No.';
+            worksheet.getCell(`C${recapStart+1}`).value = 'Quantity';
+            worksheet.getCell(`B${recapStart+2}`).value = filledRows[0]?.stockNo || '';
+            worksheet.getCell(`C${recapStart+2}`).value = '111';
+            worksheet.getCell(`B${recapStart+3}`).value = 'Less Issuance';
+            const minIssueQty = filledRows.length > 0 ? Math.min(...filledRows.map(row => parseFloat(row.quantityIssued) || 0)) : '';
+            worksheet.getCell(`C${recapStart+3}`).value = minIssueQty !== '' ? String(minIssueQty) : '';
+            worksheet.getCell(`B${recapStart+4}`).value = date || 'December 2024';
+            worksheet.getCell(`C${recapStart+4}`).value = '104';
+            worksheet.getCell(`F${recapStart+1}`).value = 'Unit Cost';
+            worksheet.getCell(`G${recapStart+1}`).value = 'Total Cost';
+            worksheet.getCell(`H${recapStart+1}`).value = 'UACS Object Code';
+            worksheet.getCell(`F${recapStart+2}`).value = filledRows[0]?.unitCost || '';
+            worksheet.getCell(`G${recapStart+2}`).value = filledRows[0]?.amount || '';
+
+            // Certification/Signature Section
+            worksheet.addRow([]);
+            const noteRow = worksheet.addRow(['Note:', '', '', '', '', '', '', '']);
+            worksheet.mergeCells(`A${noteRow.number}:E${noteRow.number}`);
+            worksheet.getCell(`A${noteRow.number}`).font = { name: 'Arial', size: 12, bold: true };
+            worksheet.getCell(`A${noteRow.number}`).alignment = { vertical: 'middle' };
+            worksheet.mergeCells(`F${noteRow.number}:H${noteRow.number}`);
+            const certRow = worksheet.addRow([
+                'I hereby certify to the correctness of the above information.', '', '', '', '', 'Posted by:', '', '']);
+            worksheet.mergeCells(`A${certRow.number}:E${certRow.number}`);
+            worksheet.mergeCells(`F${certRow.number}:H${certRow.number}`);
+            certRow.font = { name: 'Arial', size: 12 };
+            const nameRow = worksheet.addRow([
+                'KRIZELLE JANE G. MATIAS', '', '', '', '', '', '', '']);
+            worksheet.mergeCells(`A${nameRow.number}:E${nameRow.number}`);
+            worksheet.mergeCells(`F${nameRow.number}:H${nameRow.number}`);
+            nameRow.font = { name: 'Arial', size: 12 };
+            const sigRow = worksheet.addRow([
+                'Signature over Printed Name of Supply and/or Property Custodian', '', '', '', '', 'Signature over Printed Name of Designated Account Staff', 'Date', '']);
+            worksheet.mergeCells(`A${sigRow.number}:E${sigRow.number}`);
+            worksheet.mergeCells(`F${sigRow.number}:G${sigRow.number}`);
+            sigRow.font = { name: 'Arial', size: 12 };
 
             // Set column widths
             worksheet.columns = [
-                { width: 15 },  // RIS No.
-                { width: 20 },  // Responsibility Center Code
-                { width: 10 },  // Stock No.
-                { width: 30 },  // Item
-                { width: 10 },   // Unit
-                { width: 15 },  // Quantity Issued
-                { width: 12 },   // Unit Cost
-                { width: 12 },    // Amount
-                { width: 15 }    // Date
+                { width: 22 },  // RIS No.
+                { width: 28 },  // Responsibility Center Code
+                { width: 18 },  // Stock No.
+                { width: 45 },  // Item
+                { width: 15 },  // Unit
+                { width: 18 },  // Quantity Issued
+                { width: 18 },  // Unit Cost
+                { width: 30 }   // Amount (wider for long text)
             ];
 
-            // Add borders to all cells
-            const lastRow = worksheet.rowCount;
-            for (let i = 4; i <= lastRow; i++) {
-                for (let j = 1; j <= 8; j++) {
-                    const cell = worksheet.getCell(i, j);
+            // Center-align all table cells (headers and body)
+            worksheet.eachRow({ includeEmpty: true }, function(row, rowNumber) {
+                row.eachCell({ includeEmpty: true }, function(cell) {
+                    // Center table headers and body
+                    if (
+                        rowNumber >= tableHeader.number &&
+                        rowNumber <= tableHeader.number + tableBody.length
+                    ) {
+                        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                    }
+                    // Center section headers and signature lines
+                    if (
+                        rowNumber === sectionHeader.number ||
+                        rowNumber === tableHeader.number ||
+                        rowNumber > worksheet.lastRow.number - 8 // for signature/certification
+                    ) {
+                        cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+                    }
+                    cell.font = { name: 'Arial', size: 12, bold: !!cell.font?.bold };
                     cell.border = {
                         top: { style: 'thin' },
                         left: { style: 'thin' },
                         bottom: { style: 'thin' },
                         right: { style: 'thin' }
                     };
-                }
-            }
-
-            // Format number cells
-            for (let i = 6; i <= lastRow; i++) {
-                // Unit Cost and Amount
-                worksheet.getCell(`G${i}`).numFmt = '#,##0.00';
-                worksheet.getCell(`H${i}`).numFmt = '#,##0.00';
-            }
+                });
+            });
 
             // Generate filename
             const fileName = `RSMI_Report_${date.replace(/\s+/g, '_') || 'December_2024'}.xlsx`;
-            
-            // Save the file
-            await workbook.xlsx.writeFile(fileName);
-            
+            // Save the file (browser-safe)
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
             alert('Excel file exported successfully!');
         } catch (error) {
             console.error('Export error:', error);
